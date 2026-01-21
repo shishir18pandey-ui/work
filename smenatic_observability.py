@@ -1,0 +1,301 @@
+# app/observability.py
+import os
+import logging
+from opentelemetry import trace
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor, SimpleSpanProcessor, ConsoleSpanExporter
+from opentelemetry.sdk.resources import SERVICE_NAME, Resource
+
+
+from opentelemetry.sdk._logs import LoggerProvider, LoggingHandler
+from opentelemetry.sdk._logs.export import BatchLogRecordProcessor, ConsoleLogExporter
+from opentelemetry._logs import set_logger_provider, get_logger_provider
+
+
+
+from opentelemetry.propagate import set_global_textmap
+from opentelemetry.trace.propagation.tracecontext import TraceContextTextMapPropagator
+
+
+# Module-level state
+_tracer_initialized = False
+_logger = logging.getLogger(__name__)
+
+
+def is_tracing_enabled() -> bool:
+    """Check if telemetry is enabled via environment variable."""
+    return os.environ.get('TELEMETRY_SERVICE_NAME') is not None
+
+
+def is_local_mode() -> bool:
+    """Check if running in local/dev mode (console export)."""
+    return os.environ.get('TELEMETRY_LOCAL', 'false').lower() == 'true'
+
+
+def init_tracer():
+    """
+    Initialize OpenTelemetry tracer and logger providers.
+    This MUST be called BEFORE attaching instrumentation to FastAPI.
+    """
+    global _tracer_initialized
+    
+    if _tracer_initialized:
+        _logger.warning("Tracer already initialized, skipping...")
+        return
+    
+ 
+    set_global_textmap(TraceContextTextMapPropagator())
+    _logger.info(" W3C Trace Context propagation enabled")
+
+    
+    service_name = os.environ.get('TELEMETRY_SERVICE_NAME', 'genai-de-semantic-agent')
+    environment = os.environ.get('ENVIRONMENT', 'local')
+
+    # Create resource (metadata about your service)
+    resource = Resource.create({
+        SERVICE_NAME: service_name,
+        "service.namespace": "ai-platform",
+        "deployment.environment": environment,
+    })
+
+    # ============== TRACES ==============
+    tracer_provider = TracerProvider(resource=resource)
+    trace.set_tracer_provider(tracer_provider)
+
+    if is_local_mode():
+        _init_local_trace_exporter(tracer_provider, service_name)
+    else:
+        _init_otlp_trace_exporter(tracer_provider, service_name)
+  
+    logger_provider = LoggerProvider(resource=resource)
+    set_logger_provider(logger_provider)
+
+    if is_local_mode():
+        _init_local_log_exporter(logger_provider, service_name)
+    else:
+        _init_otlp_log_exporter(logger_provider, service_name)
+    
+    # Attach OTel logging handler to root logger
+    _attach_logging_handler()
+    _instrument_libraries()
+    _tracer_initialized = True
+
+def _init_local_trace_exporter(tracer_provider: TracerProvider, service_name: str):
+    """Initialize console exporter for local development (traces)."""
+    console_exporter = ConsoleSpanExporter()
+    tracer_provider.add_span_processor(
+        SimpleSpanProcessor(console_exporter)
+    )
+    _logger.info("=" * 60)
+    _logger.info(" OpenTelemetry TRACES initialized in LOCAL mode")
+    _logger.info(f" Service: {service_name}")
+    _logger.info(" Traces will be printed to console")
+    _logger.info("=" * 60)
+
+def _init_otlp_trace_exporter(tracer_provider: TracerProvider, service_name: str):
+    """Initialize OTLP HTTP exporter for production (traces)."""
+    try:
+        from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+        
+        telemetry_endpoint = os.environ.get(
+            'TELEMETRY_ENDPOINT', 
+            'ot-collector.tracing.svc.cluster.local'
+        )
+        telemetry_port = os.environ.get('TELEMETRY_PORT', '4318')
+        
+        endpoint_url = f"http://{telemetry_endpoint}:{telemetry_port}/v1/traces"
+        
+        otlp_exporter = OTLPSpanExporter(
+            endpoint=endpoint_url,
+            timeout=10,  # 10 second timeout
+        )
+        
+        tracer_provider.add_span_processor(
+            BatchSpanProcessor(
+                otlp_exporter,
+                max_queue_size=2048,
+                max_export_batch_size=512,
+                export_timeout_millis=30000,
+            )
+        )
+        
+        _logger.info("=" * 60)
+        _logger.info(" OpenTelemetry TRACES initialized (OTLP/HTTP)")
+        _logger.info(f" Service: {service_name}")
+        _logger.info(f" Exporting to: {endpoint_url}")
+        _logger.info("=" * 60)
+        
+    except Exception as e:
+        _logger.error(f" Failed to initialize OTLP trace exporter: {e}")
+        _logger.info(" Falling back to console exporter for traces")
+        
+        console_exporter = ConsoleSpanExporter()
+        tracer_provider.add_span_processor(
+            SimpleSpanProcessor(console_exporter)
+        )
+def _init_local_log_exporter(logger_provider: LoggerProvider, service_name: str):
+    """Initialize console exporter for local development (logs)."""
+    console_log_exporter = ConsoleLogExporter()
+    logger_provider.add_log_record_processor(
+        BatchLogRecordProcessor(console_log_exporter)
+    )
+    
+    _logger.info("=" * 60)
+    _logger.info(" OpenTelemetry LOGS initialized in LOCAL mode")
+    _logger.info(f" Service: {service_name}")
+    _logger.info(" Logs will be printed to console")
+    _logger.info("=" * 60)
+
+def _init_otlp_log_exporter(logger_provider: LoggerProvider, service_name: str):
+    """Initialize OTLP HTTP exporter for production (logs)."""
+    try:
+        from opentelemetry.exporter.otlp.proto.http._log_exporter import OTLPLogExporter
+        
+        telemetry_endpoint = os.environ.get(
+            'TELEMETRY_ENDPOINT', 
+            'ot-collector.tracing.svc.cluster.local'
+        )
+        telemetry_port = os.environ.get('TELEMETRY_PORT', '4318')
+        
+        # HTTP requires full URL with /v1/logs path
+        endpoint_url = f"http://{telemetry_endpoint}:{telemetry_port}/v1/logs"
+        
+        otlp_log_exporter = OTLPLogExporter(
+            endpoint=endpoint_url,
+            timeout=10,
+        )
+        
+        logger_provider.add_log_record_processor(
+            BatchLogRecordProcessor(
+                otlp_log_exporter,
+                max_queue_size=2048,
+                max_export_batch_size=512,
+                export_timeout_millis=30000,
+            )
+        )
+        
+        _logger.info("=" * 60)
+        _logger.info("OpenTelemetry LOGS initialized (OTLP/HTTP)")
+        _logger.info(f" Service: {service_name}")
+        _logger.info(f"Exporting to: {endpoint_url}")
+        _logger.info("=" * 60)
+        
+    except Exception as e:
+        _logger.error(f" Failed to initialize OTLP log exporter: {e}")
+        _logger.info(" Falling back to console exporter for logs")
+        
+        console_log_exporter = ConsoleLogExporter()
+        logger_provider.add_log_record_processor(
+            BatchLogRecordProcessor(console_log_exporter)
+        )
+
+
+def _attach_logging_handler():
+    try:
+        
+        handler = LoggingHandler(
+            level=logging.INFO,
+            logger_provider=get_logger_provider()  # ← CORRECT: get_logger_provider()
+        )
+
+        # Attach to root logger (affects ALL loggers in your app)
+        root_logger = logging.getLogger()
+        root_logger.addHandler(handler)
+        root_logger.setLevel(logging.INFO)
+        
+        _logger.info(" OpenTelemetry logging handler attached to root logger")
+    except Exception as e:
+        _logger.warning(f" Failed to attach OTel logging handler: {e}")
+
+
+def _instrument_libraries():
+    """
+    Auto-instrument common libraries.
+    This wraps HTTP clients, database calls, etc. with spans automatically.
+    """
+    try:
+        from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
+        HTTPXClientInstrumentor().instrument()
+        _logger.info(" HTTPX auto-instrumented")
+    except ImportError:
+        pass
+    
+    try:
+        from opentelemetry.instrumentation.requests import RequestsInstrumentor
+        RequestsInstrumentor().instrument()
+        _logger.info(" Requests auto-instrumented")
+    except ImportError:
+        pass
+    
+    try:
+        from opentelemetry.instrumentation.logging import LoggingInstrumentor
+        
+        LoggingInstrumentor().instrument(set_logging_format=False)
+        # ==========================================
+        _logger.info(" Logging auto-instrumented (trace_id/span_id injection)")
+    except ImportError:
+        pass
+
+
+def attach_opentelemetry(app):
+    """
+    Attach OpenTelemetry instrumentation to FastAPI app.
+    This MUST be called AFTER init_tracer().
+    
+    NOTE: FastAPIInstrumentor.instrument_app() automatically adds:
+    - OpenTelemetryMiddleware (for root span creation)
+    - Route instrumentation (child spans for each endpoint)
+    
+    DO NOT manually add OpenTelemetryMiddleware!
+    """
+    try:
+        from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+
+        FastAPIInstrumentor.instrument_app(app)
+
+        _logger.info(" FastAPI instrumented with OpenTelemetry")
+    except Exception as e:
+        _logger.error(f" Failed to instrument FastAPI: {e}")
+
+
+def get_tracer(name: str = __name__):
+    """Get a tracer instance for manual span creation."""
+    return trace.get_tracer(name)
+
+
+def get_current_trace_id() -> str:
+    """Get the current trace ID as hex string."""
+    span = trace.get_current_span()
+    if span and span.get_span_context().is_valid:
+        return format(span.get_span_context().trace_id, '032x')
+    return "0"
+
+
+def get_current_span_id() -> str:
+    """Get the current span ID as hex string."""
+    span = trace.get_current_span()
+    if span and span.get_span_context().is_valid:
+        return format(span.get_span_context().span_id, '016x')
+    return "0"
+
+
+def add_span_attributes(attributes: dict):
+    """Add multiple attributes to the current span."""
+    span = trace.get_current_span()
+    if span:
+        for key, value in attributes.items():
+            if value is not None:
+                if isinstance(value, (bool, int, float, str)):
+                    span.set_attribute(key, value)
+                else:
+                    span.set_attribute(key, str(value))
+
+
+def record_exception(exception: Exception, attributes: dict = None):
+    """Record an exception on the current span."""
+    span = trace.get_current_span()
+    if span:
+        span.record_exception(exception)
+        span.set_attribute("error", True)
+        if attributes:
+            add_span_attributes(attributes)
