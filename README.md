@@ -1397,3 +1397,72 @@ db_config:
     "app_tags": ["optimus", "login", "password"]
   }
 ]
+
+
+
+this are my pod logs 026-07-01 13:55:03,152 - tools.tool - INFO - [idp_password_expiry_check] app=optimus db=platform query=SELECT * FROM IDP.customer WHERE ucic = '1055678509'
+
+2026-07-01 13:55:03,155 - utils.oracle_connection - ERROR - DB Error [optimus:platform]: DPY-6005: cannot connect to database (CONNECTION_ID=uhhb75rhVQuFiMs9yPznwQ==).
+[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)
+Traceback (most recent call last):
+  File "src/oracledb/impl/thin/connection.pyx", line 421, in oracledb.thin_impl.ThinConnImpl._connect_with_address
+  File "src/oracledb/impl/thin/protocol.pyx", line 268, in oracledb.thin_impl.Protocol._connect_phase_one
+  File "src/oracledb/impl/thin/protocol.pyx", line 422, in oracledb.thin_impl.Protocol._connect_tcp
+  File "src/oracledb/impl/thin/transport.pyx", line 265, in oracledb.thin_impl.Transport.negotiate_tls
+  File "/usr/local/lib/python3.11/ssl.py", line 517, in wrap_socket
+    return self.sslsocket_class._create(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/ssl.py", line 1108, in _create
+    self.do_handshake()
+  File "/usr/local/lib/python3.11/ssl.py", line 1379, in do_handshake
+    self._sslobj.do_handshake()
+ssl.SSLEOFError: [SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/utils/oracle_connection.py", line 148, in execute_oracle_query_async
+    result = await asyncio.to_thread(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/utils/oracle_connection.py", line 126, in _execute_query_sync
+    with pool.acquire() as connection:
+         ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/oracledb/pool.py", line 428, in acquire
+    return oracledb.connect(
+           ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/oracledb/connection.py", line 1768, in connect
+    return conn_class(dsn=dsn, pool=pool, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/oracledb/connection.py", line 889, in __init__
+    impl = pool_impl.acquire(params_impl)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "src/oracledb/impl/thin/pool.pyx", line 637, in oracledb.thin_impl.ThinPoolImpl.acquire
+  File "src/oracledb/impl/thin/pool.pyx", line 643, in oracledb.thin_impl.ThinPoolImpl.acquire
+  File "src/oracledb/impl/thin/pool.pyx", line 639, in oracledb.thin_impl.ThinPoolImpl.acquire
+  File "/usr/local/lib/python3.11/threading.py", line 363, in wait_for
+    result = predicate()
+             ^^^^^^^^^^^
+  File "src/oracledb/impl/thin/pool.pyx", line 950, in oracledb.thin_impl.PooledConnRequest.fulfill
+  File "src/oracledb/impl/thin/pool.pyx", line 602, in oracledb.thin_impl.ThinPoolImpl._process_request
+  File "src/oracledb/impl/thin/pool.pyx", line 575, in oracledb.thin_impl.ThinPoolImpl._create_conn_impl
+  File "src/oracledb/impl/thin/connection.pyx", line 544, in oracledb.thin_impl.ThinConnImpl.connect
+  File "src/oracledb/impl/thin/connection.pyx", line 540, in oracledb.thin_impl.ThinConnImpl.connect
+  File "src/oracledb/impl/thin/connection.pyx", line 482, in oracledb.thin_impl.ThinConnImpl._connect_with_params
+  File "src/oracledb/impl/thin/connection.pyx", line 463, in oracledb.thin_impl.ThinConnImpl._connect_with_description
+  File "src/oracledb/impl/thin/connection.pyx", line 425, in oracledb.thin_impl.ThinConnImpl._connect_with_address
+  File "/usr/local/lib/python3.11/site-packages/oracledb/errors.py", line 199, in _raise_err
+    raise error.exc_type(error) from cause
+oracledb.exceptions.OperationalError: DPY-6005: cannot connect to database (CONNECTION_ID=uhhb75rhVQuFiMs9yPznwQ==).
+[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1006)
+╭────────────────────── ✅ Tool Execution Completed (#2) ──────────────────────╮
+│                                                                              │
+│  Tool Completed                                                              │
+│  Tool: idp_password_expiry_check                                             │
+│  Output: {'success': False, 'data': None, 'error': 'DPY-6005: cannot         │
+│  connect to database (CONNECTION_ID=
