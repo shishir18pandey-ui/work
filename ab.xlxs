@@ -1,0 +1,30 @@
+7/8/2026	Login Issues	Customer has entered wrong password	Customer is unable to login in net banking	"mobile_number=+919326199259
+customer ID: 9904794229"	idp-api	/api/idp/v1/login/password	From this Api we will able to get the error message "Credentials are incorrect"	https://tracing.uat-opt.idfcfirstbank.com/trace/174a5b8857b67bcd0ad426aed99c1236?uiEmbed=v0
+						/api/idp/v2/login/get-login-mode	From this api we will get the fileds such as USERNAME, CUSTOMER_ID, MOBILE NUMBER user has entered at the time of login	https://tracing.uat-opt.idfcfirstbank.com/trace/a50e23436ab37e697c626c45d3e253ea?uiEmbed=v0
+	Login Issues	Net Banking Activation Issue	Customer is unable to login in net banking	"mobile_number=+911000097355
+customer ID: 1062664939"	idp-api	/api/idp/v1/login/password	From this Api we will able to get the error message "Credentials are incorrect"	https://tracing.uat-opt.idfcfirstbank.com/trace/174a5b8857b67bcd0ad426aed99c1236?uiEmbed=v0
+						/api/idp/v2/login/get-login-mode	From this api we will get the fileds such as USERNAME, CUSTOMER_ID, MOBILE NUMBER user has entered at the time of login	https://tracing.uat-opt.idfcfirstbank.com/trace/db60ef362e38f6b1e037a45f1905a5ef?uiEmbed=v0
+	Login Issues	Customer ID is Blocked	Customer is unable to login in net banking	"mobile_number=+917666104797
+customer ID: 1062098304"	idp-api	/api/idp/v1/login/password	From this Api we will able to get the error message "Credentials are incorrect"	https://tracing.uat-opt.idfcfirstbank.com/trace/ecb4d50ae05d7bea70d579ae7ccbce32?uiEmbed=v0
+						/api/idp/v2/login/get-login-mode	From this api we will get the fileds such as USERNAME, CUSTOMER_ID, MOBILE NUMBER user has entered at the time of login	https://tracing.uat-opt.idfcfirstbank.com/trace/ae8c691e4bc3187d2e3af1ff201d0170?uiEmbed=v0
+	Login Issues	Unable to login on Mobile app	Customer is unable to login in mobile app	"Customer ID: 1064026303
+user_id : f88b76e0-4934-4f4e-8348-9d1ca24f88b3"	idp-api	/api/idp/v3/login/mpin	"Here you will get the user_id using below query
+
+SELECT
+             device_id,user_id FROM IDP.customerdevice where user_id in (select user_id
+              from IDP.customer where ucic in ('1064026303'));
+              "	https://tracing.uat-opt.idfcfirstbank.com/trace/36007343a7b0dd4a5c1efc006fc3a603?uiEmbed=v0
+	Login Issues	Unable to login on Mobile app	Customer is unable to login in mobile app (MPIN is incorrect)	"Customer ID: 1040581863
+user_id : 22003f12-af14-4d1d-a674-b2f6ca2a59e8"	idp-api	/api/idp/v3/login/mpin	"Here you will get the user_id using below query
+
+SELECT
+             device_id,user_id FROM IDP.customerdevice where user_id in (select user_id
+              from IDP.customer where ucic in ('1064026303'));
+              "	https://tracing.uat-opt.idfcfirstbank.com/trace/929264d7e2f6bfa3527f547dbc854d3c?uiEmbed=v0
+	Login Issues	Unable to login on Mobile app	Customer is unable to login in mobile app (Device is not active)	"Customer ID: 9911649831
+user_id : 6cb94137-bc7a-40e2-987f-4d4a3375aa12"	idp-api	/api/idp/v3/login/mpin	"Here you will get the user_id using below query
+
+SELECT
+             device_id,user_id FROM IDP.customerdevice where user_id in (select user_id
+              from IDP.customer where ucic in ('9911649831'));
+              "	https://tracing.uat-opt.idfcfirstbank.com/trace/067985f6efbfb622ae9e186fc6d2f539?uiEmbed=v0
