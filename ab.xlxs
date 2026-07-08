@@ -1,30 +1,313 @@
-7/8/2026	Login Issues	Customer has entered wrong password	Customer is unable to login in net banking	"mobile_number=+919326199259
-customer ID: 9904794229"	idp-api	/api/idp/v1/login/password	From this Api we will able to get the error message "Credentials are incorrect"	https://tracing.uat-opt.idfcfirstbank.com/trace/174a5b8857b67bcd0ad426aed99c1236?uiEmbed=v0
-						/api/idp/v2/login/get-login-mode	From this api we will get the fileds such as USERNAME, CUSTOMER_ID, MOBILE NUMBER user has entered at the time of login	https://tracing.uat-opt.idfcfirstbank.com/trace/a50e23436ab37e697c626c45d3e253ea?uiEmbed=v0
-	Login Issues	Net Banking Activation Issue	Customer is unable to login in net banking	"mobile_number=+911000097355
-customer ID: 1062664939"	idp-api	/api/idp/v1/login/password	From this Api we will able to get the error message "Credentials are incorrect"	https://tracing.uat-opt.idfcfirstbank.com/trace/174a5b8857b67bcd0ad426aed99c1236?uiEmbed=v0
-						/api/idp/v2/login/get-login-mode	From this api we will get the fileds such as USERNAME, CUSTOMER_ID, MOBILE NUMBER user has entered at the time of login	https://tracing.uat-opt.idfcfirstbank.com/trace/db60ef362e38f6b1e037a45f1905a5ef?uiEmbed=v0
-	Login Issues	Customer ID is Blocked	Customer is unable to login in net banking	"mobile_number=+917666104797
-customer ID: 1062098304"	idp-api	/api/idp/v1/login/password	From this Api we will able to get the error message "Credentials are incorrect"	https://tracing.uat-opt.idfcfirstbank.com/trace/ecb4d50ae05d7bea70d579ae7ccbce32?uiEmbed=v0
-						/api/idp/v2/login/get-login-mode	From this api we will get the fileds such as USERNAME, CUSTOMER_ID, MOBILE NUMBER user has entered at the time of login	https://tracing.uat-opt.idfcfirstbank.com/trace/ae8c691e4bc3187d2e3af1ff201d0170?uiEmbed=v0
-	Login Issues	Unable to login on Mobile app	Customer is unable to login in mobile app	"Customer ID: 1064026303
-user_id : f88b76e0-4934-4f4e-8348-9d1ca24f88b3"	idp-api	/api/idp/v3/login/mpin	"Here you will get the user_id using below query
-
-SELECT
-             device_id,user_id FROM IDP.customerdevice where user_id in (select user_id
-              from IDP.customer where ucic in ('1064026303'));
-              "	https://tracing.uat-opt.idfcfirstbank.com/trace/36007343a7b0dd4a5c1efc006fc3a603?uiEmbed=v0
-	Login Issues	Unable to login on Mobile app	Customer is unable to login in mobile app (MPIN is incorrect)	"Customer ID: 1040581863
-user_id : 22003f12-af14-4d1d-a674-b2f6ca2a59e8"	idp-api	/api/idp/v3/login/mpin	"Here you will get the user_id using below query
-
-SELECT
-             device_id,user_id FROM IDP.customerdevice where user_id in (select user_id
-              from IDP.customer where ucic in ('1064026303'));
-              "	https://tracing.uat-opt.idfcfirstbank.com/trace/929264d7e2f6bfa3527f547dbc854d3c?uiEmbed=v0
-	Login Issues	Unable to login on Mobile app	Customer is unable to login in mobile app (Device is not active)	"Customer ID: 9911649831
-user_id : 6cb94137-bc7a-40e2-987f-4d4a3375aa12"	idp-api	/api/idp/v3/login/mpin	"Here you will get the user_id using below query
-
-SELECT
-             device_id,user_id FROM IDP.customerdevice where user_id in (select user_id
-              from IDP.customer where ucic in ('9911649831'));
-              "	https://tracing.uat-opt.idfcfirstbank.com/trace/067985f6efbfb622ae9e186fc6d2f539?uiEmbed=v0
+[{
+    "name": "login_password_check",
+    "type": "JAEGER",
+    "purpose": "Check net banking / web login traces. The response payload contains the actual error returned by the login API for this specific customer — read and report it exactly as it appears, whatever it says. Pass tag_name='customer_id' with the UCIC value (the tool resolves the tag automatically). If a mobile number is present in the incident, run this tool a SECOND time with tag_name='mobile_number' — some traces are only tagged by mobile. ALSO run login_mode_check for the same customer — the login error alone is often not enough to tell wrong password apart from wrong username or mobile typed into the username field; login_mode_check shows what the customer actually entered. Never invent or assume an error — only state what the trace payload shows.",
+    "service": "idp-api",
+    "parameters": [
+      {"name": "tag_name", "type": "string", "description": "Use 'customer_id' (pass the UCIC value) or 'mobile_number'", "required": true},
+      {"name": "tag_value", "type": "string", "description": "The customer_id/UCIC (e.g. 1061821167) or mobile number (e.g. +919326199259)", "required": true}
+    ],
+    "output_description": "Failed login traces for this customer. The response payload holds whatever error the API actually returned — read it directly, do not assume a fixed set of possible values.",
+    "example_use_cases": ["Customer unable to login on net banking", "Login failure of any kind"],
+    "app_tags": ["optimus", "login", "authentication", "netbanking"]
+  },
+  {
+    "name": "login_mode_check",
+    "type": "JAEGER",
+    "purpose": "Shows which identifier the customer actually typed at login — USERNAME, CUSTOMER_ID, or MOBILE NUMBER — as recorded in the trace. Use this alongside login_password_check to work out whether a login failure was due to the password itself or due to the customer entering the wrong identifier (e.g. mobile number typed into the username field). Also surfaces the CDP validation call (cdp.idfcfirstbank.com/v1/customers/search, field primaryMobileWithIsd) if present in the trace — check its result rather than assuming what it says. Pass tag_name='customer_id' with the UCIC value, or 'mobile_number'. Report only what the trace actually contains.",
+    "service": "idp-api",
+    "parameters": [
+      {"name": "tag_name", "type": "string", "description": "Use 'customer_id' (pass the UCIC value) or 'mobile_number'", "required": true},
+      {"name": "tag_value", "type": "string", "description": "The customer_id/UCIC or mobile number", "required": true}
+    ],
+    "output_description": "Returns the identifier fields the customer submitted at login, plus any CDP validation response present in the trace.",
+    "example_use_cases": ["Diagnose which identifier the customer used at login", "Login failure needing more context than the password error alone"],
+    "app_tags": ["optimus", "login", "identifier"]
+  },
+  {
+    "name": "mpin_login_check",
+    "type": "JAEGER",
+    "purpose": "Mobile app MPIN login traces. IDENTIFIER RULE (structural, not content-related): these traces are tagged ONLY by user_id (a UUID like 22003f12-af14-4d1d-a674-b2f6ca2a59e8) — never by UCIC or customer_id. STEP 1: call idp_customer_device_lookup or idp_get_user_id_from_ucic with the customer's UCIC to get the user_id. STEP 2: call this tool with tag_name='user_id' and tag_value set to that UUID. Passing a UCIC directly here will return zero traces regardless of whether the customer actually had a failed login. Once you have traces, read the response payload for whatever specific error occurred — do not assume what it says.",
+    "service": "idp-api",
+    "parameters": [
+      {"name": "tag_name", "type": "string", "description": "Must be 'user_id' — the UUID from idp_customer_device_lookup, never the UCIC", "required": true},
+      {"name": "tag_value", "type": "string", "description": "The user_id UUID, e.g. 22003f12-af14-4d1d-a674-b2f6ca2a59e8", "required": true}
+    ],
+    "output_description": "MPIN login failure traces for this user_id. The response payload holds whatever error actually occurred — read it directly. If zero traces are returned, first verify a user_id UUID was passed and not a UCIC before concluding there is no login attempt on record.",
+    "example_use_cases": ["Customer unable to login via MPIN on mobile app", "Any mobile-app login failure"],
+    "app_tags": ["optimus", "login", "mpin", "mobile-app"]
+  },
+  {
+    "name": "device_registration_check",
+    "type": "JAEGER",
+    "purpose": "Device registration traces (/api/idp/v6/registration). Pass tag_name='customer_id' with the UCIC value, or 'mobile_number'. If the incident describes a registration LOOP (registration screen appears repeatedly), also run idp_customer_device_lookup (checks for multiple active devices on one user) and idp_device_multiuser_lookup (checks if one device is shared across users) — the loop is usually a data condition, not something visible in the trace error alone. Read whatever error or event the trace actually contains; do not assume a fixed list of causes.",
+    "service": "idp-api",
+    "parameters": [
+      {"name": "tag_name", "type": "string", "description": "Use 'customer_id' (pass the UCIC value) or 'mobile_number'", "required": true},
+      {"name": "tag_value", "type": "string", "description": "The customer_id/UCIC or mobile number", "required": true}
+    ],
+    "output_description": "Registration failure traces for this customer. The response/event fields hold whatever the API actually reported — read directly rather than assuming a fixed set of outcomes.",
+    "example_use_cases": ["Unable to register device", "Any device registration failure", "Registration screen appears repeatedly"],
+    "app_tags": ["optimus", "registration", "device"]
+  },
+    {
+      "name": "beneficiary_add_check",
+      "type": "JAEGER",
+      "purpose": "Check beneficiary/payee addition traces to diagnose errors like 'Payee already exists' when customer is unable to add beneficiary details.",
+      "service": "beneficiary-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic, customer_id, or mobile_number", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns beneficiary addition traces with error messages.",
+      "example_use_cases": ["Unable to add beneficiary", "Payee already exists error", "Beneficiary addition failed"],
+      "app_tags": ["optimus", "beneficiary", "payee"]
+    },
+    {
+      "name": "fund_transfer_check",
+      "type": "JAEGER",
+      "purpose": "Check fund transfer and UPI transaction traces. Covers payments-api fund transfer endpoint and downstream upi-api merchant/request endpoint. Look for errors like INVALID VIRTUAL ADDRESS from finacq.phi.idfcbank.com.",
+      "service": "payments-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic, customer_id, mobile_number, txn_id, or txn_request_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns fund transfer traces. Check downstream upi-api calls and finacq endpoint responses for errors.",
+      "example_use_cases": ["Unable to do UPI transaction", "INVALID VIRTUAL ADDRESS error", "Fund transfer failed", "Payment transaction error"],
+      "app_tags": ["optimus", "payments", "upi", "fund-transfer"]
+    },
+    {
+      "name": "upi_merchant_request_check",
+      "type": "JAEGER",
+      "purpose": "Check UPI merchant request/response traces in upi-api service. This is the downstream service called by payments-api for UPI transactions. Look for errors from finacq.phi.idfcbank.com/merchant/request endpoint.",
+      "service": "upi-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic, customer_id, mobile_number, txn_id, or txn_request_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns UPI merchant request traces with error details from finacq endpoint.",
+      "example_use_cases": ["UPI payment failed", "INVALID VIRTUAL ADDRESS", "Merchant request error"],
+      "app_tags": ["optimus", "upi", "merchant"]
+    },
+    {
+      "name": "billpay_transaction_check",
+      "type": "JAEGER",
+      "purpose": "Check BillPay transaction traces to diagnose failures when customer is unable to pay a bill.",
+      "service": "billpay-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic, customer_id, mobile_number, or txn_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns billpay transaction traces with error details.",
+      "example_use_cases": ["Unable to do BillPay transaction", "Bill payment failed"],
+      "app_tags": ["optimus", "billpay", "payment"]
+    },
+    {
+      "name": "billpay_biller_fetch_check",
+      "type": "JAEGER",
+      "purpose": "Check biller details fetch traces. This calls a downstream Billdesk endpoint (billdesk-payment-services-sys/validateBDPayment). If no response is found from Billdesk, this is a Billdesk-side issue that needs to be raised with the Billdesk team — not resolvable from our side.",
+      "service": "billpay-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns biller fetch traces. If Billdesk endpoint shows no response, this must be escalated to Billdesk team — do not attempt further resolution.",
+      "example_use_cases": ["Unable to fetch biller details", "Biller list not loading"],
+      "app_tags": ["optimus", "billpay", "biller"]
+    },
+    {
+      "name": "billpay_add_biller_check",
+      "type": "JAEGER",
+      "purpose": "Check add-new-biller traces. This calls downstream Billdesk endpoint (billdesk-billermgmt-sys/createBDBillerAccount). Common error: customer is trying to add a biller with a short name that already exists in the system for another biller — instruct customer to use a different short name.",
+      "service": "billpay-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns add-biller traces. If error indicates duplicate biller name, instruct customer to retry with a different short name.",
+      "example_use_cases": ["Unable to add new biller", "Biller name already exists error"],
+      "app_tags": ["optimus", "billpay", "biller", "add"]
+    },
+    {
+      "name": "billpay_modify_biller_check",
+      "type": "JAEGER",
+      "purpose": "Check modify-existing-biller traces. This calls downstream Billdesk endpoint (billdesk-billermgmt-sys/modifyBDBillerAccount). Common error: timeout from Billdesk side — needs escalation to Billdesk team.",
+      "service": "billpay-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns modify-biller traces. If timeout from Billdesk, escalate to Billdesk team — not resolvable from our side.",
+      "example_use_cases": ["Unable to modify biller details", "Biller update timeout"],
+      "app_tags": ["optimus", "billpay", "biller", "modify"]
+    },
+    {
+      "name": "debitcard_view_check",
+      "type": "JAEGER",
+      "purpose": "Check debit card details view traces. Common cause: customer is in Asset_Only category — debit cards are not issued for asset-only customers.",
+      "service": "DEBITCARD-API",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns debit card view traces. Check if customer falls under Asset_Only category — if so, this is expected behavior, not a bug.",
+      "example_use_cases": ["Unable to view debit card details", "Debit card not showing"],
+      "app_tags": ["optimus", "debitcard", "view"]
+    },
+    {
+      "name": "debitcard_international_limit_check",
+      "type": "JAEGER",
+      "purpose": "Check traces for setting international transaction limits on debit card. This calls downstream SFDC endpoint (generic-case-exp/cardServices) present in the same trace.",
+      "service": "DEBITCARD-API",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns international limit traces including downstream SFDC errors.",
+      "example_use_cases": ["Unable to set international debit card limits", "Card limit update failed"],
+      "app_tags": ["optimus", "debitcard", "limit"]
+    },
+    {
+      "name": "debitcard_virtual_card_check",
+      "type": "JAEGER",
+      "purpose": "Check virtual debit card request traces. This calls downstream DCMS endpoint (card-mgmt-proc/createVirtualCard). Common error: timeout from DCMS side.",
+      "service": "DEBITCARD-API",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns virtual card request traces. If DCMS timeout, this is a downstream DCMS issue.",
+      "example_use_cases": ["Unable to request virtual debit card", "Virtual card creation timeout"],
+      "app_tags": ["optimus", "debitcard", "virtual"]
+    },
+    {
+      "name": "debitcard_pin_generation_check",
+      "type": "JAEGER",
+      "purpose": "Check debit card PIN generation traces. This calls downstream DCMS endpoint (fss-card-services-sys/generatePin). The actual error message is encrypted in the response and needs decryption to identify root cause.",
+      "service": "DEBITCARD-API",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns PIN generation traces. Note: actual DCMS error message may be encrypted in response payload.",
+      "example_use_cases": ["Unable to generate debit card PIN", "PIN generation failed"],
+      "app_tags": ["optimus", "debitcard", "pin"]
+    },
+    {
+      "name": "fixed_deposit_view_check",
+      "type": "JAEGER",
+      "purpose": "Check fixed deposit details view traces. Common errors: (1) 'unauthorized to perform action' — customer does not have deposit permissions, (2) timeout from CBS endpoint (bancs/fdList) — CBS-side issue.",
+      "service": "deposit-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns FD view traces. If 'unauthorized' error, customer lacks deposit permissions — not a bug. If CBS timeout, escalate to CBS team.",
+      "example_use_cases": ["Unable to view fixed deposit details", "FD details not loading", "FD business account view issue"],
+      "app_tags": ["optimus", "deposit", "fixed-deposit", "view"]
+    },
+    {
+      "name": "fixed_deposit_advice_download_check",
+      "type": "JAEGER",
+      "purpose": "Check FD advice download traces. Common error: 'unauthorized to perform action' — customer does not have deposit permissions.",
+      "service": "deposits-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns FD advice download traces. If unauthorized error, customer lacks deposit permissions.",
+      "example_use_cases": ["Unable to download FD advice"],
+      "app_tags": ["optimus", "deposit", "advice"]
+    },
+    {
+      "name": "fixed_deposit_tds_check",
+      "type": "JAEGER",
+      "purpose": "Check TDS certificate download traces for fixed deposits. Common error: 'unauthorized to perform action' — customer does not have deposit permissions.",
+      "service": "deposits-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns TDS download traces. If unauthorized error, customer lacks deposit permissions.",
+      "example_use_cases": ["Unable to download TDS certificate"],
+      "app_tags": ["optimus", "deposit", "tds"]
+    },
+    {
+      "name": "form121_eligibility_check",
+      "type": "JAEGER",
+      "purpose": "Check Form 121 eligibility traces. Common error: 'Country of tax residence not eligible'.",
+      "service": "deposits-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns Form 121 eligibility traces. If country of tax residence not eligible, this is expected — customer's country doesn't qualify.",
+      "example_use_cases": ["Unable to submit Form 121", "Form 121 eligibility failed"],
+      "app_tags": ["optimus", "deposit", "form121", "tax"]
+    },
+    {
+      "name": "credit_card_view_check",
+      "type": "JAEGER",
+      "purpose": "Check credit card details view traces. Calls downstream Prime endpoint (ccei/creditcard/entityinquiry). Common error: timeout from Prime end.",
+      "service": "CREDIT-CARD-API",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: ucic or customer_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual value of the identifier", "required": true}
+      ],
+      "output_description": "Returns credit card view traces. If Prime timeout, this is a downstream Prime-side issue.",
+      "example_use_cases": ["Unable to view credit card details", "Credit card not loading"],
+      "app_tags": ["optimus", "creditcard", "view"]
+    },
+    {
+      "name": "credit_card_balance_transfer_check",
+      "type": "JAEGER",
+      "purpose": "Check balance transfer initiation traces. Common failure: 'no active offer available'. Verify downstream offer service call to customer-generic-info-exp/v2/offer.",
+      "service": "CREDIT-CARD-API",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: customer_id or ucic", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual identifier value", "required": true}
+      ],
+      "output_description": "Returns balance transfer traces and downstream offer API response. If 'no active offer available' is returned, customer is currently not eligible for a balance transfer offer.",
+      "example_use_cases": ["Unable to transfer credit card balance", "No active offer available", "Balance transfer initiation failed"],
+      "app_tags": ["optimus", "creditcard", "balance-transfer"]
+    },
+    {
+      "name": "credit_card_addon_application_check",
+      "type": "JAEGER",
+      "purpose": "Check Add-on Credit Card application traces. Verify downstream call to creditcard-application-exp/v1/createAddOnAppln for application errors.",
+      "service": "CREDIT-CARD-API",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: customer_id or ucic", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual identifier value", "required": true}
+      ],
+      "output_description": "Returns Add-on Credit Card application traces and downstream application service response.",
+      "example_use_cases": ["Unable to apply for Add-on Credit Card", "Add-on card application failed"],
+      "app_tags": ["optimus", "creditcard", "addon-card"]
+    },
+    {
+      "name": "payments_add_funds_check",
+      "type": "JAEGER",
+      "purpose": "Check Add Funds transaction traces. Common error: 'account not found' while adding funds.",
+      "service": "payments-api",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: customer_id, account_number or txn_id", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual identifier value", "required": true}
+      ],
+      "output_description": "Returns Add Funds transaction traces including account validation errors.",
+      "example_use_cases": ["Unable to add funds", "Account not found", "Add funds transaction failed"],
+      "app_tags": ["optimus", "payments", "add-funds"]
+    },
+    {
+      "name": "mutual_fund_holdings_check",
+      "type": "JAEGER",
+      "purpose": "Check Mutual Fund holdings traces when customer is unable to view investment details.",
+      "service": "WEALTH-API",
+      "parameters": [
+        {"name": "tag_name", "type": "string", "description": "Identifier type: customer_id or ucic", "required": true},
+        {"name": "tag_value", "type": "string", "description": "The actual identifier value", "required": true}
+      ],
+      "output_description": "Returns Mutual Fund holdings traces and downstream errors, if any.",
+      "example_use_cases": ["Unable to view mutual fund holdings", "Investment details not loading", "Mutual fund portfolio unavailable"],
+      "app_tags": ["optimus", "wealth", "mutual-fund", "investment"]
+    }
+  ]
