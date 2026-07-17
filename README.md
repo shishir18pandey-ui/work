@@ -1,666 +1,662 @@
-2026-07-13 04:57:38,623 - __main__ - INFO - → Message received | incident=fd6df6693b0e8f10b6986f34c3e45a73 event=new_incident partition=1 offset=261
-2026-07-13 04:57:38,624 - __main__ - INFO - ✓ Offset committed | incident=fd6df6693b0e8f10b6986f34c3e45a73
-2026-07-13 04:57:38,624 - __main__ - INFO - → Processing | incident=fd6df6693b0e8f10b6986f34c3e45a73 event=new_incident
-2026-07-13 04:57:38,656 - __main__ - INFO -   DB status | incident=fd6df6693b0e8f10b6986f34c3e45a73 status=in_progress
-2026-07-13 04:57:38,659 - __main__ - INFO -   Flow type | incident=fd6df6693b0e8f10b6986f34c3e45a73 type=new_incident
-╭───────────────────────────── 🌊 Flow Execution ──────────────────────────────╮
-│                                                                              │
-│  Starting Flow Execution                                                     │
-│  Name: IncidentManagementFlow                                                │
-│  ID: bdf20a2c-4031-48e8-b296-c63b6e7fc288                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+this is flow.py
 
-╭────────────────────────────── 🌊 Flow Started ───────────────────────────────╮
-│                                                                              │
-│  Flow Started                                                                │
-│  Name: IncidentManagementFlow                                                │
-│  ID: bdf20a2c-4031-48e8-b296-c63b6e7fc288                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-Flow started with ID: bdf20a2c-4031-48e8-b296-c63b6e7fc288
-2026-07-13 04:57:54,695 - crewai.flow.flow - INFO - Flow started with ID: bdf20a2c-4031-48e8-b296-c63b6e7fc288
-Generated incident description for UCIC 1041338998
-╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
-│                                                                              │
-│  Method: initialize_and_classify                                             │
-│  Status: Running                                                             │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+from pydantic import BaseModel
+from typing import List, Optional, Dict
+import httpx
+import os
+import json
+import re
+from dotenv import load_dotenv
+from crewai.flow.flow import Flow, start, listen, router
+from crewai.flow.persistence import persist
+from utils.incident_db_async import upsert_incident_payload_async
+from agents.debugger import run_backend_resolver_crew_async
+from agents.context_builder import run_incident_context_crew_async
+from agents.intent_classifier import run_intent_classifier_crew_async
+from utils.llm import run_crew_with_retry_async
 
-╭───────────────────────── 🚀 Crew Execution Started ──────────────────────────╮
-│                                                                              │
-│  Crew Execution Started                                                      │
-│  Name: crew                                                                  │
-│  ID: 51899c7a-f2ee-4e0e-af00-cd2f10f79e22                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+load_dotenv()
 
-╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
-│                                                                              │
-│  Task Started                                                                │
-│  Name: Analyze the user input and categorize it.                             │
-│                                                                              │
-│  Interaction History:                                                        │
-│  ```                                                                         │
-│  ['NA']                                                                      │
-│  ```                                                                         │
-│                                                                              │
-│  User Input:                                                                 │
-│  ```                                                                         │
-│  Short Description: Customer is unable to do the transaction                 │
-│  Description: Customer is unable to do the transaction                       │
-│  ```                                                                         │
-│                                                                              │
-│  Latest Interaction:                                                         │
-│  ```                                                                         │
-│  NA                                                                          │
-│  ```                                                                         │
-│                                                                              │
-│  Depending on history you can figure out latest question if it exists.       │
-│  Catagorise intent on basis of `Latest Interaction` if it is NA, then        │
-│  classify on baisis of `User Input`                                          │
-│                                                                              │
-│  **Categories**:                                                             │
-│                                                                              │
-│          - **closure**: Greeting, thanks, or ending the chat.                │
-│                                                                              │
-│          - **rebuttal**: User is disagreeing, correcting the system, or      │
-│  insisting that information they previously provided is correct (e.g., 'I    │
-│  already told you', 'That's wrong', 'This is correct.').                     │
-│                                                                              │
-│          - **additional_info**: Providing IDs, account numbers or            │
-│  subsequent question/information asked.                                      │
-│                                                                              │
-│  **Rule**: If the User Input contradicts the Latest Interaction or           │
-│  expresses frustration with the system's request, it MUST be 'rebuttal'.     │
-│                                                                              │
-│  Output ONLY the category name.                                              │
-│  ID: 6c228853-cd16-443b-9d74-efa1b4fd77dd                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+CA_CERT_FILE = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "/app/models/gpt-oss-120b")
+CHAT_COMPLETIONS_URL = f"{OPENAI_API_BASE}/chat/completions"
 
-04:58:10 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
-2026-07-13 04:58:10,742 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Intent Classifier                                                    │
-│                                                                              │
-│  Task: Analyze the user input and categorize it.                             │
-│                                                                              │
-│  Interaction History:                                                        │
-│  ```                                                                         │
-│  ['NA']                                                                      │
-│  ```                                                                         │
-│                                                                              │
-│  User Input:                                                                 │
-│  ```                                                                         │
-│  Short Description: Customer is unable to do the transaction                 │
-│  Description: Customer is unable to do the transaction                       │
-│  ```                                                                         │
-│                                                                              │
-│  Latest Interaction:                                                         │
-│  ```                                                                         │
-│  NA                                                                          │
-│  ```                                                                         │
-│                                                                              │
-│  Depending on history you can figure out latest question if it exists.       │
-│  Catagorise intent on basis of `Latest Interaction` if it is NA, then        │
-│  classify on baisis of `User Input`                                          │
-│                                                                              │
-│  **Categories**:                                                             │
-│                                                                              │
-│          - **closure**: Greeting, thanks, or ending the chat.                │
-│                                                                              │
-│          - **rebuttal**: User is disagreeing, correcting the system, or      │
-│  insisting that information they previously provided is correct (e.g., 'I    │
-│  already told you', 'That's wrong', 'This is correct.').                     │
-│                                                                              │
-│          - **additional_info**: Providing IDs, account numbers or            │
-│  subsequent question/information asked.                                      │
-│                                                                              │
-│  **Rule**: If the User Input contradicts the Latest Interaction or           │
-│  expresses frustration with the system's request, it MUST be 'rebuttal'.     │
-│                                                                              │
-│  Output ONLY the category name.                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+import logging
+from utils.observability import get_tracer
 
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Intent Classifier                                                    │
-│                                                                              │
-│  Final Answer:                                                               │
-│  additional_info                                                             │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+logger = logging.getLogger(__name__)
 
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Analyze the user input and categorize it.                             │
-│                                                                              │
-│  Interaction History:                                                        │
-│  ```                                                                         │
-│  ['NA']                                                                      │
-│  ```                                                                         │
-│                                                                              │
-│  User Input:                                                                 │
-│  ```                                                                         │
-│  Short Description: Customer is unable to do the transaction                 │
-│  Description: Customer is unable to do the transaction                       │
-│  ```                                                                         │
-│                                                                              │
-│  Latest Interaction:                                                         │
-│  ```                                                                         │
-│  NA                                                                          │
-│  ```                                                                         │
-│                                                                              │
-│  Depending on history you can figure out latest question if it exists.       │
-│  Catagorise intent on basis of `Latest Interaction` if it is NA, then        │
-│  classify on baisis of `User Input`                                          │
-│                                                                              │
-│  **Categories**:                                                             │
-│                                                                              │
-│          - **closure**: Greeting, thanks, or ending the chat.                │
-│                                                                              │
-│          - **rebuttal**: User is disagreeing, correcting the system, or      │
-│  insisting that information they previously provided is correct (e.g., 'I    │
-│  already told you', 'That's wrong', 'This is correct.').                     │
-│                                                                              │
-│          - **additional_info**: Providing IDs, account numbers or            │
-│  subsequent question/information asked.                                      │
-│                                                                              │
-│  **Rule**: If the User Input contradicts the Latest Interaction or           │
-│  expresses frustration with the system's request, it MUST be 'rebuttal'.     │
-│                                                                              │
-│  Output ONLY the category name.                                              │
-│  Agent: Intent Classifier                                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-╭────────────────────────────── Crew Completion ───────────────────────────────╮
-│                                                                              │
-│  Crew Execution Completed                                                    │
-│  Name: crew                                                                  │
-│  ID: 51899c7a-f2ee-4e0e-af00-cd2f10f79e22                                    │
-│  Final Output: additional_info                                               │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+def extract_json_from_output(output: str) -> dict:
+    if not output or not output.strip():
+        logger.warning("Empty output received, returning fallback response")
+        return {"diagnosis": "Unable to process incident", "solution": "Please try again later", "questions": [], "resolved": "no"}
+    
+    # Try direct JSON parsing
+    try:
+        return json.loads(output.strip())
+    except json.JSONDecodeError:
+        pass
+    
+    # Try to extract JSON from markdown code blocks
+    json_patterns = [
+        r'```json\s*([\s\S]*?)\s*```',  # ```json ... ```
+        r'```\s*([\s\S]*?)\s*```',       # ``` ... ```
+    ]
+    
+    for pattern in json_patterns:
+        match = re.search(pattern, output)
+        if match:
+            json_str = match.group(1).strip()
+            try:
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass
+    
+    # Try to find JSON-like object in the text
+    # Look for {...} pattern
+    json_like_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+    match = re.search(json_like_pattern, output)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+    
+    logger.error(f"Failed to parse JSON from output: {output}...")
+    return {
+        "diagnosis": "Unable to process incident response",
+        "solution": "Please try again later",
+        "questions": ["System encountered an issue processing the incident"],
+        "resolved": "no"
+    }
 
-2026-07-13 04:58:10,912 - opentelemetry.attributes - WARNING - Invalid type NoneType for attribute 'sop_value' value. Expected one of ['bool', 'str', 'bytes', 'int', 'float'] or a sequence of those types
-Initialized and classified incident fd6df6693b0e8f10b6986f34c3e45a73 with intent: additional_info
-Fresh incident fd6df6693b0e8f10b6986f34c3e45a73, gather context
-╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
-│                                                                              │
-│  Method: initialize_and_classify                                             │
-│  Status: Completed                                                           │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
-│                                                                              │
-│  Method: start_process                                                       │
-│  Status: Running                                                             │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+class IncidentState(BaseModel):
+    incident_id: str = ""
+    payload: dict = {}
+    incident_description: str = ""
+    incident_context: str = ""
+    user_qa_pairs: List[dict] = []
+    intent: str = ""
+    final_output_json: dict = {}
+    snow_status: str = ""
+    ucic: str = ""
+    current_comment: Optional[str] = None
 
-╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
-│                                                                              │
-│  Method: start_process                                                       │
-│  Status: Completed                                                           │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+async def send_update_to_servicenow_async(payload: Dict, question: str, resolution: str):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_update_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("question_length", len(question) if question else 0)
+        span.set_attribute("resolution_length", len(resolution) if resolution else 0)
+        
+        url = os.environ['SNOW_ENDPOINT']
 
-Generated incident description for UCIC 1041338998
-╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
-│                                                                              │
-│  Method: semantic_search                                                     │
-│  Status: Running                                                             │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+        incident_id = payload.get("incidentId")
+        headers = payload.get("headers", {})
+        request_payload = {
+            "callerId": payload.get("callerId"),
+            "incidentType": payload.get("incidentType"),
+            "businessService": payload.get("businessService"),
+            "tier1": payload.get("tier1"),
+            "tier2": payload.get("tier2"),
+            "tier3": payload.get("tier3"),
+            "impact": payload.get("impact"),
+            "urgency": payload.get("urgency"),
+            "shortDescription": payload.get("shortDescription"),
+            "description": payload.get("description"),
+            "contactType": payload.get("contactType"),
+            "sourceIncidentNum": payload.get("sourceIncidentNum"),
+            "sourceIncidentId": payload.get("sourceIncidentId"),
+            "assignmentGroup": payload.get("assignmentGroup"),
+            "incidentId": payload.get("incidentId"),
+            "state": payload.get("state"),
+            "causedByPatch": payload.get("causedByPatch"),
+            "resolutionCode": payload.get("resolutionCode"),
+            "solutionType": payload.get("solutionType"),
+            "outageType": payload.get("outageType"),
+            "additionalComments": question,
+            "resolutionNotes": resolution,
+            "cause": payload.get("cause"),
+            "onHoldReason": payload.get("onHoldReason"),
+            "correlationDisplay": payload.get("correlationDisplay"),
+            "vendorGroup": payload.get("vendorGroup")
+        }
 
-╭───────────────────────── 🚀 Crew Execution Started ──────────────────────────╮
-│                                                                              │
-│  Crew Execution Started                                                      │
-│  Name: crew                                                                  │
-│  ID: 976d33d0-cdf7-4001-9ceb-7bb693968aa1                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+        # Remove None values
+        request_payload = {k: v for k, v in request_payload.items() if v is not None}
 
-╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
-│                                                                              │
-│  Task Started                                                                │
-│  Name: Find similar incidents                                                │
-│  ID: eb03d622-8eef-4e1d-bd09-3fdd7b4889c5                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+        headers.update({
+            "Authorization": f"Basic {os.environ['SNOW_TOKEN']}",
+        })
 
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Historic Incident Analyst                                            │
-│                                                                              │
-│  Task: Search for the top 5 most similar historic incidents to the           │
-│  following current incident:                                                 │
-│                                                                              │
-│  Short Description: Customer is unable to do the transaction                 │
-│  Description: Customer is unable to do the transaction                       │
-│  UCIC: 1041338998                                                            │
-│                                                                              │
-│  Use the search_historic_incidents tool to find similar cases. Then analyze  │
-│  the results and provide a summary of:                                       │
-│  1. The most relevant similar incidents found                                │
-│  2. How those incidents were resolved                                        │
-│  3. Key troubleshooting steps from the conversation context                  │
-│  4. Any patterns or common solutions that could apply to the current         │
-│  incident                                                                    │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+        interaction_counter = payload.get("interaction_counter")
+        print(f"interaction_counter: {interaction_counter}")
+        if interaction_counter <= 3:
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    print(f"Request - url:{url} json:{request_payload} headers:{headers}")
+                    response = await client.post(url, json=request_payload, headers=headers)
 
-04:58:26 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-07-13 04:58:26,965 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Historic Incident Analyst                                            │
-│                                                                              │
-│  Final Answer:                                                               │
-│                                                                              │
-│                                                                              │
-│  ```json                                                                     │
-│  {                                                                           │
-│    "incident_description": "Customer is unable to do the transaction",       │
-│    "top_k": 5                                                                │
-│  }                                                                           │
-│  ```                                                                         │
-│  <minimax:tool_call>                                                         │
-│  <invoke name="search_historic_incidents">                                   │
-│  <parameter name="incident_description">Customer is unable to do the         │
-│  transaction</parameter>                                                     │
-│  <parameter name="top_k">5</parameter>                                       │
-│  </invoke>                                                                   │
-│  </minimax:tool_call>                                                        │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+                    if response.status_code == 200:
+                        print(f"Successfully updated incident {incident_id} in ServiceNow")
+                        print(f"Response: {response.json()}")
+                        return True,{"status_code":response.status_code,"response":response.json()}
+                    else:
+                        logger.warning(
+                            f"Failed to update incident {incident_id} in ServiceNow. "
+                            f"Status code: {response.status_code}, Response: {response.text}"
+                        )
+                        try:
+                            return False,{"status_code":response.status_code,"response":response.json()}
+                        except:
+                            return False,{"status_code":response.status_code,"response_text":response.text}
 
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Find similar incidents                                                │
-│  Agent: Historic Incident Analyst                                            │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            except Exception as e:
+                logger.error(f"Error calling ServiceNow API for incident {incident_id}: {str(e)}")
+                return False,{"status_code": 0 ,"response_text":"Exception : "+str(e)}
 
-2026-07-13 04:58:31,207 - flow - INFO - Resolver | incident=fd6df6693b0e8f10b6986f34c3e45a73 app=optimus
-2026-07-13 04:58:31,207 - tools.tool - INFO - Loading tools for app: optimus
-2026-07-13 04:58:31,208 - tools.tool - INFO - Adding tool: login_password_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,211 - tools.tool - INFO - Adding tool: login_mode_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,213 - tools.tool - INFO - Adding tool: account_view_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,215 - tools.tool - INFO - Adding tool: device_registration_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,216 - tools.tool - INFO - Adding tool: beneficiary_add_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,218 - tools.tool - INFO - Adding tool: fund_transfer_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,220 - tools.tool - INFO - Adding tool: upi_merchant_request_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,222 - tools.tool - INFO - Adding tool: billpay_transaction_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,224 - tools.tool - INFO - Adding tool: billpay_biller_fetch_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,226 - tools.tool - INFO - Adding tool: billpay_add_biller_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,228 - tools.tool - INFO - Adding tool: billpay_modify_biller_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,229 - tools.tool - INFO - Adding tool: debitcard_view_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,231 - tools.tool - INFO - Adding tool: debitcard_international_limit_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,233 - tools.tool - INFO - Adding tool: debitcard_virtual_card_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,235 - tools.tool - INFO - Adding tool: debitcard_pin_generation_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,237 - tools.tool - INFO - Adding tool: fixed_deposit_view_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,239 - tools.tool - INFO - Adding tool: fixed_deposit_advice_download_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,241 - tools.tool - INFO - Adding tool: fixed_deposit_tds_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,243 - tools.tool - INFO - Adding tool: form121_eligibility_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,245 - tools.tool - INFO - Adding tool: credit_card_view_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,247 - tools.tool - INFO - Adding tool: credit_card_balance_transfer_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,249 - tools.tool - INFO - Adding tool: credit_card_addon_application_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,251 - tools.tool - INFO - Adding tool: payments_add_funds_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,254 - tools.tool - INFO - Adding tool: mutual_fund_holdings_check (type=JAEGER, db_instance=main)
-2026-07-13 04:58:31,256 - tools.tool - INFO - Adding tool: idp_customer_username_lookup (type=SQL, db_instance=platform)
-2026-07-13 04:58:31,258 - tools.tool - INFO - Adding tool: idp_get_user_id_from_ucic (type=SQL, db_instance=platform)
-2026-07-13 04:58:31,260 - tools.tool - INFO - Adding tool: idp_device_multiuser_lookup (type=SQL, db_instance=platform)
-2026-07-13 04:58:31,262 - tools.tool - INFO - Adding tool: idp_password_expiry_check (type=SQL, db_instance=platform)
-2026-07-13 04:58:31,264 - agents.debugger - INFO - Loaded 28 tools for app=optimus
-╭────────────────────────────── Crew Completion ───────────────────────────────╮
-│                                                                              │
-│  Crew Execution Completed                                                    │
-│  Name: crew                                                                  │
-│  ID: 976d33d0-cdf7-4001-9ceb-7bb693968aa1                                    │
-│  Final Output:                                                               │
-│                                                                              │
-│  ```json                                                                     │
-│  {                                                                           │
-│    "incident_description": "Customer is unable to do the transaction",       │
-│    "top_k": 5                                                                │
-│  }                                                                           │
-│  ```                                                                         │
-│  <minimax:tool_call>                                                         │
-│  <invoke name="search_historic_incidents">                                   │
-│  <parameter name="incident_description">Customer is unable to do the         │
-│  transaction</parameter>                                                     │
-│  <parameter name="top_k">5</parameter>                                       │
-│  </invoke>                                                                   │
-│  </minimax:tool_call>                                                        │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
-│                                                                              │
-│  Method: semantic_search                                                     │
-│  Status: Completed                                                           │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
-│                                                                              │
-│  Method: run_resolver_crew                                                   │
-│  Status: Running                                                             │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+
+async def send_rejection_to_servicenow_async(payload, additonal_comment: str = 'BOT is unable to resolve, assign to an Engineer'):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_rejection_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        payload.update({"state": "On Hold","cause": "Assign to an Engineer."})
+        result = await send_update_to_servicenow_async(payload, additonal_comment, '')
+        return result, 'rejected'        
+
+
+async def send_question_to_servicenow_async(payload, question):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_question_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        payload.update({"state": "On Hold", "onHoldReason": "User Action Required"})
+        result = await send_update_to_servicenow_async(payload, question, '')
+        return result, 'on_hold'         
+
+
+async def send_resolution_to_servicenow_async(payload, resolution):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_resolution_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("resolution_length", len(resolution) if resolution else 0)
+        payload.update({
+           #"cause": "Resolved by Bot.",
+           #"state": "Resolved",
+           # "resolutionCode": "Solved (Permanently)",
+            #"solutionType": "Other",
+            #"outageType": "No Outage"
+            "state":"On Hold",
+            "onHoldReason": "User Action Required"
+        })
+        result = await send_update_to_servicenow_async(payload, None, resolution)
+        return result, 'on_hold'    
+
+
+def payload_to_incident_description(payload):
+    from utils.files_processor import process_attachments 
+
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("payload_to_incident_description") as span:
+        span.set_attribute("short_description_length", len(payload.get('shortDescription','')))
+        span.set_attribute("description_length", len(payload.get('description','')))
+        span.set_attribute("individualUCIC", payload.get('individualUCIC','i'))
+        
+        short_description = payload.get('shortDescription','')
+        description = payload.get('description','')
+        individualUCIC = payload.get('individualUCIC','i')
+        # individualUCIC = individualUCIC[:-1]
+        result = f"Short Description: {short_description}\nDescription: {description}"
+
+        file_text = process_attachments(payload.get('files') or [])   
+        if file_text:                                                  
+            result = result + "\n\n" + file_text                       
+        print(f"Generated incident description for UCIC {individualUCIC}")
+        return result, individualUCIC
 
 
 
-╭───────────────────────── 🚀 Crew Execution Started ──────────────────────────╮
-│                                                                              │
-│  Crew Execution Started                                                      │
-│  Name: crew                                                                  │
-│  ID: 5ec0e9b8-cde7-4251-85f7-0781f730462d                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+# @persist(key="incident_id")
+class IncidentManagementFlow(Flow[IncidentState]):
 
-╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
-│                                                                              │
-│  Task Started                                                                │
-│  Name: Identify Customer                                                     │
-│  ID: b831d490-7916-4376-816c-2db81514db43                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+    @start()
+    async def initialize_and_classify(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("initialize_and_classify") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
 
-04:58:47 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-07-13 04:58:47,315 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Task: Extract customer identifiers from the incident.                       │
-│                                                                              │
-│  UCIC field: 1041338998                                                      │
-│  Incident: Short Description: Customer is unable to do the transaction       │
-│  Description: Customer is unable to do the transaction                       │
-│                                                                              │
-│  Extract these identifiers if present:                                       │
-│  - ucic                                                                      │
-│  - mobile_number                                                             │
-│  - username                                                                  │
-│  - customer_id                                                               │
-│  - txn_id / txn_request_id                                                   │
-│                                                                              │
-│  Then use fetch_optimus_logs tool with:                                      │
-│  - tag_name = the identifier type you found                                  │
-│  - tag_value = the actual value                                              │
-│  - service = pick from tool description based on incident type               │
-│  - time_description = 'last 48 hours' unless user mentions a specific time   │
-│                                                                              │
-│  If no logs found with ucic, retry with mobile_number if available.          │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            self.state.incident_description, self.state.ucic = payload_to_incident_description(self.state.payload)
 
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Final Answer:                                                               │
-│                                                                              │
-│                                                                              │
-│  Thought: I need to extract customer identifiers from the incident and       │
-│  fetch appropriate Jaeger logs. The incident provides UCIC: 1041338998 and   │
-│  describes "Customer is unable to do the transaction". Let me first search   │
-│  for historic incidents to understand similar patterns, then fetch logs      │
-│  using the available UCIC.                                                   │
-│  <minimax:tool_call>                                                         │
-│  <invoke name="search_historic_incidents">                                   │
-│  <parameter name="incident_description">Customer is unable to do the         │
-│  transaction</parameter>                                                     │
-│  <parameter name="top_k">5</parameter>                                       │
-│  </invoke>                                                                   │
-│  </minimax:tool_call>                                                        │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            if '__agent_data' not in self.state.payload:
+                self.state.payload['__agent_data'] = {
+                    'snow_logs': [], 'qa_pairs': [], 'comments': []
+                }
 
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Identify Customer                                                     │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            snow_logs = self.state.payload.get('__agent_data', {}).get('snow_logs', [])
+            if snow_logs and snow_logs[-1]['type'] == 'question' and self.state.current_comment:
+                 self.state.payload['__agent_data']['qa_pairs'].append({
+                     "question": snow_logs[-1]["question"],
+                     "answer": self.state.current_comment
+                 })
 
-╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
-│                                                                              │
-│  Task Started                                                                │
-│  Name: Diagnose Optimus Issue                                                │
-│  ID: f4ad9023-ae91-422a-9751-f6814213ab24                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            self.state.user_qa_pairs = self.state.payload['__agent_data'].get('qa_pairs', [])
 
-04:59:05 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-07-13 04:59:05,625 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Task: Given the following incident:                                         │
-│                                                                              │
-│  Short Description: Customer is unable to do the transaction                 │
-│  Description: Customer is unable to do the transaction                       │
-│                                                                              │
-│  Using the Jaeger logs and IDP SQL query results from the discovery phase:   │
-│  1. Identify the root cause from error traces                                │
-│  2. Check HTTP status codes — 4xx means client error, 5xx means server       │
-│  error                                                                       │
-│  3. If login issue — check IDP DB for password expiry, device registration   │
-│  4. Cross reference with historic incidents:                                 │
-│                                                                              │
-│  ```json                                                                     │
-│  {                                                                           │
-│    "incident_description": "Customer is unable to do the transaction",       │
-│    "top_k": 5                                                                │
-│  }                                                                           │
-│  ```                                                                         │
-│  <minimax:tool_call>                                                         │
-│  <invoke name="search_historic_incidents">                                   │
-│  <parameter name="incident_description">Customer is unable to do the         │
-│  transaction</parameter>                                                     │
-│  <parameter name="top_k">5</parameter>                                       │
-│  </invoke>                                                                   │
-│  </minimax:tool_call>                                                        │
-│  5. If logs show no errors, check if the issue is configuration-related      │
-│                                                                              │
-│  6. Always return all error code and there message in reponse Run IDP SQL    │
-│  tools if needed to check customer/device status.                            │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            comment = self.state.current_comment if self.state.current_comment else "NA"
 
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Final Answer:                                                               │
-│                                                                              │
-│                                                                              │
-│  Thought: I need to first check the customer in IDP database using the UCIC  │
-│  to get more identifiers, then fetch appropriate Jaeger logs. Since the      │
-│  incident is about "unable to do the transaction", I'll start by checking    │
-│  the customer details and then try fund transfer related logs.               │
-│  <minimax:tool_call>                                                         │
-│  <invoke name="idp_get_user_id_from_ucic">                                   │
-│  <parameter name="key">1041338998</parameter>                                │
-│  </invoke>                                                                   │
-│  </minimax:tool_call>                                                        │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            self.state.intent = await run_crew_with_retry_async(
+                lambda: run_intent_classifier_crew_async(
+                    self.state.incident_description, 
+                    self.state.user_qa_pairs,
+                    comment
+                )
+            )
+            print(f"Initialized and classified incident {self.state.incident_id} with intent: {self.state.intent}")
+            return self.state.intent
 
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Diagnose Optimus Issue                                                │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+    @router(initialize_and_classify)
+    async def start_process(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("logic_router") as span:
+            span.set_attribute("intent", self.state.intent)
+            span.set_attribute("sop_exists", self.state.payload['__agent_data'].get('sop') is not None)
+            span.set_attribute("sop_value", self.state.payload['__agent_data'].get('sop'))
 
-╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
-│                                                                              │
-│  Task Started                                                                │
-│  Name: Report                                                                │
-│  ID: e5d6ebe5-408a-4dff-9646-a5b82ceaf0c8                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            counter = self.state.payload.get("interaction_counter", 0)
+            self.state.payload["interaction_counter"] = counter + 1
+            if counter >= 3:
+                print(f"Interaction limit exceeded for incident {self.state.incident_id}")
+                return "limit_exceeded"
 
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Task: Review the technical logs from the diagnosis phase.                   │
-│  Synthesize the findings into the required JSON format.                      │
-│  Always return all error code and there message in reponse                   │
-│  **CRITICAL**: Mask all PII and remove backend technical jargon. User is     │
-│  not supposed to know about SQL errors.                                      │
-│  **CRITICAL**: Verify if the issue is resolved w.r.t incident description:   │
-│  Short Description: Customer is unable to do the transaction                 │
-│  Description: Customer is unable to do the transaction, mention yes/no.      │
-│  **CRITICAL**: Do not ask repetitive questions to the user.                  │
-│  **IMPORTANT**: The person raising this incident is not a direct customer,   │
-│  but a bank employee who works in one of the branches.                       │
-│  **IMPORTANT**: If an SR needs to be raised, clearly state 'An SR needs to   │
-│  be raised' — do NOT claim it has already been raised.                       │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            if self.state.intent == "closure": 
+                print(f"Closure intent for incident {self.state.incident_id}")
+                return "handle_closure"
+            if self.state.intent == "rebuttal": 
+                print(f"Rebuttal intent for incident {self.state.incident_id}")
+                return "handle_rebuttal"
+            print(f"Fresh incident {self.state.incident_id}, gather context")
+            return "gather_context"
 
-04:59:08 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-07-13 04:59:08,446 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Final Answer:                                                               │
-│                                                                              │
-│                                                                              │
-│  Let me continue with the diagnosis by fetching the fund transfer logs       │
-│  using the UCIC provided in the incident.                                    │
-│  <minimax:tool_call>                                                         │
-│  <invoke name="fund_transfer_check">                                         │
-│  <parameter name="tag_name">ucic</parameter>                                 │
-│  <parameter name="tag_value">1041338998</parameter>                          │
-│  </invoke>                                                                   │
-│  </minimax:tool_call>                                                        │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Report                                                                │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+    @listen('gather_context')
+    async def semantic_search(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("gather_context") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("incident_description_length", len(self.state.incident_description))
 
-2026-07-13 04:59:21,614 - flow - ERROR - Failed to parse JSON from output: 
+            incident_description, ucic = payload_to_incident_description(self.state.payload)
+            desc = f"{incident_description}\nUCIC: {ucic}"
+            app = self.state.payload.get("tier1", "CBS")
+            incident_context = await run_crew_with_retry_async(
+                lambda: run_incident_context_crew_async(desc,application=app)
+            )
+            self.state.incident_context = incident_context if incident_context else "No context found"
+                
+            return 'run_resolver'
 
-Let me continue with the diagnosis by fetching the fund transfer logs using the UCIC provided in the incident.
-<minimax:tool_call>
-<invoke name="fund_transfer_check">
-<parameter name="tag_name">ucic</parameter>
-<parameter name="tag_value">1041338998</parameter>
-</invoke>
-</minimax:tool_call>...
-Resolver task completed for incident fd6df6693b0e8f10b6986f34c3e45a73
-interaction_counter: 1
-Request - url:https://api.aws-uat.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident json:{'callerId': 'devisivanage.t_tho@idfcfirstext.bank.in', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Fund Transfer', 'tier3': 'Unable to Initiate IMPS transaction', 'impact': 'Low', 'urgency': 'Low', 'shortDescription': 'Customer is unable to do the transaction', 'description': 'Customer is unable to do the transaction', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006216016', 'sourceIncidentId': '', 'assignmentGroup': 'Optimus BTO Support', 'incidentId': 'fd6df6693b0e8f10b6986f34c3e45a73', 'state': 'On Hold', 'additionalComments': 'System encountered an issue processing the incident', 'resolutionNotes': '', 'cause': '', 'onHoldReason': 'User Action Required'} headers:{'Content-Type': 'application/json', 'correlationId': 'cc743c75-913d-42e9-a641-781dd1f856b3', 'source': 'IncidentBot', 'transactionId': '7c2f8d6d-75b9-4585-88bd-42bc1616edf2', 'Authorization': 'Basic MThiNDhmNzctNzMyMy00MWJiLWJmNmUtYzZmODNlODdhOTgyOkI3TGJ1NVhkcX5JT1paaW1SLThNVDE3eWtF'}
-╭────────────────────────────── Crew Completion ───────────────────────────────╮
-│                                                                              │
-│  Crew Execution Completed                                                    │
-│  Name: crew                                                                  │
-│  ID: 5ec0e9b8-cde7-4251-85f7-0781f730462d                                    │
-│  Final Output:                                                               │
-│                                                                              │
-│  Let me continue with the diagnosis by fetching the fund transfer logs       │
-│  using the UCIC provided in the incident.                                    │
-│  <minimax:tool_call>                                                         │
-│  <invoke name="fund_transfer_check">                                         │
-│  <parameter name="tag_name">ucic</parameter>                                 │
-│  <parameter name="tag_value">1041338998</parameter>                          │
-│  </invoke>                                                                   │
-│  </minimax:tool_call>                                                        │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
-│                                                                              │
-│  Method: run_resolver_crew                                                   │
-│  Status: Completed                                                           │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
-│                                                                              │
-│  Method: update_servicenow                                                   │
-│  Status: Running                                                             │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+    
+    @listen(semantic_search)
+    async def run_resolver_crew(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("run_resolver") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("qa_pairs_count", len(self.state.user_qa_pairs))
+
+            # ── read app from payload ──
+            app = self.state.payload.get("tier1", "cbs").lower().strip()
+            span.set_attribute("app", app)
+            logger.info(f"Resolver | incident={self.state.incident_id} app={app}")
+
+            raw_resolution = await run_crew_with_retry_async(
+                lambda: run_backend_resolver_crew_async(
+                    self.state.incident_description,
+                    self.state.incident_context,
+                    self.state.user_qa_pairs,
+                    self.state.ucic,
+                    self.state.current_comment,
+                    app=app    
+                )
+            )
+
+            self.state.final_output_json = extract_json_from_output(raw_resolution)
+            print(f"Resolver task completed for incident {self.state.incident_id}")
+            return "update_servicenow"
+
+    @listen(run_resolver_crew)
+    async def update_servicenow(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("update_servicenow") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("resolution_result", self.state.final_output_json.get("resolved", "unknown"))
+
+            res = self.state.final_output_json
+            incident_status = 'in_progress'
+
+            if res.get("resolved") == 'yes':
+                msg = f"Diagnosis:\n{res['diagnosis']}\n\nSolution:\n{res['solution']}"
+                (status, info), incident_status = await send_resolution_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "resolution", "resolution": msg, "status": status, "response": info
+                })
+                print(f"Resolution sent for incident {self.state.incident_id}")
+
+            elif res.get("questions"):
+                msg = "\n".join(res["questions"])
+                (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "question", "question": msg, "status": status, "response": info
+                })
+                print(f"Question sent for incident {self.state.incident_id}")
+
+            else:
+                msg = f"Diagnosis:\n{res.get('diagnosis')}\n\nSolution:\n{res['solution']}"
+                (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "question", "question": msg, "status": status, "response": info
+                })
+                print(f"Question sent for incident {self.state.incident_id}")
+
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"DB updated for incident {self.state.incident_id} status={incident_status}")
+
+    @listen('handle_rebuttal')
+    async def run_rebuttal_crew(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_rebuttal") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            msg = 'BOT is unable to resolve, assign to an Engineer'
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload, msg)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Rebuttal handled for incident {self.state.incident_id} status={incident_status}")
+
+    @listen('limit_exceeded')
+    async def handle_limit_exceeded(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_limit_exceeded") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Limit exceeded rejected incident {self.state.incident_id} status={incident_status}")
+            return
+
+    @listen('closure')
+    async def handle_incident_closure(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_closure") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            print("No action for bot to take")
+            return
+
+    @listen("reject_incident")
+    async def handle_rejection(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_rejection") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Rejected incident {self.state.incident_id} status={incident_status}")
+            return
 
 
 
-Successfully updated incident fd6df6693b0e8f10b6986f34c3e45a73 in ServiceNow
-Response: {'message': 'Incident has been updated successfully.', 'incidentNumber': 'INC000006216016', 'incidentId': 'fd6df6693b0e8f10b6986f34c3e45a73', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Fund Transfer', 'tier3': 'Unable to Initiate IMPS transaction', 'impact': 'Low', 'urgency': 'Low', 'priority': 'Low', 'shortDescription': 'Customer is unable to do the transaction', 'description': 'Customer is unable to do the transaction', 'contactType': 'Self Service', 'state': 'On Hold', 'onHoldReason': 'User Action Required', 'vendorGroup': '', 'causedByPatch': None, 'resolutionCode': None, 'solutionType': None, 'outageType': None, 'resolutionNotes': '', 'additionalComments': '13-Jul-2026 10:29:21 - Incident BOT (Additional comments)\nSystem encountered an issue processing the incident\n\n', 'assignmentGroup': 'Optimus BTO Support', 'sourceIncidentNum': 'INC000006216016', 'sourceIncidentId': 'cc743c75-913d-42e9-a641-781dd1f856b3', 'businessImpact': None, 'cause': None, 'businessCorrectiveAction': None, 'techCorrectiveAction': None, 'dataSource': None, 'descriptionOfOutage': None, 'emailID': None, 'entityUCIC': None, 'hashValues': None, 'ipDetails': None, 'ldwNotifyInformation': None, 'loanAccountNumber': None, 'loginId': None, 'mobileNumber': None, 'businessPreventiveAction': None, 'techPreventiveAction': None, 'resoultionTeam': None, 'rootCause': None, 'systemName': None, 'urlOrDomain': None, 'userDetail': None, 'individualUCIC': None, 'sourceIncCreateddttime': '', 'userLocation': '', 'incidentURL': 'https://idfcfirstbanktest2.service-now.com/isupport?sys_id=fd6df6693b0e8f10b6986f34c3e45a73&view=sp&id=ticket&table=incident'}
-Question sent for incident fd6df6693b0e8f10b6986f34c3e45a73
-DB updated for incident fd6df6693b0e8f10b6986f34c3e45a73 status=on_hold
-╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
-│                                                                              │
-│  Method: update_servicenow                                                   │
-│  Status: Completed                                                           │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-╭───────────────────────────── ✅ Flow Completion ─────────────────────────────╮
-│                                                                              │
-│  Flow Execution Completed                                                    │
-│  Name: IncidentManagementFlow                                                │
-│  ID: bdf20a2c-4031-48e8-b296-c63b6e7fc288                                    │
-│                                                                              │
-│                                                                              │
-╰───────────────────────────
+this si file processor.py
+
+import os
+import base64
+import logging
+import requests
+from typing import List, Dict, Optional
+from utils.llm import llm_config
+
+logger = logging.getLogger(__name__)
+
+VISION_MODEL_NAME = os.getenv("VISION_MODEL_NAME", "/app/models/Qwen3-VL-8B-Instruct")
+VISION_API_BASE = os.getenv("VISION_API_BASE")
+
+IMAGE_MIME_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"}
+PDF_MIME_TYPES = {"application/pdf"}
+
+
+def _describe_image(base64_data: str, mime_type: str, file_name: str) -> str:
+    data_uri = f"data:{mime_type};base64,{base64_data}"
+
+    payload = {
+        "model": VISION_MODEL_NAME,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "Describe what is in this image. If it contains text "
+                            "(screenshot, error message, document, ID card), transcribe "
+                            "the visible text exactly. Be concise. No speculation."
+                        )
+                    },
+                    {"type": "image_url", "image_url": {"url": data_uri}}
+                ]
+            }
+        ],
+        "temperature": 0.0,
+        "max_tokens": 800
+    }
+
+    headers = {
+        "Authorization": f"Bearer {llm_config.token}",
+        "Content-Type": "application/json"
+    }
+
+    base_url = VISION_API_BASE or llm_config.url
+
+    try:
+        response = requests.post(
+            f"{base_url}/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=60,
+            verify='./IDFCBANKCA.pem'
+        )
+        response.raise_for_status()
+        data = response.json()
+        description = data["choices"][0]["message"]["content"]
+        logger.info(f"Image described | file={file_name}")
+        return description.strip()
+    except Exception as e:
+        logger.error(f"Image description failed | file={file_name} err={e}")
+        return "IMAGE UNREADABLE"
+
+
+def _extract_pdf(base64_data: str, file_name: str) -> str:
+    try:
+        import io
+        from pypdf import PdfReader
+
+        pdf_bytes = base64.b64decode(base64_data)
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+
+        text_parts = []
+        for i, page in enumerate(reader.pages):
+            page_text = (page.extract_text() or "").strip()
+            if page_text:
+                text_parts.append(f"[Page {i + 1}]\n{page_text}")
+
+        if text_parts:
+            combined = "\n\n".join(text_parts)
+            if len(combined) > 5000:
+                combined = combined[:5000] + "\n...(truncated)"
+            logger.info(f"PDF extracted | file={file_name}")
+            return combined
+        else:
+            return "PDF appears to be scanned; no extractable text."
+    except Exception as e:
+        logger.error(f"PDF extraction failed | file={file_name} err={e}")
+        return "PDF UNREADABLE"
+
+
+def _process_one(file: Dict) -> Optional[str]:
+    file_name = file.get("fileName", "unknown")
+    file_type = (file.get("fileType") or "").lower()
+    encoding = (file.get("contentEncoding") or "").lower()
+    content = file.get("fileContent")
+
+    if not content or encoding != "base64":
+        return None
+
+    if file_type in IMAGE_MIME_TYPES:
+        desc = _describe_image(content, file_type, file_name)
+        return f"[Attached image: {file_name}]\n{desc}"
+
+    if file_type in PDF_MIME_TYPES:
+        text = _extract_pdf(content, file_name)
+        return f"[Attached PDF: {file_name}]\n{text}"
+
+    logger.warning(f"Skipping unsupported file type | file={file_name} type={file_type}")
+    return None
+
+
+def process_attachments(files: Optional[List[Dict]]) -> str:
+    """
+    Sync file processor. Returns "" if no files or any failure.
+    Never raises — incident flow must continue regardless.
+    """
+    if not files:
+        return ""
+
+    try:
+        descriptions = []
+        for f in files:
+            result = _process_one(f)
+            if result:
+                descriptions.append(result)
+        if not descriptions:
+            return ""
+        return "\n\n--- ATTACHED FILES ---\n" + "\n\n".join(descriptions)
+    except Exception as e:
+        logger.error(f"process_attachments failed: {e}")
+        return ""
+
+
+
+        this is script im running :
+        import requests
+import base64
+import os
+import mimetypes
+import urllib3
+import json
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
+URL = "https://internal-app.uat-devutils.idfcfirstbank.com/incident_agent/incident/create"
+
+HEADERS = {
+    "Content-Type": "application/json",
+    "Authorization": "Basic YWRtaW46ZHVtbXktdG9rZW4tMTIzNDU="
+}
+FILE_PATH = "/Users/shishir.pandey_tho/script/test_img.png"
+
+with open(FILE_PATH, "rb") as file:
+    file_bytes = file.read()
+
+base64_content = base64.b64encode(file_bytes).decode("utf-8")
+
+file_payload = {
+    "fileId": "FILE001",
+    "fileName": os.path.basename(FILE_PATH),
+    "fileType": mimetypes.guess_type(FILE_PATH)[0],
+    "fileSize": len(file_bytes),
+    "contentEncoding": "base64",
+    "fileContent": base64_content
+}
+payload = {
+    "message": " ",
+    "incidentNumber": "INC000006215585",
+    "incidentId": "443459",
+    "incidentType": "Application",
+    "businessService": "Optimus",
+    "tier1": "Optimus",
+    "tier2": "Debit Card",
+    "tier3": "Set Debit cards Limits",
+    "impact": "Low",
+    "urgency": "Low",
+    "shortDescription": "Customer is unable to set the debit card limits",
+    "description": "Customer is unable to set the debit card limits",
+    "contactType": "Self Service",
+    "state": "New",
+    "assignmentGroup": "Optimus BTO Support",
+    "sourceIncidentNum": "INC000006215585",
+    "sourceIncidentId": "",
+    "entityUCIC": "1035608830",
+    "mobileNumber": "9876567898",
+    "individualUCIC": "1035608830",
+    "sourceIncCreateddttime": "19-Jun-2026 11:53:42",
+    "incidentURL": "https://idfcfirstbanktest2.service-now.com/isupport",
+    "userLocation": "",
+    "callerId": "sujeet.singh2@idfcfirst.bank.in",
+
+    # Attachment
+    "files": [
+        file_payload
+    ]
+}
+
+print("File details:")
+print("Name:", file_payload["fileName"])
+print("Type:", file_payload["fileType"])
+print("Size:", file_payload["fileSize"])
+print("Base64 length:", len(file_payload["fileContent"]))
+
+
+response = requests.post(
+    URL,
+    headers=HEADERS,
+    json=payload,
+    verify=False
+)
+
+print("\nStatus:", response.status_code)
+print("Response:", response.text)
+
+
+
+            
