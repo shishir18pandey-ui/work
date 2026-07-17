@@ -655,6 +655,31 @@ response = requests.post(
 )
 
 print("\nStatus:", response.status_code)
+
+
+this is my reposne (venv) shishir.pandey_tho@0325LTPB0124444 script % /Users/shishir.pandey_tho/script/venv/bin/python /User
+s/shishir.pandey_tho/script/abc.py
+[
+  {
+    "fileId": "FILE001",
+    "fileName": "test_img.png",
+    "fileType": "image/png",
+    "fileSize": 838305,
+    "contentEncoding": "base64",
+    "fileContent": "iVBORw0KGgoAAAANSUhEUgAAA8YAAAIYCAYAAACv0vUqAAAMTWlDQ1BJQ0MgUHJvZmlsZQAASImVVwdYU8kWnltSIQQIREBK6E0QkRJASggtgPQuKiEJEEqMCUHFjiy7gmsXEazoKoiCqysgiw11bSyKvS8WVJR1cV3sypsQQJd95XvzfXPnv/+c+eecc+feOwMAvYsvleaimgDkSfJlMcH+rKTkFBbpGUCBLtAApsCEL5BLOVFR4QCW4fbv5fU1gCjbyw5KrX/2/9eiJRTJBQAgURCnC+WCPIh/AgBvFUhl+QAQpZA3n5UvVeK1EOvIoIMQ1yhxpgq3KnG6Cl8ctImL4UL8CACyOp8vywRAow/yrAJBJtShw2iBk0QolkDsB7FPXt4MIcSLILaBNnBOulKfnf6VTubfNNNHNPn8zBGsimWwkAPEcmkuf87/mY7/XfJyFcNzWMOqniULiVHGDPP2KGdGmBKrQ/xWkh4RCbE2ACguFg7aKzEzSxESr7JHbQRyLswZYEI8SZ4byxviY4T8gDCIDSHOkORGhA/ZFGWIg5Q2MH9ohTifFwexHsQ1Inlg7JDNMdmMmOF5r2XIuJwh/ilfNuiDUv+zIieeo9LHtLNEvCF9zLEwKy4RYirEAQXihAiINSCOkOfEhg3ZpBZmcSOGbWSKGGUsFhDLRJJgf5U+Vp4hC4oZst+dJx+OHTuWJeZFDOFL+VlxIapcYY8E/EH/YSxYn0jCiR/WEcmTwodjEYoCAlWx42SRJD5WxeN60nz/GNVY3E6aGzVkj/uLcoOVvBnEcfKC2OGxBflwcar08RJpflScyk+8Mps
+Status: 422
+Response: {"code":"422","details":"files cannot be empty or absent"}
+(venv) shishir.pandey_tho@0325LTPB0124444 script % /Users/shishir.pandey_tho/script/venv/bin/python /User
+s/shishir.pandey_tho/script/abc.py
+File details:
+Name: test_img.png
+Type: image/png
+Size: 838305
+Base64 length: 1117740
+
+Status: 422
+Response: {"code":"422","details":"files cannot be empty or absent"}
+(venv) shishir.pandey_tho@0325LTPB0124444 script % 
 print("Response:", response.text)
 
 
