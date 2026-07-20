@@ -312,3 +312,16 @@ INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
 2026-07-20 21:05:07,460 - crew_main - INFO - ✓ New incident done | incident=12345
 INFO:     100.64.35.111:50972 - "POST /incident_agent/incident/create HTTP/1.1" 200 OK
 shishir.pandey_tho@032
+
+
+
+     - name: OPENAI_API_KEY
+              value: "{{ .Values.openai.api_key }}"
+            - name: OPENAI_API_BASE
+              value: "{{ .Values.openai.base_url }}"
+            - name: OPENAI_MODEL_NAME
+              value: "{{ .Values.openai.model_name }}"
+            - name: VISION_API_BASE
+              value: "{{ .Values.openai.vl_base_url }}"
+            - name : VISION_MODEL_NAME
+              value: "{{ .Values.openai.vl_model_name }}"
