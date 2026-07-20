@@ -292,3 +292,23 @@ def call_llm_streaming(
         if first_attempt:
             llm_config.set_llm_config()
             return call_llm_streaming(messages, tools, model, temperature, max_tokens, False)
+
+
+
+
+
+
+
+
+            INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-07-20 21:05:07,212 - crew_main - INFO - → Incoming request | incident=12345 has_comments=False
+2026-07-20 21:05:07,212 - crew_main - INFO -   INCIDENT_BOT_ENABLED=true
+2026-07-20 21:05:07,214 - crew_main - INFO -   DB lookup | incident=12345 exists=False
+2026-07-20 21:05:07,237 - file_processor - ERROR - Image description failed | file=pan_card.jpeg err=401 Client Error: Unauthorized for url: https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2/v1/chat/completions
+2026-07-20 21:05:07,237 - crew_main - INFO -   Files processed | incident=12345 count=1 has_description=True
+2026-07-20 21:05:07,355 - crew_main - INFO -   DB saved | incident=12345
+2026-07-20 21:05:07,459 - crew_main - INFO - ✓ Kafka published | incident=12345 event=new_incident
+2026-07-20 21:05:07,460 - crew_main - INFO - ✓ New incident done | incident=12345
+INFO:     100.64.35.111:50972 - "POST /incident_agent/incident/create HTTP/1.1" 200 OK
+shishir.pandey_tho@032
