@@ -1,36 +1,63 @@
-Next step — test with a real image
+import base64
+import time
+import requests
 
-Now swap in an actual screenshot to validate the part that actually matters for your incident bot: can it read text and describe realistic content correctly. Use the script from before:
+IMAGE_PATH = "/Users/shishir.pandey_tho/script/test_img.png"
 
-python
-import base64, json, requests
+API_URL = "https://llm-api.iservebetter.idfcfirstbank.com/qwen3-vl-8b-svc/v1/chat/completions"
 
-with open('your_screenshot.png', 'rb') as f:
-    b64 = base64.b64encode(f.read()).decode('utf-8')
+TOKEN = "c2hpc2hpci5wYW5kZXlfdGhvOlNhdHR5QDY1NDMyMQ=="
+
+with open(IMAGE_PATH, "rb") as f:
+    b64 = base64.b64encode(f.read()).decode("utf-8")
+    print(b64)
 
 payload = {
-    'model': '/app/models/Qwen3-VL-8B-Instruct',
-    'messages': [{
-        'role': 'user',
-        'content': [
-            {'type': 'text', 'text': 'Describe what is in this image. If it contains text, transcribe it exactly.'},
-            {'type': 'image_url', 'image_url': {'url': f'data:image/png;base64,{b64}'}}
-        ]
-    }],
-    'temperature': 0.0,
-    'max_tokens': 500
+    "model": "/app/models/Qwen3-VL-8B-Instruct",
+    "messages": [
+        {
+            "role": "user",
+            "content": [
+                {
+                    "type": "text",
+                    "text": "Describe what is in this image. If it contains text, transcribe it exactly."
+                },
+                {
+                    "type": "image_url",
+                    "image_url": {
+                        "url": f"data:image/png;base64,{b64}"
+                    }
+                }
+            ]
+        }
+    ],
+    "temperature": 0.0,
+    "max_tokens": 500
 }
 
-r = requests.post(
-    'https://llm-api.iservebetter.idfcfirstbank.com/qwen3-vl-8b-svc/v1/chat/completions',
-    headers={'Authorization': 'Bearer <YOUR_TOKEN>', 'Content-Type': 'application/json'},
+headers = {
+    "Authorization": f"Bearer {TOKEN}",
+    "Content-Type": "application/json"
+}
+
+start = time.perf_counter()
+
+response = requests.post(
+    API_URL,
+    headers=headers,
     json=payload,
-    verify=False
+    verify=False,   # Only if you're using a self-signed certificate
+    timeout=120
 )
-print(r.status_code)
-print(r.json())
 
-Use a real-world example that matches what customers will actually attach — e.g. a mobile app error screenshot, a debit card image, or an ID document. Check:
+elapsed = time.perf_counter() - start
 
-Does the transcribed text match exactly what's visible in the image?
-Response time — note how long this takes for a normal-sized screenshot (this tells you if the resize logic we added is actually necessary for your typical use case, or if most incoming images are already small enough).
+print(f"Status Code : {response.status_code}")
+print(f"Latency     : {elapsed:.2f} seconds")
+
+try:
+    data = response.json()
+    print("\nAssistant Response:\n")
+    print(data["choices"][0]["message"]["content"])
+except Exception:
+    print(response.text)
