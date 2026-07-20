@@ -1,4 +1,3 @@
-
 import os
 import re
 import requests
@@ -79,6 +78,71 @@ class LLMConfig:
             await asyncio.sleep(600)
 
 llm_config = LLMConfig()
+
+
+class VisionLLMConfig:
+    """
+    Separate token/url handling for the vision model (Qwen3-VL), isolated
+    from the text model's llm_config so it never overwrites the shared
+    OPENAI_API_BASE / OPENAI_API_KEY env vars, and never borrows the text
+    model's token for a different service URL.
+    """
+    def __init__(self):
+        self.env = os.getenv('ENV', 'non-local')
+        self.token = None
+        self.url = os.getenv('VISION_API_BASE')
+
+    def _get_config(self):
+        def _get_token():
+            response = requests.post(
+                url=os.getenv('ENT_AUTH_APPLICATION_TOKEN_URL'),
+                headers={},
+                data={
+                    'client_id': os.getenv('ENT_AUTH_APPLICATION_CLIENT_ID'),
+                    'client_secret': os.getenv('ENT_AUTH_APPLICATION_SECRET'),
+                    'grant_type': 'client_credentials'
+                }
+            )
+            return response.json()['access_token']
+
+        if self.env == 'local':
+            return self.url, os.getenv('OPENAI_API_KEY')
+
+        try:
+            if '-entauth' not in self.url:
+                pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
+                match = re.match(pattern, self.url)
+                base_domain, model_path, version_path = match.groups()
+                url = f"{base_domain}{model_path}-entauth{version_path}"
+            else:
+                url = self.url
+            token = _get_token()
+            return url, token
+        except Exception as e:
+            logger.error(e)
+            pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
+            match = re.match(pattern, self.url)
+            base_domain, model_path, version_path = match.groups()
+            url = f"{base_domain}{model_path}-entauth{version_path}"
+            token = _get_token()
+            return url, token
+
+    def set_llm_config(self):
+        try:
+            url, token = self._get_config()
+            self.url = url
+            self.token = token
+            logger.info(f"Vision token refreshed for {self.url}")
+        except Exception as e:
+            logger.error(f"Vision token refresh failed: {e}")
+
+    async def refresh_loop(self):
+        while True:
+            self.set_llm_config()
+            await asyncio.sleep(600)
+
+
+vision_llm_config = VisionLLMConfig()
 
 
 def run_crew_with_retry(crew_factory, *args, max_retries=3, base_delay=1, **kwargs):
@@ -292,36 +356,3 @@ def call_llm_streaming(
         if first_attempt:
             llm_config.set_llm_config()
             return call_llm_streaming(messages, tools, model, temperature, max_tokens, False)
-
-
-
-
-
-
-
-
-            INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-2026-07-20 21:05:07,212 - crew_main - INFO - → Incoming request | incident=12345 has_comments=False
-2026-07-20 21:05:07,212 - crew_main - INFO -   INCIDENT_BOT_ENABLED=true
-2026-07-20 21:05:07,214 - crew_main - INFO -   DB lookup | incident=12345 exists=False
-2026-07-20 21:05:07,237 - file_processor - ERROR - Image description failed | file=pan_card.jpeg err=401 Client Error: Unauthorized for url: https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2/v1/chat/completions
-2026-07-20 21:05:07,237 - crew_main - INFO -   Files processed | incident=12345 count=1 has_description=True
-2026-07-20 21:05:07,355 - crew_main - INFO -   DB saved | incident=12345
-2026-07-20 21:05:07,459 - crew_main - INFO - ✓ Kafka published | incident=12345 event=new_incident
-2026-07-20 21:05:07,460 - crew_main - INFO - ✓ New incident done | incident=12345
-INFO:     100.64.35.111:50972 - "POST /incident_agent/incident/create HTTP/1.1" 200 OK
-shishir.pandey_tho@032
-
-
-
-     - name: OPENAI_API_KEY
-              value: "{{ .Values.openai.api_key }}"
-            - name: OPENAI_API_BASE
-              value: "{{ .Values.openai.base_url }}"
-            - name: OPENAI_MODEL_NAME
-              value: "{{ .Values.openai.model_name }}"
-            - name: VISION_API_BASE
-              value: "{{ .Values.openai.vl_base_url }}"
-            - name : VISION_MODEL_NAME
-              value: "{{ .Values.openai.vl_model_name }}"
