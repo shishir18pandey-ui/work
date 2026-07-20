@@ -1,3 +1,8 @@
+Next step — test with a real image
+
+Now swap in an actual screenshot to validate the part that actually matters for your incident bot: can it read text and describe realistic content correctly. Use the script from before:
+
+python
 import base64, json, requests
 
 with open('your_screenshot.png', 'rb') as f:
@@ -24,3 +29,8 @@ r = requests.post(
 )
 print(r.status_code)
 print(r.json())
+
+Use a real-world example that matches what customers will actually attach — e.g. a mobile app error screenshot, a debit card image, or an ID document. Check:
+
+Does the transcribed text match exactly what's visible in the image?
+Response time — note how long this takes for a normal-sized screenshot (this tells you if the resize logic we added is actually necessary for your typical use case, or if most incoming images are already small enough).
