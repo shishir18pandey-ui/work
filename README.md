@@ -1,550 +1,468 @@
-
 import os
-import re
-import requests
-import json
-from typing import List, Dict, Optional, Any
+from observability import init_telemetry, get_tracer
+import logging
+# Add these to existing imports
+from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks, UploadFile, File, Form
+from fastapi.responses import HTMLResponse, JSONResponse
+import httpx
+from typing import Optional,List
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+logger = logging.getLogger(__name__)
+
+telemetry_endpoint = os.getenv("TELEMETRY_ENDPOINT")
+if telemetry_endpoint:
+    logger.info("OpenTelemetry tracer initialization started...")
+    try:
+        init_telemetry()
+        logger.info("OpenTelemetry tracer initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize OpenTelemetry: {e}")
+
+from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 import asyncio
-import logging
-from observability import get_tracer
+import json
+from datetime import datetime
+from dotenv import load_dotenv
+from pydantic import BaseModel, Field
+from typing import Optional
+import secrets
+import uuid
+from  file_processor import process_attachments
+from oracle_connection import test_oracle_connection
+from incident_db import (
+    get_incident,
+    get_incident_status,
+    set_incident_status,
+    upsert_incident_payload,
+    set_incident_resolution,
+    get_last_25_incidents
+)
+from incident_db_async import upsert_incident_payload_async
+from confluent_kafka import Producer
+
+load_dotenv()
+JIRA_RAG_INGEST_URL = os.getenv(
+    "JIRA_RAG_INGEST_URL",
+    "https://internal-app.uat-devutils.idfcfirstbank.com/api/jira-conf-rag/ingest/incidents"
+)
+logger.info("crew_main.py loaded successfully")
+logger.info(f"INCIDENT_BOT_ENABLED = {os.getenv('INCIDENT_BOT_ENABLED')}")
+logger.info(f"KAFKA_BROKER_URL = {os.getenv('KAFKA_BROKER_URL')}")
+logger.info(f"KAFKA_TOPIC = {os.getenv('KAFKA_TOPIC', 'GEN-AI-DE-INCIDENT-EVENTS')}")
 
 
-logger = logging.getLogger(__name__)
+# ─────────────────────────────────────────
+# AUTH
+# ─────────────────────────────────────────
 
+def verify_dummy_header(credentials: HTTPBasicCredentials = Depends(HTTPBasic())):
+    expected_username = os.getenv("INCIDENT_AUTH_USERNAME", "admin")
+    expected_password = os.getenv("INCIDENT_AUTH_TOKEN", "dummy-token-12345")
 
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-OPENAI_API_BASE = os.environ.get('OPENAI_VL_API_BASE')
-OPENAI_MODEL_NAME = os.environ.get('OPENAI_VL_MODEL_NAME')
+    is_correct_username = secrets.compare_digest(
+        credentials.username.encode("utf8"),
+        expected_username.encode("utf8")
+    )
+    is_correct_password = secrets.compare_digest(
+        credentials.password.encode("utf8"),
+        expected_password.encode("utf8")
+    )
 
-class LLMConfig:
-    def __init__(self):
-        self.env = os.getenv('ENV', 'non-local')
-        self.token = None
-        self.url = OPENAI_API_BASE
-        
-    def _get_config(self) -> str:
-        def _get_token():
-            response = requests.post(
-                url=os.getenv('ENT_AUTH_APPLICATION_TOKEN_URL'),
-                headers={},
-                data={
-                    'client_id': os.getenv('ENT_AUTH_APPLICATION_CLIENT_ID'),
-                    'client_secret': os.getenv('ENT_AUTH_APPLICATION_SECRET'),
-                    'grant_type': 'client_credentials'
-                }
-            )
-            response_data = response.json()
-            return response_data['access_token']
-        
-        if self.env == 'local':
-            url = self.url
-            token = os.getenv('OPENAI_API_KEY')
-        else: 
-            try:
-                if "-entauth" not in self.url:
-                    logger.info("Converting OpenAI URL to Ent-Auth URL")
-                    pattern = r"(https?://[^/]+)(/[^/]+)(/.*)"
-                    match = re.match(pattern, self.url)
-                    base_domain, model_path, version_path = match.groups()
-                    url = f"{base_domain}{model_path}-entauth{version_path}"
-                    logger.info("Ent-Auth URL generated: %s", url)
-                else:
-                    url = self.url
-                token = _get_token()
-                return url, token
-            except Exception as e:
-                logger.error(e)
-
-            # retry
-            pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
-            match = re.match(pattern, self.url)
-            base_domain, model_path, version_path = match.groups()
-            url = f"{base_domain}{model_path}-entauth{version_path}"
-            logger.info("Testing 2 Ent-Auth URL generated: %s", url)
-
-            token = _get_token()
-            return url, token
-
-    def set_llm_config(self) -> dict:
-        try:
-            url, token = self._get_config()
-            self.url = url
-            self.token = token
-            os.environ['OPENAI_API_KEY'] = token
-            os.environ['OPENAI_API_BASE'] = url
-            logger.info("OPENAI_API_KEY refreshed")
-        except Exception as e:
-            logger.error(f"OPENAI_API_KEY refresh failed: {e}")
-
-
-    async def refresh_loop(self):
-        while True:
-            self.set_llm_config()
-            await asyncio.sleep(600)
-
-llm_config = LLMConfig()
-
-
-def run_crew_with_retry(crew_factory, *args, max_retries=3, base_delay=1, **kwargs):
-    import time
-    from litellm.exceptions import AuthenticationError
-    
-    last_error = None
-    for attempt in range(max_retries + 1):
-        try:
-            return crew_factory(*args, **kwargs)
-        except (AuthenticationError, Exception) as e:
-            error_str = str(e).lower()
-            if ('401' in error_str or 'invalid_token' in error_str or 
-                'authentication' in error_str or 'access token' in error_str):
-                last_error = e
-                if attempt < max_retries:
-                    # Exponential backoff: 1s, 2s, 4s, etc.
-                    delay = base_delay * (10 ** attempt)
-                    logger.info(f"Token expired (attempt {attempt + 1}/{max_retries}), "
-                               f"refreshing token and retrying in {delay}s...")
-                    llm_config.set_llm_config()
-                    time.sleep(delay)
-                else:
-                    logger.error(f"Max retries ({max_retries}) reached for crew execution")
-            else:
-                raise
-    
-    raise last_error
-
-
-def call_llm(
-    messages: List[Dict[str, str]],
-    tools: Optional[List[Dict[str, Any]]] = None,
-    model: str = OPENAI_MODEL_NAME,
-    temperature: float = 0.0,
-    max_tokens: Optional[int] = None,
-    first_attempt = True
-) -> Dict[str, Any]:
-
-    tracer = get_tracer(__name__)
-    
-    with tracer.start_as_current_span("call_llm") as span:
-        span.set_attribute("model", model)
-        span.set_attribute("temperature", temperature)
-        if tools:
-            span.set_attribute("has_tools", True)
-        else:
-            span.set_attribute("has_tools", False)
-
-        payload = {
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-        }
-
-        if max_tokens:
-            payload["max_tokens"] = max_tokens
-
-        if tools:
-            payload["tools"] = tools
-            payload["tool_choice"] = "auto"
-
-        # Set headers
-        headers = {
-            "Authorization": f"Bearer {llm_config.token}",
-            "Content-Type": "application/json"
-        }
-
-        # Make API call
-        try:
-            response = requests.post(
-                f'{llm_config.url}/chat/completions',
-                headers=headers,
-                json=payload,
-                timeout=240,
-                verify='./IDFCBANKCA.pem'
-            )
-
-            response.raise_for_status()
-            data = response.json()
-
-            message = data["choices"][0]["message"]
-
-            # Extract response and tool calls
-            response_text = message.get("content")
-            tool_calls = None
-
-            if message.get("tool_calls"):
-                tool_calls = [
-                    {
-                        "id": tc["id"],
-                        "type": tc["type"],
-                        "function": {
-                            "name": tc["function"]["name"],
-                            "arguments": tc["function"]["arguments"]
-                        }
-                    }
-                    for tc in message["tool_calls"]
-                ]
-
-            return {
-                "response": response_text,
-                "tool_calls": tool_calls,
-                "finish_reason": data["choices"][0]["finish_reason"],
-                "usage": {
-                    "prompt_tokens": data["usage"]["prompt_tokens"],
-                    "completion_tokens": data["usage"]["completion_tokens"],
-                    "total_tokens": data["usage"]["total_tokens"]
-                },
-                "raw_message": message
-            }
-
-        except requests.exceptions.RequestException as e:
-            # Return error in consistent format
-            span.record_exception(e)
-            return {
-                "response": None,
-                "tool_calls": None,
-                "finish_reason": "error",
-                "error": str(e),
-                "usage": None,
-                "raw_message": None
-            }
-        except (KeyError, json.JSONDecodeError) as e:
-            span.record_exception(e)
-            return {
-                "response": None,
-                "tool_calls": None,
-                "finish_reason": "error",
-                "error": f"Failed to parse API response: {str(e)}",
-                "usage": None,
-                "raw_message": None
-            }
-        except Exception as e:
-            logger.error(e)
-            span.record_exception(e)
-            if first_attempt:
-                llm_config.set_llm_config()
-                return call_llm(messages, tools, model, temperature, max_tokens, False)
-
-
-def call_llm_streaming(
-    messages: List[Dict[str, str]],
-    tools: Optional[List[Dict[str, Any]]] = None,
-    model: str = OPENAI_MODEL_NAME,
-    temperature: float = 0.7,
-    max_tokens: Optional[int] = None,
-    first_attempt = True
-):
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "stream": True
-    }
-
-    if max_tokens:
-        payload["max_tokens"] = max_tokens
-
-    if tools:
-        payload["tools"] = tools
-        payload["tool_choice"] = "auto"
-
-    headers = {
-        "Authorization": f"Bearer {llm_config.token}",
-        "Content-Type": "application/json"
-    }
-
-    try:
-        response = requests.post(
-            llm_config.url,
-            headers=headers,
-            json=payload,
-            stream=True,
-            timeout=30
+    if not (is_correct_username and is_correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
         )
-
-        response.raise_for_status()
-
-        for line in response.iter_lines():
-            if line:
-                line = line.decode('utf-8')
-                if line.startswith('data: '):
-                    line = line[6:]  # Remove 'data: ' prefix
-
-                if line == '[DONE]':
-                    break
-
-                try:
-                    chunk_data = json.loads(line)
-                    delta = chunk_data["choices"][0]["delta"]
-
-                    yield {
-                        "delta": delta.get("content"),
-                        "tool_calls": delta.get("tool_calls"),
-                        "finish_reason": chunk_data["choices"][0].get("finish_reason")
-                    }
-                except json.JSONDecodeError:
-                    continue
-
-    except requests.exceptions.RequestException as e:
-        yield {
-            "delta": None,
-            "tool_calls": None,
-            "finish_reason": "error",
-            "error": str(e)
-        }
-
-    except Exception as e:
-        logger.error(e)
-        if first_attempt:
-            llm_config.set_llm_config()
-            return call_llm_streaming(messages, tools, model, temperature, max_tokens, False)
+    return credentials.username
 
 
+# ─────────────────────────────────────────
+# APP SETUP
+# ─────────────────────────────────────────
 
+app = FastAPI()
 
+from clean_extract_bot_data import router as export_router
+app.include_router(export_router)
 
-
-
-
-
-import os
-import io
-import base64
-import logging
-import requests
-from typing import List, Dict, Optional
-from PIL import Image
 from llm import llm_config
-
-logger = logging.getLogger(__name__)
-
-VISION_MODEL_NAME = os.getenv("OPENAI_VL_MODEL_NAME", "/app/models/Qwen3-VL-8B-Instruct")
-VISION_API_BASE = os.getenv("OPENAI_VL_API_BASE")
-
-IMAGE_MIME_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"}
-PDF_MIME_TYPES = {"application/pdf"}
-
-print(VISION_MODEL_NAME,"testing1.5")
-print(VISION_API_BASE,"testing2")
+asyncio.get_event_loop().create_task(llm_config.refresh_loop())
 
 
-MAX_IMAGE_DIMENSION = 1280
-JPEG_QUALITY = 85
+os.makedirs("static", exist_ok=True)
+os.makedirs("templates", exist_ok=True)
+
+app.mount("/incident_agent/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+logger.info("FastAPI app initialized")
 
 
-def _resize_image_if_needed(base64_data: str, mime_type: str, file_name: str) -> tuple:
-    """
-    Downscale image so its longest side <= MAX_IMAGE_DIMENSION px.
-    Controls Qwen-VL visual-token count. Falls back to original data on
-    any failure — never blocks the flow.
-    """
-    try:
-        base64_data = base64_data.replace("\n", "").replace("\r", "").strip()
-        raw_bytes = base64.b64decode(base64_data)
-        img = Image.open(io.BytesIO(raw_bytes))
+# ─────────────────────────────────────────
+# KAFKA PRODUCER
+# ─────────────────────────────────────────
 
-        width, height = img.size
-        longest_side = max(width, height)
-
-        if longest_side <= MAX_IMAGE_DIMENSION:
-            return base64_data, mime_type
-
-        scale = MAX_IMAGE_DIMENSION / longest_side
-        new_size = (int(width * scale), int(height * scale))
-
-        if img.mode != "RGB":
-            img = img.convert("RGB")
-
-        resized = img.resize(new_size, Image.LANCZOS)
-
-        buffer = io.BytesIO()
-        resized.save(buffer, format="JPEG", quality=JPEG_QUALITY)
-        new_bytes = buffer.getvalue()
-
-        logger.info(
-            f"Resized image | file={file_name} "
-            f"original={width}x{height} -> {new_size[0]}x{new_size[1]} "
-            f"original_bytes={len(raw_bytes)} new_bytes={len(new_bytes)}"
-        )
-
-        return base64.b64encode(new_bytes).decode("utf-8"), "image/jpeg"
-
-    except Exception as e:
-        logger.error(f"Image resize failed | file={file_name} err={e} — using original")
-        return base64_data, mime_type
+def get_kafka_producer():
+    return Producer({
+        'bootstrap.servers': os.getenv("KAFKA_BROKER_URL"),
+        'security.protocol': 'SASL_SSL',
+        'sasl.mechanism': 'SCRAM-SHA-512',
+        'sasl.username': os.getenv("KAFKA_USERNAME", "gen-ai-de_msk_uat"),
+        'sasl.password': os.getenv("KAFKA_PASSWORD"),
+    })
 
 
-def _describe_image(base64_data: str, mime_type: str, file_name: str) -> str:
-    base64_data, mime_type = _resize_image_if_needed(base64_data, mime_type, file_name)
-
-    data_uri = f"data:{mime_type};base64,{base64_data}"
-
-    payload = {
-        "model": VISION_MODEL_NAME,
-        "messages": [
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "text",
-                        "text": (
-                            "Describe what is in this image. If it contains text "
-                            "(screenshot, error message, document, ID card), transcribe "
-                            "the visible text exactly. Be concise. No speculation."
-                        )
-                    },
-                    {
-                        "type": "image_url",
-                        "image_url": {"url": data_uri}
-                    }
-                ]
+def publish_to_kafka(incident_id: str, event_type: str, payload: dict):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("publish_to_kafka") as span:
+        span.set_attribute("incident_id", incident_id)
+        span.set_attribute("event_type", event_type)
+        try:
+            producer = get_kafka_producer()
+            message = {
+                "incident_id": incident_id,
+                "event_type": event_type,
+                "payload": payload
             }
-        ],
-        "temperature": 0.0,
-        "max_tokens": 800
-    }
-    
-    headers = {
-        "Authorization": f"Bearer {llm_config.token}",
-        "Content-Type": "application/json"
+            producer.produce(
+                topic=os.getenv("KAFKA_TOPIC", "GEN-AI-DE-INCIDENT-EVENTS"),
+                key=incident_id.encode('utf-8'),
+                value=json.dumps(message).encode('utf-8')
+            )
+            producer.flush()
+            logger.info(f"✓ Kafka published | incident={incident_id} event={event_type}")
+        except Exception as e:
+            logger.error(f"✗ Kafka publish FAILED | incident={incident_id} error={e}")
+            raise
+
+
+
+
+def get_header_details():
+    return {
+        "Content-Type": "application/json",
+        "correlationId": str(uuid.uuid4()),
+        "source": "IncidentBot",
+        "transactionId": str(uuid.uuid4())
     }
 
-    base_url =  llm_config.url
-    print(base_url,"testing1")
 
+def handle_no_comments(incident_id: str):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("handle_no_comments") as span:
+        span.set_attribute("incident_id", incident_id)
+        logger.info(f"  No comments | incident={incident_id}")
+
+from typing import List, Optional
+from pydantic import BaseModel
+
+class Attachment(BaseModel):
+    fileId: Optional[str] = None
+    fileName: str
+    fileType: str
+    fileSize: Optional[int] = None
+    contentEncoding: str
+    fileContent: str
+
+# ─────────────────────────────────────────
+# MODELS
+# ─────────────────────────────────────────
+
+class ServiceNowIncidentCreateRequest(BaseModel):
+    callerId: Optional[str] = None
+    incidentType: Optional[str] = None
+    businessService: Optional[str] = None
+    tier1: Optional[str] = None
+    tier2: Optional[str] = None
+    tier3: Optional[str] = None
+    impact: Optional[str] = None
+    urgency: Optional[str] = None
+    shortDescription: Optional[str] = None
+    description: Optional[str] = None
+    contactType: Optional[str] = None
+    sourceIncidentNum: Optional[str] = None
+    sourceIncidentId: Optional[str] = None
+    assignmentGroup: Optional[str] = None
+    businessImpact: Optional[str] = None
+    cause: Optional[str] = None
+    businessCorrectiveAction: Optional[str] = None
+    techCorrectiveAction: Optional[str] = None
+    dataSource: Optional[str] = None
+    descriptionOfOutage: Optional[str] = None
+    emailId: Optional[str] = None
+    entityUCIC: Optional[str] = None
+    hashValues: Optional[str] = None
+    ipDetails: Optional[str] = None
+    ldwNotifyInformation: Optional[str] = None
+    loanAccountNumber: Optional[str] = None
+    loginId: Optional[str] = None
+    mobileNumber: Optional[str] = None
+    businessPreventiveAction: Optional[str] = None
+    techPreventiveAction: Optional[str] = None
+    resoultionTeam: Optional[str] = None
+    rootCause: Optional[str] = None
+    systemName: Optional[str] = None
+    urlOrDomain: Optional[str] = None
+    userDetail: Optional[str] = None
+    taskEffectiveNumber: Optional[str] = None
+    individualUCIC: Optional[str] = None
+    sourceIncCreateddttime: Optional[str] = None
+    incidentId: str = Field(..., min_length=1)
+    state: Optional[str] = None
+    causedByPatch: Optional[str] = None
+    resolutionCode: Optional[str] = None
+    solutionType: Optional[str] = None
+    outageType: Optional[str] = None
+    vendorGroup: Optional[str] = None
+    additionalComments: Optional[str] = None
+    onHoldReason: Optional[str] = None
+    resolutionNotes: Optional[str] = None
+    userLocation: Optional[str] = None
+    incidentNumber: str
+    assignedTo: Optional[str] = None
+    files: Optional[List[Attachment]] = None
+
+
+
+class ServiceNowIncidentResponse(BaseModel):
+    code: str
+    details: str
+
+
+# ─────────────────────────────────────────
+# EXCEPTION HANDLER
+# ─────────────────────────────────────────
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    fields = ""
+    for err in exc.errors():
+        field = ".".join(str(x) for x in err["loc"] if x != "body")
+        fields += f", {field}" if fields else field
+    logger.warning(f"Validation error | fields={fields}")
+    return JSONResponse(
+        status_code=422,
+        content={"code": "422", "details": f"{fields} cannot be empty or absent"}
+    )
+
+
+# ─────────────────────────────────────────
+# UI ROUTES
+# ─────────────────────────────────────────
+
+@app.get("/incident_agent/results")
+def results_page(request: Request):
+    recent_incidents = get_last_25_incidents()
+    return templates.TemplateResponse(
+        "results.html",
+        {"request": request, "results": recent_incidents}
+    )
+
+@app.post("/incident_agent/ingest-incidents")
+async def ingest_incidents_proxy(
+    file: UploadFile = File(...),
+    application: str = Form("")
+):
+    logger.info(f"[ingest] Received file={file.filename} application={application}")
     try:
-        response = requests.post(
-            f"{base_url}/chat/completions",
-            headers=headers,
-            json=payload,
-            timeout=60,
-            verify='./IDFCBANKCA.pem'
+        file_contents = await file.read()
+        logger.info(f"[ingest] File size={len(file_contents)} bytes")
+
+        async with httpx.AsyncClient(timeout=600.0, verify=False) as client:
+            response = await client.post(
+                JIRA_RAG_INGEST_URL,
+                files={"file": (file.filename, file_contents, file.content_type or "text/csv")},
+                data={"application": application}
+            )
+
+        logger.info(f"[ingest] jira-rag responded status={response.status_code}")
+
+        try:
+            response_json = response.json()
+        except Exception:
+            response_json = {"raw": response.text}
+
+        return JSONResponse(content=response_json, status_code=response.status_code)
+
+    except Exception as e:
+        logger.error(f"[ingest] FAILED: {e}", exc_info=True)
+        return JSONResponse(
+            content={"status": "error", "message": str(e)},
+            status_code=500
         )
-        response.raise_for_status()
-        data = response.json()
-        description = data["choices"][0]["message"]["content"]
-        logger.info(f"Image described | file={file_name}")
-        return description.strip()
-    except Exception as e:
-        logger.error(f"Image description failed | file={file_name} err={e}")
-        return "IMAGE UNREADABLE"
+@app.get("/incident_agent", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "incidents_received": 0,
+        "incidents_resolved": 0,
+        "reference_collections": 0,
+        "indexed_incidents": 0
+    })
 
 
-def _extract_pdf(base64_data: str, file_name: str) -> str:
-    try:
-        from pypdf import PdfReader
+# ─────────────────────────────────────────
+# SERVICENOW ENDPOINTS
+# ─────────────────────────────────────────
 
-        pdf_bytes = base64.b64decode(base64_data)
-        reader = PdfReader(io.BytesIO(pdf_bytes))
+@app.post("/incident_agent/incident/create")
+async def create_incident_from_servicenow(
+    request: Request,
+    incident_data: ServiceNowIncidentCreateRequest,
+    background_tasks: BackgroundTasks,
+    auth: bool = Depends(verify_dummy_header)
+):
+    tracer = get_tracer(__name__)
 
-        text_parts = []
-        for i, page in enumerate(reader.pages):
-            page_text = (page.extract_text() or "").strip()
-            if page_text:
-                text_parts.append(f"[Page {i + 1}]\n{page_text}")
+    with tracer.start_as_current_span("create_incident_from_servicenow") as span:
+        incident_id = incident_data.incidentId
+        span.set_attribute("incident_id", incident_id)
+        span.set_attribute("has_additional_comments", bool(incident_data.additionalComments))
 
-        if text_parts:
-            combined = "\n\n".join(text_parts)
-            if len(combined) > 5000:
-                combined = combined[:5000] + "\n...(truncated)"
-            logger.info(f"PDF extracted | file={file_name}")
-            return combined
-        return "PDF appears to be scanned; no extractable text."
-    except Exception as e:
-        logger.error(f"PDF extraction failed | file={file_name} err={e}")
-        return "PDF UNREADABLE"
+        logger.info(f"→ Incoming request | incident={incident_id} has_comments={bool(incident_data.additionalComments)}")
 
+        feature = os.getenv("INCIDENT_BOT_ENABLED", False)
+        logger.info(f"  INCIDENT_BOT_ENABLED={feature}")
+        if not feature:
+            logger.warning(f"  Bot disabled, returning 503 | incident={incident_id}")
+            return ServiceNowIncidentResponse(code="503", details="Service Unavailable.")
 
-def _process_one(file: Dict) -> Optional[str]:
-    file_name = file.get("fileName", "unknown")
-    file_type = (file.get("fileType") or "").lower()
-    encoding = (file.get("contentEncoding") or "").lower()
-    content = file.get("fileContent")
+        incident = get_incident(incident_id)
+        logger.info(f"  DB lookup | incident={incident_id} exists={bool(incident)}")
 
-    if not content or encoding != "base64":
-        return None
+        if not incident:
+            # NEW INCIDENT
+            file_description = ""
+            if incident_data.files:
+                file_dicts = [f.model_dump() for f in incident_data.files]
+                file_description = process_attachments(file_dicts)
+                logger.info(f"  Files processed | incident={incident_id} count={len(file_dicts)} has_description={bool(file_description)}")
 
-    if file_type in IMAGE_MIME_TYPES:
-        desc = _describe_image(content, file_type, file_name)
-        return f"[Attached image: {file_name}]\n{desc}"
+            incident_record = incident_data.model_dump()
+            incident_record.pop("files", None)   
+            incident_record["file_description"] = file_description
+            incident_record["created_at"] = datetime.now().isoformat()
+            incident_record["status"] = "created"
+            incident_record["interaction_counter"] = 0
+            incident_record["headers"] = get_header_details()
 
-    if file_type in PDF_MIME_TYPES:
-        text = _extract_pdf(content, file_name)
-        return f"[Attached PDF: {file_name}]\n{text}"
+            try:
+                await upsert_incident_payload_async(incident_id, json.dumps(incident_record))
+                logger.info(f"  DB saved | incident={incident_id}")
+            except Exception as e:
+                logger.error(f"✗ DB upsert FAILED | incident={incident_id} error={e}")
+                raise HTTPException(status_code=500, detail="Incident server error")
 
-    logger.warning(f"Skipping unsupported file type | file={file_name} type={file_type}")
-    return None
-
-
-def process_attachments(files: Optional[List[Dict]]) -> str:
-    """
-    Sync file processor. Returns "" if no files or any failure.
-    Never raises — incident creation must succeed regardless.
-    """
-    if not files:
-        return ""
-
-    try:
-        descriptions = []
-        for f in files:
-            result = _process_one(f)
-            if result:
-                descriptions.append(result)
-        if not descriptions:
-            return ""
-        return "\n\n".join(descriptions)
-    except Exception as e:
-        logger.error(f"process_attachments failed: {e}")
-        return ""
+            publish_to_kafka(incident_id, "new_incident", incident_record)
+            logger.info(f"✓ New incident done | incident={incident_id}")
+            return ServiceNowIncidentResponse(code="202", details="Accepted")
 
 
+        else:
+            # EXISTING INCIDENT
+            additional_comments = incident_data.additionalComments
+            payload = incident['payload']
+
+            if additional_comments:
+                current_status = get_incident_status(incident_id)
+                logger.info(f"  Existing incident | incident={incident_id} status={current_status}")
+                span.set_attribute("current_status", current_status or "unknown")
+
+                if current_status == 'on_hold':
+                    payload["additionalComments"] = additional_comments
+
+                    if incident_data.files:
+                        file_dicts = [f.model_dump() for f in incident_data.files]
+                        new_file_description = process_attachments(file_dicts)
+                        if new_file_description:
+                            payload["file_description"] = new_file_description
+                            logger.info(f"  Follow-up files processed | incident={incident_id}")
+
+                    set_incident_status(incident_id, 'in_progress')
+                    publish_to_kafka(incident_id, "additional_comments", payload)
+                    logger.info(f"✓ Additional comments published | incident={incident_id}")
+
+                elif current_status == 'in_progress':
+                    logger.info(f"  Ignored | incident={incident_id} reason=already_in_progress")
+
+                elif current_status in ['resolved', 'rejected']:
+                    logger.info(f"  Ignored | incident={incident_id} reason=final_status={current_status}")
+
+                else:
+                    logger.info(f"  Ignored | incident={incident_id} reason=unknown_status={current_status}")
+
+            else:
+                handle_no_comments(incident_id)
+
+            return ServiceNowIncidentResponse(code="202", details="Accepted")
 
 
+@app.get("/incident_agent/incident/{incident_id}")
+async def get_incident_details(incident_id: str, auth: bool = Depends(verify_dummy_header)):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("get_incident_details") as span:
+        span.set_attribute("incident_id", incident_id)
+        logger.info(f"→ Get incident details | incident={incident_id}")
+        incident = get_incident(incident_id)
+        if not incident:
+            logger.warning(f"  Not found | incident={incident_id}")
+            raise HTTPException(status_code=404, detail="Incident not found")
+        return incident['payload']
 
 
+@app.get("/incident_agent/nudge_incident/{incident_id}")
+async def nudge_incident(incident_id: str):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("nudge_incident") as span:
+        span.set_attribute("incident_id", incident_id)
+        logger.info(f"→ Nudge incident | incident={incident_id}")
+        incident = get_incident(incident_id)
+        if not incident:
+            logger.warning(f"  Not found | incident={incident_id}")
+            raise HTTPException(status_code=404, detail="Incident not found")
+        payload = incident['payload']
+        publish_to_kafka(incident_id, "new_incident", payload)
+        logger.info(f"✓ Nudged | incident={incident_id}")
+        return {"status": "nudged"}
 
 
+# ─────────────────────────────────────────
+# HEALTH ENDPOINTS
+# ─────────────────────────────────────────
+
+@app.get("/incident_agent/health")
+async def health_check():
+    logger.info("Health check called")
+    return {"status": "healthy"}
 
 
-        shishir.pandey_tho@0325LTPB0124444 ~ % kubectl logs incident-agent-7576f69dd-gp4q8 
-2026-07-21 13:08:28,130 - crew_main - INFO - OpenTelemetry tracer initialization started...
-2026-07-21 13:08:28,167 - observability - INFO - HTTPX auto-instrumented
-2026-07-21 13:08:28,169 - observability - INFO - Requests auto-instrumented
-2026-07-21 13:08:28,169 - observability - INFO - OpenTelemetry initialized successfully
-2026-07-21 13:08:28,169 - observability - INFO -   Service Name : genai-de-incident-agent
-2026-07-21 13:08:28,169 - observability - INFO -   Environment  : uat
-2026-07-21 13:08:28,169 - observability - INFO -   Endpoint     : http://ot-collector.tracing.svc.cluster.local:4318/v1/traces
-2026-07-21 13:08:28,169 - crew_main - INFO - OpenTelemetry tracer initialized
-2026-07-21 13:08:28,295 - crew_main - INFO - crew_main.py loaded successfully
-2026-07-21 13:08:28,295 - crew_main - INFO - INCIDENT_BOT_ENABLED = true
-2026-07-21 13:08:28,295 - crew_main - INFO - KAFKA_BROKER_URL = b-1.dcawscentraluatkafka0.fil3x5.c4.kafka.ap-south-1.amazonaws.com:9096,b-2.dcawscentraluatkafka0.fil3x5.c4.kafka.ap-south-1.amazonaws.com:9096,b-3.dcawscentraluatkafka0.fil3x5.c4.kafka.ap-south-1.amazonaws.com:9096
-2026-07-21 13:08:28,295 - crew_main - INFO - KAFKA_TOPIC = GEN-AI-DE-INCIDENT-EVENTS
-2026-07-21 13:08:28,300 - crew_main - INFO - FastAPI app initialized
-INFO:     Started server process [1]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-2026-07-21 13:09:55,649 - crew_main - INFO - → Incoming request | incident=343579 has_comments=False
-2026-07-21 13:09:55,649 - crew_main - INFO -   INCIDENT_BOT_ENABLED=true
-2026-07-21 13:09:55,651 - crew_main - INFO -   DB lookup | incident=343579 exists=False
-2026-07-21 13:09:55,677 - file_processor - ERROR - Image description failed | file=apple.jpeg err=401 Client Error: Unauthorized for url: https://llm-api.iservebetter.idfcfirstbank.com/qwen3-vl-8b-svc/v1/chat/completions
-2026-07-21 13:09:55,677 - crew_main - INFO -   Files processed | incident=343579 count=1 has_description=True
-2026-07-21 13:09:55,791 - crew_main - INFO -   DB saved | incident=343579
-2026-07-21 13:09:55,909 - crew_main - INFO - ✓ Kafka published | incident=343579 event=new_incident
-2026-07-21 13:09:55,910 - crew_main - INFO - ✓ New incident done | incident=343579
-/app/models/Qwen3-VL-8B-Instruct testing1.5
-https://llm-api.iservebetter.idfcfirstbank.com/qwen3-vl-8b-svc/v1 testing2
-https://llm-api.iservebetter.idfcfirstbank.com/qwen3-vl-8b-svc/v1 testing1
-INFO:     100.64.35.111:45800 - "POST /incident_agent/incident/create HTTP/1.1" 200 OK
-shishir.pandey_tho@0325LTPB0124444 ~ % 
-
-
-
-
-
-
-now tell me how we can fix this 
-why it is nottaking entauth 
-
-
-
-
-            
+@app.get("/incident_agent/health/oracle")
+async def oracle_health_check():
+    logger.info("Oracle health check called")
+    result = test_oracle_connection()
+    if result["connected"]:
+        logger.info(f"Oracle connected | sysdate={result['sysdate']}")
+        return {
+            "status": "healthy",
+            "connected": True,
+            "sysdate": result["sysdate"],
+            "message": "Successfully connected to Oracle database"
+        }
+    else:
+        logger.error(f"Oracle connection FAILED | error={result['error']}")
+        return {
+            "status": "unhealthy",
+            "connected": False,
+            "error": result["error"],
+            "message": "Failed to connect to Oracle database"
+        }
