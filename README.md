@@ -1,3 +1,4 @@
+
 import os
 import re
 import requests
@@ -12,8 +13,8 @@ logger = logging.getLogger(__name__)
 
 
 OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-OPENAI_API_BASE = os.environ.get('OPENAI_API_BASE')
-OPENAI_MODEL_NAME = os.environ.get('OPENAI_MODEL_NAME')
+OPENAI_API_BASE = os.environ.get('OPENAI_VL_API_BASE')
+OPENAI_MODEL_NAME = os.environ.get('OPENAI_VL_MODEL_NAME')
 
 class LLMConfig:
     def __init__(self):
@@ -40,11 +41,13 @@ class LLMConfig:
             token = os.getenv('OPENAI_API_KEY')
         else: 
             try:
-                if '-entauth' not in self.url:
-                    pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
+                if "-entauth" not in self.url:
+                    logger.info("Converting OpenAI URL to Ent-Auth URL")
+                    pattern = r"(https?://[^/]+)(/[^/]+)(/.*)"
                     match = re.match(pattern, self.url)
                     base_domain, model_path, version_path = match.groups()
                     url = f"{base_domain}{model_path}-entauth{version_path}"
+                    logger.info("Ent-Auth URL generated: %s", url)
                 else:
                     url = self.url
                 token = _get_token()
@@ -57,6 +60,8 @@ class LLMConfig:
             match = re.match(pattern, self.url)
             base_domain, model_path, version_path = match.groups()
             url = f"{base_domain}{model_path}-entauth{version_path}"
+            logger.info("Testing 2 Ent-Auth URL generated: %s", url)
+
             token = _get_token()
             return url, token
 
@@ -78,71 +83,6 @@ class LLMConfig:
             await asyncio.sleep(600)
 
 llm_config = LLMConfig()
-
-
-class VisionLLMConfig:
-    """
-    Separate token/url handling for the vision model (Qwen3-VL), isolated
-    from the text model's llm_config so it never overwrites the shared
-    OPENAI_API_BASE / OPENAI_API_KEY env vars, and never borrows the text
-    model's token for a different service URL.
-    """
-    def __init__(self):
-        self.env = os.getenv('ENV', 'non-local')
-        self.token = None
-        self.url = os.getenv('VISION_API_BASE')
-
-    def _get_config(self):
-        def _get_token():
-            response = requests.post(
-                url=os.getenv('ENT_AUTH_APPLICATION_TOKEN_URL'),
-                headers={},
-                data={
-                    'client_id': os.getenv('ENT_AUTH_APPLICATION_CLIENT_ID'),
-                    'client_secret': os.getenv('ENT_AUTH_APPLICATION_SECRET'),
-                    'grant_type': 'client_credentials'
-                }
-            )
-            return response.json()['access_token']
-
-        if self.env == 'local':
-            return self.url, os.getenv('OPENAI_API_KEY')
-
-        try:
-            if '-entauth' not in self.url:
-                pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
-                match = re.match(pattern, self.url)
-                base_domain, model_path, version_path = match.groups()
-                url = f"{base_domain}{model_path}-entauth{version_path}"
-            else:
-                url = self.url
-            token = _get_token()
-            return url, token
-        except Exception as e:
-            logger.error(e)
-            pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
-            match = re.match(pattern, self.url)
-            base_domain, model_path, version_path = match.groups()
-            url = f"{base_domain}{model_path}-entauth{version_path}"
-            token = _get_token()
-            return url, token
-
-    def set_llm_config(self):
-        try:
-            url, token = self._get_config()
-            self.url = url
-            self.token = token
-            logger.info(f"Vision token refreshed for {self.url}")
-        except Exception as e:
-            logger.error(f"Vision token refresh failed: {e}")
-
-    async def refresh_loop(self):
-        while True:
-            self.set_llm_config()
-            await asyncio.sleep(600)
-
-
-vision_llm_config = VisionLLMConfig()
 
 
 def run_crew_with_retry(crew_factory, *args, max_retries=3, base_delay=1, **kwargs):
@@ -356,3 +296,255 @@ def call_llm_streaming(
         if first_attempt:
             llm_config.set_llm_config()
             return call_llm_streaming(messages, tools, model, temperature, max_tokens, False)
+
+
+
+
+
+
+
+
+
+import os
+import io
+import base64
+import logging
+import requests
+from typing import List, Dict, Optional
+from PIL import Image
+from llm import llm_config
+
+logger = logging.getLogger(__name__)
+
+VISION_MODEL_NAME = os.getenv("OPENAI_VL_MODEL_NAME", "/app/models/Qwen3-VL-8B-Instruct")
+VISION_API_BASE = os.getenv("OPENAI_VL_API_BASE")
+
+IMAGE_MIME_TYPES = {"image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"}
+PDF_MIME_TYPES = {"application/pdf"}
+
+print(VISION_MODEL_NAME,"testing1.5")
+print(VISION_API_BASE,"testing2")
+
+
+MAX_IMAGE_DIMENSION = 1280
+JPEG_QUALITY = 85
+
+
+def _resize_image_if_needed(base64_data: str, mime_type: str, file_name: str) -> tuple:
+    """
+    Downscale image so its longest side <= MAX_IMAGE_DIMENSION px.
+    Controls Qwen-VL visual-token count. Falls back to original data on
+    any failure — never blocks the flow.
+    """
+    try:
+        base64_data = base64_data.replace("\n", "").replace("\r", "").strip()
+        raw_bytes = base64.b64decode(base64_data)
+        img = Image.open(io.BytesIO(raw_bytes))
+
+        width, height = img.size
+        longest_side = max(width, height)
+
+        if longest_side <= MAX_IMAGE_DIMENSION:
+            return base64_data, mime_type
+
+        scale = MAX_IMAGE_DIMENSION / longest_side
+        new_size = (int(width * scale), int(height * scale))
+
+        if img.mode != "RGB":
+            img = img.convert("RGB")
+
+        resized = img.resize(new_size, Image.LANCZOS)
+
+        buffer = io.BytesIO()
+        resized.save(buffer, format="JPEG", quality=JPEG_QUALITY)
+        new_bytes = buffer.getvalue()
+
+        logger.info(
+            f"Resized image | file={file_name} "
+            f"original={width}x{height} -> {new_size[0]}x{new_size[1]} "
+            f"original_bytes={len(raw_bytes)} new_bytes={len(new_bytes)}"
+        )
+
+        return base64.b64encode(new_bytes).decode("utf-8"), "image/jpeg"
+
+    except Exception as e:
+        logger.error(f"Image resize failed | file={file_name} err={e} — using original")
+        return base64_data, mime_type
+
+
+def _describe_image(base64_data: str, mime_type: str, file_name: str) -> str:
+    base64_data, mime_type = _resize_image_if_needed(base64_data, mime_type, file_name)
+
+    data_uri = f"data:{mime_type};base64,{base64_data}"
+
+    payload = {
+        "model": VISION_MODEL_NAME,
+        "messages": [
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "text",
+                        "text": (
+                            "Describe what is in this image. If it contains text "
+                            "(screenshot, error message, document, ID card), transcribe "
+                            "the visible text exactly. Be concise. No speculation."
+                        )
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {"url": data_uri}
+                    }
+                ]
+            }
+        ],
+        "temperature": 0.0,
+        "max_tokens": 800
+    }
+    
+    headers = {
+        "Authorization": f"Bearer {llm_config.token}",
+        "Content-Type": "application/json"
+    }
+
+    base_url =  llm_config.url
+    print(base_url,"testing1")
+
+    try:
+        response = requests.post(
+            f"{base_url}/chat/completions",
+            headers=headers,
+            json=payload,
+            timeout=60,
+            verify='./IDFCBANKCA.pem'
+        )
+        response.raise_for_status()
+        data = response.json()
+        description = data["choices"][0]["message"]["content"]
+        logger.info(f"Image described | file={file_name}")
+        return description.strip()
+    except Exception as e:
+        logger.error(f"Image description failed | file={file_name} err={e}")
+        return "IMAGE UNREADABLE"
+
+
+def _extract_pdf(base64_data: str, file_name: str) -> str:
+    try:
+        from pypdf import PdfReader
+
+        pdf_bytes = base64.b64decode(base64_data)
+        reader = PdfReader(io.BytesIO(pdf_bytes))
+
+        text_parts = []
+        for i, page in enumerate(reader.pages):
+            page_text = (page.extract_text() or "").strip()
+            if page_text:
+                text_parts.append(f"[Page {i + 1}]\n{page_text}")
+
+        if text_parts:
+            combined = "\n\n".join(text_parts)
+            if len(combined) > 5000:
+                combined = combined[:5000] + "\n...(truncated)"
+            logger.info(f"PDF extracted | file={file_name}")
+            return combined
+        return "PDF appears to be scanned; no extractable text."
+    except Exception as e:
+        logger.error(f"PDF extraction failed | file={file_name} err={e}")
+        return "PDF UNREADABLE"
+
+
+def _process_one(file: Dict) -> Optional[str]:
+    file_name = file.get("fileName", "unknown")
+    file_type = (file.get("fileType") or "").lower()
+    encoding = (file.get("contentEncoding") or "").lower()
+    content = file.get("fileContent")
+
+    if not content or encoding != "base64":
+        return None
+
+    if file_type in IMAGE_MIME_TYPES:
+        desc = _describe_image(content, file_type, file_name)
+        return f"[Attached image: {file_name}]\n{desc}"
+
+    if file_type in PDF_MIME_TYPES:
+        text = _extract_pdf(content, file_name)
+        return f"[Attached PDF: {file_name}]\n{text}"
+
+    logger.warning(f"Skipping unsupported file type | file={file_name} type={file_type}")
+    return None
+
+
+def process_attachments(files: Optional[List[Dict]]) -> str:
+    """
+    Sync file processor. Returns "" if no files or any failure.
+    Never raises — incident creation must succeed regardless.
+    """
+    if not files:
+        return ""
+
+    try:
+        descriptions = []
+        for f in files:
+            result = _process_one(f)
+            if result:
+                descriptions.append(result)
+        if not descriptions:
+            return ""
+        return "\n\n".join(descriptions)
+    except Exception as e:
+        logger.error(f"process_attachments failed: {e}")
+        return ""
+
+
+
+
+
+
+
+
+
+
+        shishir.pandey_tho@0325LTPB0124444 ~ % kubectl logs incident-agent-7576f69dd-gp4q8 
+2026-07-21 13:08:28,130 - crew_main - INFO - OpenTelemetry tracer initialization started...
+2026-07-21 13:08:28,167 - observability - INFO - HTTPX auto-instrumented
+2026-07-21 13:08:28,169 - observability - INFO - Requests auto-instrumented
+2026-07-21 13:08:28,169 - observability - INFO - OpenTelemetry initialized successfully
+2026-07-21 13:08:28,169 - observability - INFO -   Service Name : genai-de-incident-agent
+2026-07-21 13:08:28,169 - observability - INFO -   Environment  : uat
+2026-07-21 13:08:28,169 - observability - INFO -   Endpoint     : http://ot-collector.tracing.svc.cluster.local:4318/v1/traces
+2026-07-21 13:08:28,169 - crew_main - INFO - OpenTelemetry tracer initialized
+2026-07-21 13:08:28,295 - crew_main - INFO - crew_main.py loaded successfully
+2026-07-21 13:08:28,295 - crew_main - INFO - INCIDENT_BOT_ENABLED = true
+2026-07-21 13:08:28,295 - crew_main - INFO - KAFKA_BROKER_URL = b-1.dcawscentraluatkafka0.fil3x5.c4.kafka.ap-south-1.amazonaws.com:9096,b-2.dcawscentraluatkafka0.fil3x5.c4.kafka.ap-south-1.amazonaws.com:9096,b-3.dcawscentraluatkafka0.fil3x5.c4.kafka.ap-south-1.amazonaws.com:9096
+2026-07-21 13:08:28,295 - crew_main - INFO - KAFKA_TOPIC = GEN-AI-DE-INCIDENT-EVENTS
+2026-07-21 13:08:28,300 - crew_main - INFO - FastAPI app initialized
+INFO:     Started server process [1]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+2026-07-21 13:09:55,649 - crew_main - INFO - → Incoming request | incident=343579 has_comments=False
+2026-07-21 13:09:55,649 - crew_main - INFO -   INCIDENT_BOT_ENABLED=true
+2026-07-21 13:09:55,651 - crew_main - INFO -   DB lookup | incident=343579 exists=False
+2026-07-21 13:09:55,677 - file_processor - ERROR - Image description failed | file=apple.jpeg err=401 Client Error: Unauthorized for url: https://llm-api.iservebetter.idfcfirstbank.com/qwen3-vl-8b-svc/v1/chat/completions
+2026-07-21 13:09:55,677 - crew_main - INFO -   Files processed | incident=343579 count=1 has_description=True
+2026-07-21 13:09:55,791 - crew_main - INFO -   DB saved | incident=343579
+2026-07-21 13:09:55,909 - crew_main - INFO - ✓ Kafka published | incident=343579 event=new_incident
+2026-07-21 13:09:55,910 - crew_main - INFO - ✓ New incident done | incident=343579
+/app/models/Qwen3-VL-8B-Instruct testing1.5
+https://llm-api.iservebetter.idfcfirstbank.com/qwen3-vl-8b-svc/v1 testing2
+https://llm-api.iservebetter.idfcfirstbank.com/qwen3-vl-8b-svc/v1 testing1
+INFO:     100.64.35.111:45800 - "POST /incident_agent/incident/create HTTP/1.1" 200 OK
+shishir.pandey_tho@0325LTPB0124444 ~ % 
+
+
+
+
+
+
+now tell me how we can fix this 
+why it is nottaking entauth 
+
+
+
+
+            
