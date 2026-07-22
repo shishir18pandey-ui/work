@@ -1,11 +1,13 @@
 import os
 from observability import init_telemetry, get_tracer
 import logging
+import re
+from contextlib import asynccontextmanager
 # Add these to existing imports
 from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks, UploadFile, File, Form
 from fastapi.responses import HTMLResponse, JSONResponse
 import httpx
-from typing import Optional,List
+from typing import Optional, List
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -32,11 +34,11 @@ import asyncio
 import json
 from datetime import datetime
 from dotenv import load_dotenv
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, validator
 from typing import Optional
 import secrets
 import uuid
-from  file_processor import process_attachments
+from file_processor import process_attachments
 from oracle_connection import test_oracle_connection
 from incident_db import (
     get_incident,
@@ -87,17 +89,56 @@ def verify_dummy_header(credentials: HTTPBasicCredentials = Depends(HTTPBasic())
 
 
 # ─────────────────────────────────────────
+# CONTENT VALIDATION (malicious script/code detection)
+# ─────────────────────────────────────────
+
+_MALICIOUS_PATTERNS = [
+    re.compile(r'<\s*script', re.IGNORECASE),
+    re.compile(r'<\s*iframe', re.IGNORECASE),
+    re.compile(r'javascript\s*:', re.IGNORECASE),
+    re.compile(r'on(error|load|click|mouseover)\s*=', re.IGNORECASE),
+    re.compile(r'\bimport\s+os\b', re.IGNORECASE),
+    re.compile(r'\bimport\s+subprocess\b', re.IGNORECASE),
+    re.compile(r'\bexec\s*\(', re.IGNORECASE),
+    re.compile(r'\beval\s*\(', re.IGNORECASE),
+    re.compile(r'os\.system\s*\(', re.IGNORECASE),
+    re.compile(r'__import__\s*\(', re.IGNORECASE),
+    re.compile(r'ignore\s+(all\s+)?previous\s+instructions', re.IGNORECASE),
+    re.compile(r'<\|im_start\|>', re.IGNORECASE),
+    re.compile(r'disregard\s+.*\binstructions\b', re.IGNORECASE),
+]
+
+
+def contains_malicious_content(value: str) -> bool:
+    if not value:
+        return False
+    for pattern in _MALICIOUS_PATTERNS:
+        if pattern.search(value):
+            return True
+    return False
+
+
+# ─────────────────────────────────────────
 # APP SETUP
 # ─────────────────────────────────────────
 
-app = FastAPI()
+from llm import llm_config
+
+llm_config.set_llm_config()   # synchronous — guarantees a valid token before any request
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # startup
+    asyncio.create_task(llm_config.refresh_loop())
+    yield
+    # shutdown — nothing needed here currently
+
+
+app = FastAPI(lifespan=lifespan)
 
 from clean_extract_bot_data import router as export_router
 app.include_router(export_router)
-
-from llm import llm_config
-asyncio.get_event_loop().create_task(llm_config.refresh_loop())
-
 
 os.makedirs("static", exist_ok=True)
 os.makedirs("templates", exist_ok=True)
@@ -146,8 +187,6 @@ def publish_to_kafka(incident_id: str, event_type: str, payload: dict):
             raise
 
 
-
-
 def get_header_details():
     return {
         "Content-Type": "application/json",
@@ -163,8 +202,6 @@ def handle_no_comments(incident_id: str):
         span.set_attribute("incident_id", incident_id)
         logger.info(f"  No comments | incident={incident_id}")
 
-from typing import List, Optional
-from pydantic import BaseModel
 
 class Attachment(BaseModel):
     fileId: Optional[str] = None
@@ -173,6 +210,7 @@ class Attachment(BaseModel):
     fileSize: Optional[int] = None
     contentEncoding: str
     fileContent: str
+
 
 # ─────────────────────────────────────────
 # MODELS
@@ -232,6 +270,11 @@ class ServiceNowIncidentCreateRequest(BaseModel):
     assignedTo: Optional[str] = None
     files: Optional[List[Attachment]] = None
 
+    @validator('shortDescription', 'businessImpact')
+    def validate_no_malicious_content(cls, v):
+        if v and contains_malicious_content(v):
+            raise ValueError("Invalid content detected — field contains disallowed script or code patterns")
+        return v
 
 
 class ServiceNowIncidentResponse(BaseModel):
@@ -246,10 +289,21 @@ class ServiceNowIncidentResponse(BaseModel):
 @app.exception_handler(RequestValidationError)
 async def validation_exception_handler(request: Request, exc: RequestValidationError):
     fields = ""
+    malicious_errors = []
     for err in exc.errors():
         field = ".".join(str(x) for x in err["loc"] if x != "body")
         fields += f", {field}" if fields else field
+        if "Invalid content detected" in err.get("msg", ""):
+            malicious_errors.append(f"{field}: {err['msg']}")
+
     logger.warning(f"Validation error | fields={fields}")
+
+    if malicious_errors:
+        return JSONResponse(
+            status_code=422,
+            content={"code": "422", "details": "; ".join(malicious_errors)}
+        )
+
     return JSONResponse(
         status_code=422,
         content={"code": "422", "details": f"{fields} cannot be empty or absent"}
@@ -261,12 +315,13 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # ─────────────────────────────────────────
 
 @app.get("/incident_agent/results")
-def results_page(request: Request):
+def results_page(request: Request, auth: bool = Depends(verify_dummy_header)):
     recent_incidents = get_last_25_incidents()
     return templates.TemplateResponse(
         "results.html",
         {"request": request, "results": recent_incidents}
     )
+
 
 @app.post("/incident_agent/ingest-incidents")
 async def ingest_incidents_proxy(
@@ -300,6 +355,8 @@ async def ingest_incidents_proxy(
             content={"status": "error", "message": str(e)},
             status_code=500
         )
+
+
 @app.get("/incident_agent", response_class=HTMLResponse)
 async def dashboard(request: Request):
     return templates.TemplateResponse("dashboard.html", {
@@ -349,7 +406,7 @@ async def create_incident_from_servicenow(
                 logger.info(f"  Files processed | incident={incident_id} count={len(file_dicts)} has_description={bool(file_description)}")
 
             incident_record = incident_data.model_dump()
-            incident_record.pop("files", None)   
+            incident_record.pop("files", None)
             incident_record["file_description"] = file_description
             incident_record["created_at"] = datetime.now().isoformat()
             incident_record["status"] = "created"
@@ -366,7 +423,6 @@ async def create_incident_from_servicenow(
             publish_to_kafka(incident_id, "new_incident", incident_record)
             logger.info(f"✓ New incident done | incident={incident_id}")
             return ServiceNowIncidentResponse(code="202", details="Accepted")
-
 
         else:
             # EXISTING INCIDENT
