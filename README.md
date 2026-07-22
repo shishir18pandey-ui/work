@@ -522,3 +522,42 @@ async def oracle_health_check():
             "error": result["error"],
             "message": "Failed to connect to Oracle database"
         }
+
+
+
+
+
+
+
+
+
+
+
+
+content-validator.py
+
+import re
+
+_MALICIOUS_PATTERNS = [
+    re.compile(r'<\s*script', re.IGNORECASE),
+    re.compile(r'<\s*iframe', re.IGNORECASE),
+    re.compile(r'javascript\s*:', re.IGNORECASE),
+    re.compile(r'on(error|load|click|mouseover)\s*=', re.IGNORECASE),
+    re.compile(r'\bimport\s+os\b', re.IGNORECASE),
+    re.compile(r'\bimport\s+subprocess\b', re.IGNORECASE),
+    re.compile(r'\bexec\s*\(', re.IGNORECASE),
+    re.compile(r'\beval\s*\(', re.IGNORECASE),
+    re.compile(r'os\.system\s*\(', re.IGNORECASE),
+    re.compile(r'__import__\s*\(', re.IGNORECASE),
+    re.compile(r'ignore\s+(all\s+)?previous\s+instructions', re.IGNORECASE),
+    re.compile(r'<\|im_start\|>', re.IGNORECASE),
+    re.compile(r'disregard\s+.*\binstructions\b', re.IGNORECASE),
+]
+
+def contains_malicious_content(value: str) -> bool:
+    if not value:
+        return False
+    for pattern in _MALICIOUS_PATTERNS:
+        if pattern.search(value):
+            return True
+    return False
