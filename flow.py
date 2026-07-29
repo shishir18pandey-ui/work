@@ -6,19 +6,24 @@ import json
 import re
 from dotenv import load_dotenv
 from crewai.flow.flow import Flow, start, listen, router
-from crewai.flow.persistence import persist
 from utils.incident_db_async import upsert_incident_payload_async
-from agents.debugger import run_backend_resolver_crew_async
 from agents.context_builder import run_incident_context_crew_async
-from agents.intent_classifier import run_intent_classifier_crew_async
+from agents.intent_classifier import run_classifier_with_enrichment_async
+from agents.plan_agent import run_plan_agent_async
+# from agents.execute_agent import run_execute_agent_async
+from agents.execute_agent_jaeger import run_jaeger_only_async
+from agents.summary_agent import run_summary_agent_async
+from agents.self_critique import run_self_critique_async, should_escalate
 from utils.llm import run_crew_with_retry_async
+from tools.discovery_tools import discover_jaeger_services_impl
+
 
 load_dotenv()
 
 CA_CERT_FILE = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
-OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "/app/models/gpt-oss-120b")
+OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "/app/models/MiniMax-M2.5")
 CHAT_COMPLETIONS_URL = f"{OPENAI_API_BASE}/chat/completions"
 
 import logging
@@ -38,7 +43,6 @@ def extract_json_from_output(output: str) -> dict:
     except json.JSONDecodeError:
         pass
     
-    # Try to extract JSON from markdown code blocks
     json_patterns = [
         r'```json\s*([\s\S]*?)\s*```',  # ```json ... ```
         r'```\s*([\s\S]*?)\s*```',       # ``` ... ```
@@ -53,8 +57,7 @@ def extract_json_from_output(output: str) -> dict:
             except json.JSONDecodeError:
                 pass
     
-    # Try to find JSON-like object in the text
-    # Look for {...} pattern
+   
     json_like_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
     match = re.search(json_like_pattern, output)
     if match:
@@ -79,10 +82,19 @@ class IncidentState(BaseModel):
     incident_context: str = ""
     user_qa_pairs: List[dict] = []
     intent: str = ""
-    final_output_json: dict = {}
+    agent_output: dict = {}
     snow_status: str = ""
     ucic: str = ""
     current_comment: Optional[str] = None
+    app: str = "" 
+    customer_identifiers: Dict[str, str] = {}
+    problem_category: str = "" 
+    plan_output: Optional[Dict] = None
+    execution_result: Optional[Dict] = None
+    summary_output: Optional[Dict] = None
+    enriched_prompt: str = ""
+    discovered_services: str = ""
+
 
 async def send_update_to_servicenow_async(payload: Dict, question: str, resolution: str):
     tracer = get_tracer(__name__)
@@ -182,40 +194,40 @@ async def send_resolution_to_servicenow_async(payload, resolution):
         span.set_attribute("incident_id", payload.get("incidentId"))
         span.set_attribute("resolution_length", len(resolution) if resolution else 0)
         payload.update({
-           #"cause": "Resolved by Bot.",
-           #"state": "Resolved",
-           # "resolutionCode": "Solved (Permanently)",
-            #"solutionType": "Other",
-            #"outageType": "No Outage"
+            # "cause": "Resolved by Bot.",
+            # "state": "Resolved",
+            # "resolutionCode": "Solved (Permanently)",
+            # "solutionType": "Other",
+            # "outageType": "No Outage"
             "state":"On Hold",
             "onHoldReason": "User Action Required"
         })
-        result = await send_update_to_servicenow_async(payload, None, resolution)
+        result = await send_update_to_servicenow_async(payload, resolution, None)
         return result, 'on_hold'    
 
 
 def payload_to_incident_description(payload):
+    from utils.files_processor import process_attachments 
+
     tracer = get_tracer(__name__)
     with tracer.start_as_current_span("payload_to_incident_description") as span:
         span.set_attribute("short_description_length", len(payload.get('shortDescription','')))
         span.set_attribute("description_length", len(payload.get('description','')))
         span.set_attribute("individualUCIC", payload.get('individualUCIC','i'))
-
+        
         short_description = payload.get('shortDescription','')
         description = payload.get('description','')
         individualUCIC = payload.get('individualUCIC','i')
         result = f"Short Description: {short_description}\nDescription: {description}"
 
-        file_description = payload.get('file_description', '')
-        if file_description:
-            result = result + "\n\n--- ATTACHED FILES ---\n" + file_description
-
+        file_text = process_attachments(payload.get('files') or [])   
+        if file_text:                                                  
+            result = result + "\n\n" + file_text                       
         print(f"Generated incident description for UCIC {individualUCIC}")
         return result, individualUCIC
 
 
 
-# @persist(key="incident_id")
 class IncidentManagementFlow(Flow[IncidentState]):
 
     @start()
@@ -240,15 +252,26 @@ class IncidentManagementFlow(Flow[IncidentState]):
 
             self.state.user_qa_pairs = self.state.payload['__agent_data'].get('qa_pairs', [])
 
-            comment = self.state.current_comment if self.state.current_comment else "NA"
+            comment = self.state.current_comment if self.state.current_comment else None
 
-            self.state.intent = await run_crew_with_retry_async(
-                lambda: run_intent_classifier_crew_async(
-                    self.state.incident_description, 
-                    self.state.user_qa_pairs,
-                    comment
+            classifier_output = await run_crew_with_retry_async(
+                lambda: run_classifier_with_enrichment_async(
+                    payload=self.state.payload,
+                    incident_description=self.state.incident_description,
+                    user_qa_pairs=self.state.user_qa_pairs,
+                    comment=comment
                 )
             )
+            self.state.intent = classifier_output.intent
+            self.state.customer_identifiers = classifier_output.customer_identifiers
+            self.state.problem_category = classifier_output.problem_category
+            self.state.app = classifier_output.app
+            self.state.enriched_prompt = classifier_output.enriched_prompt
+            
+            self.state.payload['__agent_data']['classifier_output'] = classifier_output.model_dump()
+            
+            print(f"Enhanced classifier | incident={self.state.incident_id} | app={self.state.app} | category={self.state.problem_category}")
+            
             print(f"Initialized and classified incident {self.state.incident_id} with intent: {self.state.intent}")
             return self.state.intent
 
@@ -272,6 +295,18 @@ class IncidentManagementFlow(Flow[IncidentState]):
             if self.state.intent == "rebuttal": 
                 print(f"Rebuttal intent for incident {self.state.incident_id}")
                 return "handle_rebuttal"
+
+            classifier_data = self.state.payload.get('__agent_data', {}).get('classifier_output', {})
+            if classifier_data.get('needs_user_input'):
+                print(f"Need more info for incident {self.state.incident_id}")
+                self.state.agent_output = {
+                    "resolved": "no",
+                    "diagnosis": "Additional information needed",
+                    "solution": "Please provide more details",
+                    "questions": [classifier_data.get('clarification_question', 'Could you please provide more information? Please provide trace ID/ Correlation ID/ Customer Number/ Account Number if possible')]
+                }
+                return "update_servicenow"
+            
             print(f"Fresh incident {self.state.incident_id}, gather context")
             return "gather_context"
 
@@ -283,17 +318,18 @@ class IncidentManagementFlow(Flow[IncidentState]):
             span.set_attribute("incident_id", self.state.incident_id)
             span.set_attribute("incident_description_length", len(self.state.incident_description))
 
-            incident_description, ucic = payload_to_incident_description(self.state.payload)
-            desc = f"{incident_description}\nUCIC: {ucic}"
+            # Use already-generated description from initialize_and_classify
+            # desc = f"{self.state.incident_description}\nUCIC: {self.state.ucic}"
+            desc = self.state.enriched_prompt
             app = self.state.payload.get("tier1", "CBS")
             incident_context = await run_crew_with_retry_async(
                 lambda: run_incident_context_crew_async(desc,application=app)
             )
             self.state.incident_context = incident_context if incident_context else "No context found"
-                
+
             return 'run_resolver'
 
-    
+
     @listen(semantic_search)
     async def run_resolver_crew(self):
         tracer = get_tracer(__name__)
@@ -301,34 +337,154 @@ class IncidentManagementFlow(Flow[IncidentState]):
             span.set_attribute("incident_id", self.state.incident_id)
             span.set_attribute("qa_pairs_count", len(self.state.user_qa_pairs))
 
-            # ── read app from payload ──
             app = self.state.payload.get("tier1", "cbs").lower().strip()
+            self.state.app = app
             span.set_attribute("app", app)
             logger.info(f"Resolver | incident={self.state.incident_id} app={app}")
 
-            raw_resolution = await run_crew_with_retry_async(
-                lambda: run_backend_resolver_crew_async(
-                    self.state.incident_description,
-                    self.state.incident_context,
-                    self.state.user_qa_pairs,
-                    self.state.ucic,
-                    self.state.current_comment,
-                    app=app    
+            return await self._run_agentic_resolver(app)
+
+    async def _run_agentic_resolver(self, app: str):
+        tracer = get_tracer(__name__)
+
+        customer_ids = self.state.customer_identifiers if hasattr(self.state, 'customer_identifiers') else {}
+        problem_cat = self.state.problem_category if hasattr(self.state, 'problem_category') else ""
+
+        try:
+            self.state.discovered_services = await discover_jaeger_services_impl(app)
+            logger.info(f"Discovered services for app={app}")
+        except Exception as e:
+            logger.warning(f"Failed to discover services: {e}")
+            self.state.discovered_services = "Service discovery unavailable"
+
+        with tracer.start_as_current_span("plan_agent") as span:
+            span.set_attribute("app", app)
+            plan_output = await run_crew_with_retry_async(
+                lambda: run_plan_agent_async(
+                    enriched_prompt=self.state.enriched_prompt,
+                    app=app,
+                    customer_identifiers=customer_ids,
+                    problem_category=problem_cat,
+                    incident_context=self.state.incident_context,
+                    discovered_services=self.state.discovered_services
                 )
             )
-
-            self.state.final_output_json = extract_json_from_output(raw_resolution)
-            print(f"Resolver task completed for incident {self.state.incident_id}")
+            self.state.plan_output = plan_output.model_dump() if hasattr(plan_output, 'model_dump') else plan_output
+            print(f"Plan Agent completed for incident {self.state.incident_id}")
+        
+        if plan_output.needs_more_info:
+            self.state.agent_output = {
+                "resolved": "no",
+                "diagnosis": "Additional information needed",
+                "solution": plan_output.question_for_user or "Please provide more details",
+                "questions": [plan_output.question_for_user] if plan_output.question_for_user else []
+            }
             return "update_servicenow"
+        
+        with tracer.start_as_current_span("execute_agent") as span:
+            span.set_attribute("issue_summary", plan_output.issue_summary[:100] if plan_output.issue_summary else "")
+            execution_result = await run_crew_with_retry_async(
+                lambda: run_jaeger_only_async(
+                    plan_output=plan_output,
+                    incident_description=self.state.incident_description,
+                    app=app,
+                    customer_identifiers=customer_ids,
+                    problem_category=problem_cat,
+                    max_iterations=5,
+                    incident_id=self.state.incident_id,
+                    discovered_services=self.state.discovered_services
+                )
+            )
+            self.state.execution_result = execution_result.model_dump() if hasattr(execution_result, 'model_dump') else execution_result
+            print(f"Execute Agent completed for incident {self.state.incident_id}")
+            
+            # Handle escalation if confidence is low
+            if hasattr(execution_result, 'confidence') and execution_result.confidence < 0.3:
+                # Trigger escalation via ServiceNow
+                escalation_msg = execution_result.escalation_reason or "BOT unable to resolve - assigning to L2 Engineer"
+                (status, info), incident_status = await send_rejection_to_servicenow_async(
+                    self.state.payload, 
+                    escalation_msg
+                )
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "escalation", 
+                    "reason": escalation_msg,
+                    "confidence": execution_result.confidence,
+                    "status": status, 
+                    "response": info
+                })
+                print(f"Escalated incident {self.state.incident_id} due to low confidence: {execution_result.confidence}")
+        
+        with tracer.start_as_current_span("summary_agent") as span:
+            summary_output = await run_crew_with_retry_async(
+                lambda: run_summary_agent_async(
+                    incident_description=self.state.incident_description,
+                    execution_result=execution_result,
+                    historic_context=self.state.incident_context,
+                    user_qa_pairs=self.state.user_qa_pairs
+                )
+            )
+            self.state.summary_output = summary_output.model_dump() if hasattr(summary_output, 'model_dump') else summary_output
+            print(f"Summary Agent completed for incident {self.state.incident_id}")
+        
+        # Self-Critique Loop: DISABLED - causing false escalations
+        # if summary_output.resolved == "yes":
+        #     tool_calls = self.state.execution_result.get('tool_calls', []) if isinstance(self.state.execution_result, dict) else []
+        #     critique = await run_self_critique_async(
+        #         incident_description=self.state.incident_description,
+        #         diagnosis=summary_output.diagnosis,
+        #         solution=summary_output.solution,
+        #         tool_calls=tool_calls,
+        #         user_qa_pairs=self.state.user_qa_pairs
+        #     )
+        #     
+        #     # Log critique results
+        #     self.state.payload['__agent_data']['snow_logs'].append({
+        #         "type": "self_critique",
+        #         "is_valid": critique.is_valid,
+        #         "confidence": critique.confidence,
+        #         "issues_found": critique.issues_found
+        #     })
+        #     
+        #     # Use revised output if critique found issues
+        #     if critique.revised_diagnosis:
+        #         summary_output.diagnosis = critique.revised_diagnosis
+        #     if critique.revised_solution:
+        #         summary_output.solution = critique.revised_solution
+        #     
+        #     # Check if should escalate based on critique
+        #     if should_escalate(critique):
+        #         print(f"Self-critique triggered escalation for incident {self.state.incident_id}")
+        #         (status, info), incident_status = await send_rejection_to_servicenow_async(
+        #             self.state.payload,
+        #             f"Auto-escalated: Low confidence ({critique.confidence:.2f}). Issues: {', '.join(critique.issues_found[:2])}"
+        #         )
+        #         self.state.payload['__agent_data']['snow_logs'].append({
+        #             "type": "escalation", 
+        #             "reason": "self_critique_escalation",
+        #             "confidence": critique.confidence,
+        #             "status": status, 
+        #             "response": info
+        #         })
+        #         return "update_servicenow"
+        
+        self.state.agent_output = {
+            "resolved": summary_output.resolved,
+            "diagnosis": summary_output.diagnosis,
+            "solution": summary_output.solution,
+            "questions": summary_output.questions
+        }
+        
+        return "update_servicenow"
 
     @listen(run_resolver_crew)
     async def update_servicenow(self):
         tracer = get_tracer(__name__)
         with tracer.start_as_current_span("update_servicenow") as span:
             span.set_attribute("incident_id", self.state.incident_id)
-            span.set_attribute("resolution_result", self.state.final_output_json.get("resolved", "unknown"))
+            span.set_attribute("resolution_result", self.state.agent_output.get("resolved", "unknown"))
 
-            res = self.state.final_output_json
+            res = self.state.agent_output
             incident_status = 'in_progress'
 
             if res.get("resolved") == 'yes':
