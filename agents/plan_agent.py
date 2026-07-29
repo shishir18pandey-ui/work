@@ -1,0 +1,208 @@
+import os
+from typing import Dict, Optional
+from pydantic import BaseModel, Field
+
+os.environ["OTEL_SDK_DISABLED"] = "true"
+
+from crewai import Agent, Task, Crew, LLM
+from utils.llm import llm_config
+from tools.query_tools import JaegerTraceTool
+from tools.app_config import get_app_config
+
+
+class PlanOutput(BaseModel):
+    issue_identified: bool = Field(description="True if enough info to proceed")
+    issue_summary: str = Field(description="What's the issue from similarity + jaeger")
+    jaeger_results: Dict = Field(
+        default_factory=dict,
+        description="From jaeger traces"
+    )
+    next_steps: str = Field(description="Guidance for Execute Agent")
+    needs_more_info: bool = Field(description="True if need user input")
+    question_for_user: Optional[str] = Field(
+        default=None,
+        description="What to ask user"
+    )
+    suggested_service: Optional[str] = Field(
+        default=None,
+        description="Jaeger service to query"
+    )
+    customer_identifiers: Dict[str, str] = Field(
+        default_factory=dict,
+        description="All customer identifiers extracted from the incident"
+    )
+
+
+async def run_plan_agent_async(
+    enriched_prompt: str,
+    app: str,
+    customer_identifiers: Dict[str, str],
+    problem_category: str,
+    incident_context: str = "",
+    discovered_services: str = "",
+) -> PlanOutput:
+
+    llm = LLM(
+        model="openai/" + os.environ.get('OPENAI_MODEL_NAME'),
+        temperature=0.0,
+        base_url=llm_config.url,
+        api_key=llm_config.token
+    )
+    
+    try:
+        app_config = get_app_config(app)
+        default_service = app_config.default_jaeger_service
+    except ValueError:
+        default_service = None
+    
+    # Initialize Jaeger tool - LLM will decide when and how to use it
+    jaeger_tool = JaegerTraceTool()
+    
+    similarity_result = incident_context if incident_context else "No similar incidents found."
+    
+    # Build customer identifiers string for LLM
+    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
+    
+    analysis_agent = Agent(
+        role="Triage Analyst",
+        goal="Analyze investigation results and create a plan for resolution",
+        backstory=(
+            "You are a senior incident analyst. Your job is to analyze "
+            "Similarity Search results and Jaeger traces to understand "
+            "what the issue is and guide the next steps.\n\n"
+            "You have access to tools to fetch additional data when needed.\n\n"
+            "You must determine:\n"
+            "1. Is the issue clear from the data?\n"
+            "2. If yes, what's the next step (ELK or DB)?\n"
+            "3. If no, use tools to gather more info"
+        ),
+        tools=[],
+        verbose=True,
+        allow_delegation=False,
+        llm=llm,
+        temperature=0,
+        max_iter=3,
+        reasoning=True,
+        max_reasoning_attempts=3
+    )
+    
+    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
+    
+    # Add discovered services to context if available
+    services_section = ""
+    if discovered_services:
+        services_section = f"\n=== AVAILABLE JAEGER SERVICES ===\n{discovered_services}\n"
+    
+    analysis_task = Task(
+        description=(
+            f"Analyze the following investigation results and create a plan:\n\n"
+            f"=== INCIDENT ANALYSIS (from Intent Classifier) ===\n{enriched_prompt}\n\n"
+            f"=== SIMILARITY SEARCH RESULTS ===\n{similarity_result}\n\n"
+            f"=== CONTEXT ===\n"
+            f"Application: {app}\n"
+            f"Problem Category: {problem_category}\n"
+            f"Customer Identifiers:\n{identifiers_text}\n"
+            f"{services_section}\n"
+            f"You have access to a Jaeger tracing tool. If you need more information about "
+            f"service calls, latency issues, or distributed traces, use the tool to fetch data.\n\n"
+            f"IMPORTANT: When you use the Jaeger tool, include the key findings in your response below.\n\n"
+            f"Provide your analysis in this format:\n"
+            f"ISSUE_UNDERSTOOD: yes/no\n"
+            f"ISSUE_SUMMARY: [brief description of what the issue is - include any Jaeger trace findings here]\n"
+            f"JAEGER_FINDINGS: [you MUST use the Jaeger tool to fetch traces - summarize the key trace data including service names, errors, latency issues, etc. NEVER write 'NOT_USED' - always fetch and analyze traces]\n"
+            f"NEXT_STEPS: [what Execute Agent should do next]\n"
+            f"NEEDS_MORE_INFO: yes/no\n"
+            f"QUESTION_FOR_USER: [if needs more info, what to ask]\n"
+        ),
+        agent=analysis_agent,
+        expected_output=(
+            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, JAEGER_FINDINGS, "
+            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields."
+        )
+    )
+    
+    crew = Crew(
+        agents=[analysis_agent],
+        tasks=[analysis_task],
+        verbose=False
+    )
+    
+    result = await crew.akickoff()
+    result_text = str(result)
+    
+    return _parse_plan_output(
+        result_text,
+        {},
+        customer_identifiers,
+        default_service
+    )
+
+
+def _parse_plan_output(
+    llm_response: str,
+    jaeger_results: Dict,
+    customer_identifiers: Dict[str, str],
+    default_service: str
+) -> PlanOutput:
+    
+    issue_understood = "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower() if "ISSUE_UNDERSTOOD:" in llm_response else "no"
+    
+    issue_summary = ""
+    if "ISSUE_SUMMARY:" in llm_response:
+        summary_part = llm_response.split("ISSUE_SUMMARY:")[-1]
+        next_section = summary_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in summary_part else summary_part
+        issue_summary = next_section.strip()
+    
+    # Parse JAEGER_FINDINGS from LLM response
+    jaeger_findings = ""
+    if "JAEGER_FINDINGS:" in llm_response:
+        findings_part = llm_response.split("JAEGER_FINDINGS:")[-1]
+        # Find the next field
+        next_field_match = findings_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in findings_part else findings_part
+        jaeger_findings = next_field_match.strip()
+    
+    # Build jaeger_results from LLM findings
+    # CRITICAL: Jaeger MUST be used - if NOT_USED, force re-investigation
+    if jaeger_findings and jaeger_findings.upper() != "NOT_USED":
+        parsed_jaeger = {
+            "raw": jaeger_findings,
+            "has_errors": "error" in jaeger_findings.lower() or "failed" in jaeger_findings.lower() or "exception" in jaeger_findings.lower(),
+            "trace_count": 0,
+            "used": True
+        }
+        # Try to extract trace count
+        import re
+        match = re.search(r"(\d+)\s*traces?", jaeger_findings, re.IGNORECASE)
+        if match:
+            parsed_jaeger["trace_count"] = int(match.group(1))
+        jaeger_results = parsed_jaeger
+    else:
+        # CRITICAL: Jaeger was NOT used - this is a failure!
+        # Force the issue to be marked as not understood so Execute Agent will use Jaeger
+        issue_understood = "no"
+        issue_summary = "Jaeger traces not fetched - investigation incomplete. Execute Agent must fetch Jaeger traces."
+        jaeger_results = {"used": False, "raw": "", "trace_count": 0, "has_errors": False, "error": "Jaeger not used by Plan Agent"}
+    
+    next_steps = ""
+    if "NEXT_STEPS:" in llm_response:
+        steps_part = llm_response.split("NEXT_STEPS:")[-1]
+        next_section = steps_part.split("NEEDS_MORE_INFO:")[0] if "NEEDS_MORE_INFO:" in steps_part else steps_part
+        next_steps = next_section.strip()
+    
+    needs_more_info = "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower() if "NEEDS_MORE_INFO:" in llm_response else False
+    
+    question = None
+    if "QUESTION_FOR_USER:" in llm_response:
+        question_part = llm_response.split("QUESTION_FOR_USER:")[-1]
+        question = question_part.strip()
+    
+    return PlanOutput(
+        issue_identified=issue_understood == "yes",
+        issue_summary=issue_summary or "Unable to determine issue from initial investigation",
+        jaeger_results=jaeger_results,
+        next_steps=next_steps or "Use ELK or DB queries based on findings",
+        needs_more_info=needs_more_info,
+        question_for_user=question,
+        suggested_service=default_service,
+        customer_identifiers=customer_identifiers
+    )
