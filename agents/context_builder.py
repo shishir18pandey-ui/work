@@ -1,0 +1,183 @@
+import os
+
+os.environ["OTEL_SDK_DISABLED"] = "true"
+
+import logging
+
+logger = logging.getLogger(__name__)
+
+
+def format_incidents_for_llm(results, max_conversation_chars=100000):
+    if not results:
+        return "No similar historic incidents found."
+
+    formatted = []
+
+    for i, inc in enumerate(results, 1):
+        if 'document' in inc:
+            doc = inc.get('document', {})
+            incident_id = doc.get('id', 'N/A')
+            content = doc.get('content', '')
+            chunked_content = inc.get('chunked_content', content)
+            
+            score = inc.get('score') or inc.get('dense_score') or 0
+            
+            metadata = inc.get('metadata', {})
+            assignment_group = metadata.get('assignment_group', 'N/A')
+            
+            if len(chunked_content) > max_conversation_chars:
+                chunked_content = chunked_content[:max_conversation_chars] + "..."
+            
+            resolution = "No resolution notes available"
+            if 'Ticket Resolution notes is:' in content:
+                try:
+                    resolution_start = content.find('Ticket Resolution notes is:')
+                    resolution_end = content.find('\n', resolution_start + 30)
+                    if resolution_end == -1:
+                        resolution = content[resolution_start + 30:resolution_start + 500]
+                    else:
+                        resolution = content[resolution_start + 30:resolution_end].strip()
+                except:
+                    pass
+            
+            incident_str = f"""
+=== SIMILAR INCIDENT {i} (Similarity: {score:.2%}) ===
+Incident ID: {incident_id}
+Assignment Group: {assignment_group}
+
+CONTENT:
+{chunked_content}
+
+RESOLUTION:
+{resolution}
+
+---
+"""
+        else:
+            incident_str = f""" Document not available. """
+        formatted.append(incident_str)
+
+    return "\n".join(formatted)
+
+
+async def run_incident_context_crew_async(incident_description: str, application: str, top_k: int = 5) -> str:
+    from crewai import Agent, Task, Crew, Process, LLM
+    from crewai.tools import BaseTool
+    from typing import List, Dict
+    import asyncio
+    from utils.http_calls import http_client_post_async
+    from utils.llm import OPENAI_MODEL_NAME, llm_config
+    from utils.observability import get_tracer
+
+    logger = logging.getLogger(__name__)
+
+    async def similarity_search_api_async(index: str, query_string: str, application: str) -> List[Dict]:
+        headers = {
+            "Content-Type": "application/json",
+        }
+        body = {
+            "metadata": {"application": application},
+            "query": query_string,
+            "index_source": index
+        }
+        response = await http_client_post_async(
+            os.getenv("SEMANTIC_SEARCH_ENDPOINT"),
+            headers=headers,
+            json=body
+        )
+        json_resp: Dict = response.json
+        results: List[Dict] = []
+        for obj in json_resp:
+            results.append(obj)
+        return results
+
+    _application = application
+
+    class SearchHistoricIncidentsTool(BaseTool):
+        name: str = "search_historic_incidents"
+        description: str = (
+            "Search for similar incidents from the historic incident database. "
+            "This tool finds past incidents that are similar to the current issue "
+            "and provides their resolution details and conversation context. "
+            "Use this to understand how similar issues were resolved in the past."
+        )
+
+        def _run(self, incident_description: str, top_k: int = 5):
+            return asyncio.run(self._arun(incident_description, top_k))
+
+        async def _arun(self, incident_description: str, top_k: int = 5):
+            logger.info(f"Searching similar incidents | app={_application} top_k={top_k}")
+            results = await similarity_search_api_async(
+                index='incidents',
+                query_string=incident_description,
+                application=_application
+            )
+            logger.info(f"Found {len(results)} similar incidents for app={_application}")
+            return format_incidents_for_llm(results)
+
+    tracer = get_tracer(__name__)
+
+    with tracer.start_as_current_span("_run_incident_context_crew_async") as span:
+        span.set_attribute("incident_description", incident_description[:100] + "..." if len(incident_description) > 100 else incident_description)
+        span.set_attribute("application", application)
+
+        llm = LLM(
+            model="openai/" + OPENAI_MODEL_NAME,
+            temperature=0.0,
+            base_url=llm_config.url,
+            api_key=llm_config.token
+        )
+
+        search_tool = SearchHistoricIncidentsTool()
+
+        agent = Agent(
+            role="Historic Incident Analyst",
+            goal="Find similar past incidents and provide resolution context",
+            backstory=(
+                "You are a senior incident analyst with access to a database of historic incidents. "
+                "Your expertise is in finding similar past incidents and understanding how they were resolved. "
+                "You will search for similar incidents and format the findings to help resolve the current issue."
+            ),
+            tools=[search_tool],
+            verbose=False,
+            allow_delegation=False,
+            llm=llm,
+            temperature=0,
+            max_iter=2,
+            reasoning=False,
+            max_retry_limit=1
+        )
+
+        task = Task(
+            name="Find similar incidents",
+            description=(
+                "Search for the top {top_k} most similar historic incidents to the following current incident:\n\n"
+                "{incident_description}\n\n"
+                "Use the search_historic_incidents tool to find similar cases. "
+                "Then analyze the results and provide a summary of:\n"
+                "1. The most relevant similar incidents found\n"
+                "2. How those incidents were resolved\n"
+                "3. Key troubleshooting steps from the conversation context\n"
+                "4. Any patterns or common solutions that could apply to the current incident"
+            ),
+            agent=agent,
+            expected_output=(
+                "A structured summary of similar historic incidents with their resolutions, "
+                "ready to be used as context for resolving the current incident."
+            ),
+        )
+
+        crew = Crew(
+            agents=[agent],
+            tasks=[task],
+            process=Process.sequential,
+            verbose=True
+        )
+
+        with tracer.start_as_current_span("crew_kickoff_async") as crew_span:
+            crew_span.set_attribute("incident_description", incident_description + "..." if len(incident_description) > 100 else incident_description)
+            output = str(await crew.akickoff(
+                inputs={"incident_description": incident_description, "top_k": top_k}
+            ))
+
+        return output
