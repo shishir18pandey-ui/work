@@ -1,67 +1,63 @@
-[
-  {
-    "name": "idp_customer_username_lookup",
-    "type": "SQL",
-    "db_instance": "platform",
-    "purpose": "Validate username and UCIC mapping in IDP customer table. Used when username mismatch or login issues occur.",
-    "query": "SELECT ucic, username FROM IDP.customer WHERE ucic = :ucic",
-    "parameters": [
-      {"name": "ucic", "type": "string", "description": "Customer UCIC"}
-    ],
-    "output_description": "Returns UCIC and username mapping.",
-    "example_use_cases": ["Incorrect username entered", "Username not mapped to UCIC"],
-    "app_tags": ["optimus", "login", "username"]
-  },
-  {
-    "name": "idp_customer_device_lookup",
-    "type": "SQL",
-    "db_instance": "platform",
-    "purpose": "Fetch device_id and user_id for a customer. REQUIRED FIRST STEP before mpin_login_check — MPIN traces in Jaeger are tagged by user_id (UUID), not UCIC, so you must call this to get the user_id. Also used for registration loops, multiple active devices, and MPIN expiry (MPIN_CREATED_ON).",
-    "query": "SELECT * FROM IDP.customerdevice WHERE user_id IN (SELECT user_id FROM IDP.customer WHERE ucic = :ucic)",
-    "parameters": [
-      {"name": "ucic", "type": "string", "description": "Customer UCIC"}
-    ],
-    "output_description": "Returns device details including DEVICE_ID, USER_ID, MPIN_CREATED_ON, IS_ACTIVE.",
-    "example_use_cases": ["Multiple active devices issue", "Registration screen loop", "MPIN expiry validation", "Get user_id before searching MPIN traces"],
-    "app_tags": ["optimus", "device", "mpin", "user-id"]
-  },
-  {
-    "name": "idp_get_user_id_from_ucic",
-    "type": "SQL",
-    "db_instance": "platform",
-    "purpose": "MANDATORY FIRST STEP for any mobile-app / MPIN incident. Converts a customer UCIC into the user_id UUID and device_id required by mpin_login_check. Jaeger MPIN traces are tagged ONLY by user_id, so this must be run before any MPIN log search.",
-    "query": "SELECT device_id, user_id FROM IDP.customerdevice WHERE user_id IN (SELECT user_id FROM IDP.customer WHERE ucic = :ucic)",
-    "parameters": [
-      {"name": "ucic", "type": "string", "description": "Customer UCIC"}
-    ],
-    "output_description": "Returns device_id and user_id (UUID). Pass user_id to mpin_login_check as tag_value with tag_name='user_id'. Multiple rows means multiple registered devices.",
-    "example_use_cases": ["Get user_id before searching MPIN traces", "Mobile app login issue", "Forgot MPIN", "Device registration loop"],
-    "app_tags": ["optimus", "login", "mpin", "user-id"]
-  },
-  {
-    "name": "idp_device_multiuser_lookup",
-    "type": "SQL",
-    "db_instance": "platform",
-    "purpose": "Check if a device_id is linked to multiple user_ids causing registration/login conflicts.",
-    "query": "SELECT * FROM IDP.customerdevice WHERE device_id = :device_id",
-    "parameters": [
-      {"name": "device_id", "type": "string", "description": "Device identifier"}
-    ],
-    "output_description": "Returns all user mappings for a device.",
-    "example_use_cases": ["Same device mapped to multiple users", "Login conflict due to shared device"],
-    "app_tags": ["optimus", "device"]
-  },
-  {
-    "name": "idp_password_expiry_check",
-    "type": "SQL",
-    "db_instance": "platform",
-    "purpose": "Check password status and expiry for login failures.",
-    "query": "SELECT ucic, username, passwd_created_on, is_need_to_reset_password FROM IDP.customer WHERE ucic = :ucic",
-    "parameters": [
-      {"name": "ucic", "type": "string", "description": "Customer UCIC"}
-    ],
-    "output_description": "Returns password creation date and reset flag.",
-    "example_use_cases": ["Password expired", "User locked due to password policy"],
-    "app_tags": ["optimus", "login", "password"]
-  }
-]
+from utils.llm import llm_config
+from crewai import Agent, Task, Crew, LLM
+
+
+async def run_intent_classifier_crew_async(incident_description: str, history: list, interaction: str) -> str:
+    
+    if not history:
+        history = ["NA"]
+
+    llm = LLM(
+        model = "openai/" + "/app/models/Qwen3-14B-FP8",
+        temperature=0.0,
+        base_url= "https://qwen3-14b.iservebetter.idfcfirstbank.com/v1",
+        api_key=llm_config.token
+    )
+
+    intent_agent = Agent(
+        role="Intent Classifier",
+        goal="Analyze user input and categorize it into the correct intent category",
+        backstory=(
+            "You are an expert at classifying user intents in a technical support system. "
+            "Your job is to analyze the conversation history and current user input to determine "
+            "what the user is trying to accomplish. You are precise and always output only the category name."
+        ),
+        verbose=True,
+        allow_delegation=False,
+        llm=llm,
+        temperature=0
+    )
+
+    intent_task = Task(
+        description=(
+            "Analyze the user input and categorize it.\n\n"
+            "Interaction History: \n```\n{history}\n```\n\n"
+            "User Input: \n```\n{incident_description}\n```\n\n"
+            "Latest Interaction: \n```\n{interaction}\n```\n\n"
+            "Depending on history you can figure out latest question if it exists. Catagorise intent on basis of `Latest Interaction` if it is NA, then classify on baisis of `User Input` \n\n"
+            "**Categories**:\n\n"
+            "\t- **closure**: Greeting, thanks, or ending the chat.\n\n"
+            "\t- **rebuttal**: User is disagreeing, correcting the system, or insisting that information they previously provided is correct (e.g., 'I already told you', 'That's wrong', 'This is correct.').\n\n"
+            "\t- **additional_info**: Providing IDs, account numbers or subsequent question/information asked.\n\n"
+            "**Rule**: If the User Input contradicts the Latest Interaction or expresses frustration with the system's request, it MUST be 'rebuttal'.\n\n"
+            "Output ONLY the category name."
+        ),
+        agent=intent_agent,
+        expected_output="Only the category name (closure, rebuttal, or additional_info)"
+    )
+
+    crew = Crew(
+        agents=[intent_agent],
+        tasks=[intent_task],
+        verbose=True
+    )
+
+    result = await crew.akickoff(
+        inputs={
+            "incident_description": incident_description,
+            "history": history,
+            "interaction": interaction
+        }
+    )
+    
+    return str(result)
