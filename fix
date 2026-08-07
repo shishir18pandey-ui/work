@@ -1,71 +1,392 @@
-import re
-import json
-import uuid
-import logging
-import litellm
+0:24:52 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-07 10:24:52,120 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│  Task: Extract customer identifiers from the incident.                       │
+│                                                                              │
+│  UCIC field: 1039842425                                                      │
+│  Incident: Short Description: Please find the attached screenshot for your   │
+│  reference.   Customer is unable to update the mobile number and the email   │
+│  id in the mobile application Customer ID:                                   │
+│  Description: Please find the attached screenshot for your reference.        │
+│  Customer is unable to update the mobile number and the email id in the      │
+│  mobile application                                                          │
+│  Customer ID: 5815891915                                                     │
+│                                                                              │
+│  Extract these identifiers if present:                                       │
+│  - ucic                                                                      │
+│  - mobile_number                                                             │
+│  - username                                                                  │
+│  - customer_id                                                               │
+│  - txn_id / txn_request_id                                                   │
+│                                                                              │
+│  Then use fetch_optimus_logs tool with:                                      │
+│  - tag_name = the identifier type you found                                  │
+│  - tag_value = the actual value                                              │
+│  - service = pick from tool description based on incident type               │
+│  - time_description = 'last 48 hours' unless user mentions a specific time   │
+│                                                                              │
+│  If no logs found with ucic, retry with mobile_number if available.          │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-logger = logging.getLogger(__name__)
+2026-08-07 10:25:03,075 - utils.minimax_tool_call_patch - WARNING - [minimax-recovery] recovered 1 leaked tool call(s): ['login_password_check']
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│  Final Answer:                                                               │
+│  [ChatCompletionMessageToolCall(function=Function(arguments='{"tag_name":    │
+│  "customer_id", "tag_value": "5815891915"}', name='login_password_check'),   │
+│  id='call_275b3cf0af81450b9036f578', type='function')]                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-_TOOL_CALL_RE = re.compile(r"<minimax:tool_call>(.*?)</minimax:tool_call>", re.DOTALL)
-_INVOKE_RE = re.compile(r'<invoke name="([^"]+)">(.*?)</invoke>', re.DOTALL)
-_PARAM_RE = re.compile(r'<parameter name="([^"]+)">(.*?)</parameter>', re.DOTALL)
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'agent_execution_completed' 
+closed 'llm_call_started' (expected 'agent_execution_started')
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'task_completed' closed 
+'agent_execution_started' (expected 'task_started')
+╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
+│                                                                              │
+│  Task Completed                                                              │
+│  Name: Identify Customer                                                     │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
+│                                                                              │
+│  Task Started                                                                │
+│  Name: Diagnose Optimus Issue                                                │
+│  ID: 4e5bb897-e720-4370-8c07-1095c3a6af6a                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+10:25:03 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-07 10:25:03,093 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│  Task: Given the following incident:                                         │
+│                                                                              │
+│  Short Description: Please find the attached screenshot for your reference.  │
+│  Customer is unable to update the mobile number and the email id in the      │
+│  mobile application Customer ID:                                             │
+│  Description: Please find the attached screenshot for your reference.        │
+│  Customer is unable to update the mobile number and the email id in the      │
+│  mobile application                                                          │
+│  Customer ID: 5815891915                                                     │
+│                                                                              │
+│  Using the Jaeger logs and IDP SQL query results from the discovery phase:   │
+│  1. Identify the root cause from error traces                                │
+│  2. Check HTTP status codes — 4xx means client error, 5xx means server       │
+│  error                                                                       │
+│  3. If login issue — check IDP DB for password expiry, device registration   │
+│  4. Cross reference with historic incidents: ## STRUCTURED SUMMARY OF        │
+│  SIMILAR HISTORIC INCIDENTS                                                  │
+│                                                                              │
+│  ### INCIDENT 1 (Similarity: 75.39%)                                         │
+│  **Incident ID:** INC000007060615                                            │
+│  **Assignment Group:** Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description:** Customer is unable to change mobile number from      │
+│  mobile application, no error occurred, just it doesn't get processed.       │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  - Issue is restricted within 24 hours after changing the password or MPIN   │
+│  - Once customer sets the new password/MPIN/Biometric for trusted device,    │
+│  system will not allow user to update mobile and Email ID as per the         │
+│  functionality                                                               │
+│  - Ask user to try after 24 hours to change their mobile number              │
+│  - If still issue persists, share error screenshot and exact time and date   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### INCIDENT 2 (Similarity: 83.92%)                                         │
+│  **Incident ID:** INC000004923733                                            │
+│  **Assignment Group:** Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description:** Customer is unable to update contact details         │
+│  through mobile application                                                  │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  - User is trying to change the mobile number which is already available in  │
+│  the system                                                                  │
+│  - Due to this, the system is not allowing user to change the mobile number  │
+│  - User needs to enter a NEW mobile number (not already in system)           │
+│  - Alternatively, user can visit the branch to change the mobile number      │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### INCIDENT 3 (Similarity: 2.60%)                                          │
+│  **Incident ID:** INC000005925617                                            │
+│  **Assignment Group:** Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description:** Customer unable to change contact no. and email id   │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  - Customer belongs to NR category (NRI customer)                            │
+│  - Business has restricted Mobile and Email update via Optimus channel       │
+│  - This restriction is in place since one week                               │
+│  - This is a valid scenario - please communicate to Customer accordingly     │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### INCIDENT 4 (Similarity: 79.62%)                                         │
+│  **Incident ID:** INC000008435203                                            │
+│  **Assignment Group:** Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description:** Customer is unable to find the option to update his  │
+│  mobile number and email id                                                  │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  - Mobile and email change option is available in mobile app only            │
+│  - Ask customer to reregister the mobile app with trusted device             │
+│  - Trusted device means performed the SIM verification process while         │
+│  registration                                                                │
+│  - After reregistration, check for mobile and email change options           │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### INCIDENT 5 (Similarity: 2.06%)                                          │
+│  **Incident ID:** INC000006644424                                            │
+│  **Assignment Group:** Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description:** Customer unable to register email id from mobile     │
+│  application. Email reflected as updated within 48 hours but still not       │
+│  updated.                                                                    │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  - Customer attempted to update email ID but had recently updated their      │
+│  password or changed their MPIN                                              │
+│  - As per system functionality, customer is NOT allowed to change email ID   │
+│  within 24 hours of creating or updating password or MPIN                    │
+│  - Recommend customer to wait for 24 hours after the last password/MPIN      │
+│  change                                                                      │
+│  - Ask customer to retry now to update the email id                          │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## KEY TROUBLESHOOTING STEPS FROM CONVERSATION CONTEXT                      │
+│                                                                              │
+│  1. **24-Hour Restriction Check:** Verify if customer recently changed       │
+│  password, MPIN, or set up biometric for trusted device. System restricts    │
+│  mobile/email update within 24 hours of such changes.                        │
+│                                                                              │
+│  2. **Duplicate Number Check:** Verify if the new mobile number being        │
+│  entered is already registered in the system.                                │
+│                                                                              │
+│  3. **Customer Category Check:** Check if customer is NRI category -         │
+│  Business has restricted mobile and email update via Optimus for NRI         │
+│  customers.                                                                  │
+│                                                                              │
+│  4. **Trusted Device Registration:** Ask customer to reregister mobile app   │
+│  with trusted device (SIM verification process).                             │
+│                                                                              │
+│  5. **Alternative Channel:** If online update not working, advise customer   │
+│  to visit branch for mobile number/email update.                             │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## PATTERNS AND COMMON SOLUTIONS                                            │
+│                                                                              │
+│  **Most Common Resolutions:**                                                │
+│  1. **24-hour restriction after password/MPIN change** - Most frequent root  │
+│  cause (appears in 2 incidents)                                              │
+│  2. **NRI category restriction** - Business-imposed restriction for certain  │
+│  customer categories                                                         │
+│  3. **Trusted device not registered** - Customer needs to reregister with    │
+│  SIM verification                                                            │
+│  4. **Duplicate mobile number** - New number already exists in system        │
+│                                                                              │
+│  **Recommended Actions for Current Incident (Customer ID: 5815891915, UCIC:  │
+│  1039842425):**                                                              │
+│  1. Ask customer if they recently changed password or MPIN (within 24        │
+│  hours)                                                                      │
+│  2. Check if customer is NRI category                                        │
+│  3. Verify if new mobile number is already in system                         │
+│  4. Ask customer to reregister mobile app with trusted device                │
+│  5. If all above fail, advise branch visit for manual update                 │
+│  5. If logs show no errors, check if the issue is configuration-related      │
+│                                                                              │
+│  6. Always return all error code and there message in reponse Run IDP SQL    │
+│  tools if needed to check customer/device status.                            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Repaired JSON: [{"tag_name": "customer_id", "tag_value": "5815891915"}, ["TOOL_CALL]\n{tool => 'login_password_check', args => {\n  --tag_name", "customer_id", "tag_value", 5815891915, "\\n}}\n[/TOOL_CALL]"]]
+Repaired JSON: [{"tag_name": "customer_id", "tag_value": "5815891915"}, ["TOOL_CALL]\n{tool => 'login_password_check', args => {\n  --tag_name", "customer_id", "tag_value", 5815891915, "\\n}}\n[/TOOL_CALL]"]]
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│  Error: the Action Input is not a valid key, value dictionary.               │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+10:26:09 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-07 10:26:09,182 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+Repaired JSON: [{"tag_name": "customer_id", "tag_value": "5815891915"}, ["TOOL_CALL]\n{tool => 'login_password_check', args => {\n  --tag_name", "customer_id", "tag_value", 5815891915, "\\n}}\n[/TOOL_CALL]"]]
+Repaired JSON: [{"tag_name": "customer_id", "tag_value": "5815891915"}, ["TOOL_CALL]\n{tool => 'login_password_check', args => {\n  --tag_name", "customer_id", "tag_value", 5815891915, "\\n}}\n[/TOOL_CALL]"]]
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│  Error: the Action Input is not a valid key, value dictionary.               │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+10:26:13 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-07 10:26:13,426 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-07 10:26:34,037 - utils.minimax_tool_call_patch - WARNING - [minimax-recovery] recovered 1 leaked tool call(s): ['login_password_check']
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│  Final Answer:                                                               │
+│  [ChatCompletionMessageToolCall(function=Function(arguments='{"tag_name":    │
+│  "customer_id", "tag_value": "5815891915"}', name='login_password_check'),   │
+│  id='call_524ba0be0b434810ac0ec366', type='function')]                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'agent_execution_completed' 
+closed 'llm_call_started' (expected 'agent_execution_started')
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'task_completed' closed 
+'agent_execution_started' (expected 'task_started')
+╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
+│                                                                              │
+│  Task Completed                                                              │
+│  Name: Diagnose Optimus Issue                                                │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
+│                                                                              │
+│  Task Started                                                                │
+│  Name: Report                                                                │
+│  ID: 398667ed-df2c-41aa-9dbf-5adfe153810d                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│  Task: Review the technical logs from the diagnosis phase.                   │
+│  Synthesize the findings into the required JSON format.                      │
+│                                                                              │
+│  **CRITICAL**: Always return all error code and there message in reponse     │
+│  **CRITICAL**: Mask all PII and remove backend technical jargon. User is     │
+│  not supposed to know about SQL errors.                                      │
+│  **CRITICAL**: Verify if the issue is resolved w.r.t incident description:   │
+│  Short Description: Please find the attached screenshot for your reference.  │
+│  Customer is unable to update the mobile number and the email id in the      │
+│  mobile application Customer ID:                                             │
+│  Description: Please find the attached screenshot for your reference.        │
+│  Customer is unable to update the mobile number and the email id in the      │
+│  mobile application                                                          │
+│  Customer ID: 5815891915, mention yes/no.                                    │
+│  **CRITICAL**: Do not ask repetitive questions to the user.                  │
+│  **IMPORTANT**: The person raising this incident is not a direct customer,   │
+│  but a bank employee who works in one of the branches.                       │
+│  **IMPORTANT**: If an SR needs to be raised, clearly state 'An SR needs to   │
+│  be raised' — do NOT claim it has already been raised.                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+10:26:34 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-07 10:26:34,055 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+Repaired JSON: [{"key": "1039842425"}, ["TOOL_CALL]\n{tool => 'idp_get_user_id_from_ucic', args => {\n  --key", 1039842425, "\\n}}\n[/TOOL_CALL]"]]
+Repaired JSON: [{"key": "1039842425"}, ["TOOL_CALL]\n{tool => 'idp_get_user_id_from_ucic', args => {\n  --key", 1039842425, "\\n}}\n[/TOOL_CALL]"]]
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│  Error: the Action Input is not a valid key, value dictionary.               │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+10:27:43 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-07 10:27:43,681 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│  Final Answer:                                                               │
+│                                                                              │
+│                                                                              │
+│  [ChatCompletionMessageToolCall(function=Function(arguments='{"key":         │
+│  "1039842425"}', name='idp_get_user_id_from_ucic'), id='call_abc123')]       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
+│                                                                              │
+│  Task Completed                                                              │
+│  Name: Report                                                                │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'crew_kickoff_completed' 
+closed 'task_started' (expected 'crew_kickoff_started')
+Resolver task completed for incident 2c67b8fd3baa07d02101d834c3e45a90
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'method_execution_finished' 
+closed 'task_started' (expected 'method_execution_started')
+2026-08-07 10:27:49,390 - crewai.flow.flow - ERROR - Error executing listener update_servicenow: 'solution'
+2026-08-07 10:27:49,391 - __main__ - ERROR - ✗ Flow FAILED | incident=2c67b8fd3baa07d02101d834c3e45a90 error='solution'
+interaction_counter: 1
+Request - url:https://api.aws-uat.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident json:{'callerId': 'devisivanage.t_tho@idfcfirstext.bank.in', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Account Access Issue', 'tier3': 'Account Setup requirements', 'impact': 'Low', 'urgency': 'Low', 'shortDescription': 'Please find the attached screenshot for your reference.   Customer is unable to update the mobile number and the email id in the mobile application Customer ID:', 'description': 'Please find the attached screenshot for your reference.   Customer is unable to update the mobile number and the email id in the mobile application\r\nCustomer ID: 5815891915', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006217253', 'sourceIncidentId': '', 'assignmentGroup': 'Optimus BTO Support', 'incidentId': '2c67b8fd3baa07d02101d834c3e45a90', 'state': 'On Hold', 'additionalComments': 'BOT is unable to resolve, assign to an Engineer', 'resolutionNotes': '', 'sourceIncCreateddttime': '07-Aug-2026 15:52:59', 'cause': 'Assign to an Engineer.'} headers:{'Content-Type': 'application/json', 'correlationId': '7b0e37d5-d9b2-45b4-8aed-70ec820a8155', 'source': 'IncidentBot', 'transactionId': 'fa49e175-8e20-49ae-99d8-ea0caa49a3f1', 'Authorization': 'Basic MThiNDhmNzctNzMyMy00MWJiLWJmNmUtYzZmODNlODdhOTgyOkI3TGJ1NVhkcX5JT1paaW1SLThNVDE3eWtF'}
+╭────────────────────────────── Crew Completion ───────────────────────────────╮
+│                                                                              │
+│  Crew Execution Completed                                                    │
+│  Name: crew                                                                  │
+│  ID: 878c1e6e-a7ca-485a-a8fc-3280814cde5b                                    │
+│  Final Output:                                                               │
+│                                                                              │
+│  [ChatCompletionMessageToolCall(function=Function(arguments='{"key":         │
+│  "1039842425"}', name='idp_get_user_id_from_ucic'), id='call_abc123')]       │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
+│                                                                              │
+│  Method: run_resolver_crew                                                   │
+│  Status: Completed                                                           │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
+│                                                                              │
+│  Method: update_servicenow                                                   │
+│  Status: Running                                                             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── ❌ Flow Method Failed ────────────────────────────╮
+│                                                                              │
+│  Method: update_servicenow                                                   │
+│  Status: Failed                                                              │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
 
-def _parse_leaked_calls(text: str):
-    calls = []
-    for block in _TOOL_CALL_RE.findall(text):
-        for name, body in _INVOKE_RE.findall(block):
-            args = {p_name: p_val.strip() for p_name, p_val in _PARAM_RE.findall(body)}
-            calls.append({"name": name, "arguments": args})
-    return calls
 
 
-def _recover(response):
-    try:
-        message = response.choices[0].message
-        if getattr(message, "tool_calls", None) or not message.content:
-            return response
-        if "<minimax:tool_call>" not in message.content:
-            return response
-
-        leaked = _parse_leaked_calls(message.content)
-        if not leaked:
-            return response
-
-        logger.warning(
-            f"[minimax-recovery] recovered {len(leaked)} leaked tool call(s): "
-            f"{[c['name'] for c in leaked]}"
-        )
-
-        from litellm.types.utils import ChatCompletionMessageToolCall, Function
-        message.tool_calls = [
-            ChatCompletionMessageToolCall(
-                id=f"call_{uuid.uuid4().hex[:24]}",
-                type="function",
-                function=Function(name=c["name"], arguments=json.dumps(c["arguments"]))
-            )
-            for c in leaked
-        ]
-        message.content = None
-    except Exception as e:
-        logger.error(f"[minimax-recovery] failed: {e}")
-
-    return response
-
-
-_orig_completion = litellm.completion
-_orig_acompletion = litellm.acompletion
-
-
-def completion(*args, **kwargs):
-    return _recover(_orig_completion(*args, **kwargs))
-
-
-async def acompletion(*args, **kwargs):
-    return _recover(await _orig_acompletion(*args, **kwargs))
-
-
-litellm.completion = completion
-litellm.acompletion = acompletion
-
-logger.info("[minimax-recovery] litellm patched for MiniMax tool-call leak recovery")
