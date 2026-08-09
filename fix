@@ -1,317 +1,443 @@
-
 import os
-import re
-import requests
-import httpx
 import json
-from typing import List, Dict, Optional, Any
-import asyncio
 import logging
-from utils.observability import get_tracer
 
+from utils.oracle_connection import close_oracle_async_pool
+from utils.observability import init_telemetry, get_tracer
+from utils.llm import llm_config
 
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
 logger = logging.getLogger(__name__)
 
+telemetry_endpoint = os.getenv("TELEMETRY_ENDPOINT")
 
-OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
-OPENAI_API_BASE = os.environ.get('OPENAI_API_BASE')
-OPENAI_MODEL_NAME = os.environ.get('OPENAI_MODEL_NAME')
-
-class LLMConfig:
-    def __init__(self):
-        self.env = os.getenv('ENV', 'non-local')
-        self.token = None
-        self.url = OPENAI_API_BASE
-        self.model_name = os.getenv('OPENAI_MODEL_NAME', '/app/models/MiniMax-M2.5')
+if telemetry_endpoint:
+    try:
+       
+        init_telemetry()
         
-    def _get_config(self) -> str:
-        def _get_token():
-            response = requests.post(
-                url=os.getenv('ENT_AUTH_APPLICATION_TOKEN_URL'),
-                headers={},
-                data={
-                    'client_id': os.getenv('ENT_AUTH_APPLICATION_CLIENT_ID'),
-                    'client_secret': os.getenv('ENT_AUTH_APPLICATION_SECRET'),
-                    'grant_type': 'client_credentials'
-                }
-            )
-            response_data = response.json()
-            return response_data['access_token']
-        
-        if self.env == 'local':
-            url = self.url
-            token = os.getenv('OPENAI_API_KEY')
-        else: 
-            try:
-                if '-entauth' not in self.url:
-                    pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
-                    match = re.match(pattern, self.url)
-                    base_domain, model_path, version_path = match.groups()
-                    url = f"{base_domain}{model_path}-entauth{version_path}"
-                else:
-                    url = self.url
-                token = _get_token()
-                return url, token
-            except Exception as e:
-                logger.error(e)
-
-            # retry
-            pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
-            match = re.match(pattern, self.url)
-            base_domain, model_path, version_path = match.groups()
-            url = f"{base_domain}{model_path}-entauth{version_path}"
-            token = _get_token()
-            return url, token
-
-    def set_llm_config(self) -> dict:
-        try:
-            url, token = self._get_config()
-            self.url = url
-            self.token = token
-            os.environ['OPENAI_API_KEY'] = token
-            os.environ['OPENAI_API_BASE'] = url
-            logger.info("OPENAI_API_KEY refreshed")
-        except Exception as e:
-            logger.error(f"OPENAI_API_KEY refresh failed: {e}")
+        logger.info("OpenTelemetry initialized for incident-manager worker")
+    except Exception as e:
+        logger.warning(f"Failed to initialize OpenTelemetry: {e}")
+else:
+    logger.warning("TELEMETRY_ENDPOINT not set — running without tracing")
 
 
-    async def refresh_loop(self):
-        while True:
-            self.set_llm_config()
-            await asyncio.sleep(600)
+import asyncio
+import signal
+import threading
+import time
+from confluent_kafka import Consumer, KafkaError, KafkaException
+from dotenv import load_dotenv
 
-llm_config = LLMConfig()
+load_dotenv()
 
-async def run_crew_with_retry_async(crew_factory, max_retries=3, base_delay=1):
-    from litellm.exceptions import AuthenticationError
-    
-    last_error = None
-    for attempt in range(max_retries + 1):
-        try:
-            crew_coro = crew_factory()
-            result = await crew_coro
-            return result
-        except AuthenticationError as e:
-            error_str = str(e).lower()
-            if ('401' in error_str or 'invalid_token' in error_str or 
-                'authentication' in error_str or 'access token' in error_str or 
-                'invalid_token' in error_str):
-                last_error = e
-                if attempt < max_retries:
-                    delay = base_delay * (2 ** attempt)
-                    logger.info(f"Token expired (attempt {attempt + 1}/{max_retries}), "
-                               f"refreshing token and retrying in {delay}s...")
-                    llm_config.set_llm_config()
-                    await asyncio.sleep(delay)
-                else:
-                    logger.error(f"Max retries ({max_retries}) reached for crew execution")
-            else:
-                raise
-        except Exception as e:
-            import traceback
-            error_str = str(e).lower()
-            logger.error(f"=== FULL EXCEPTION TRACEBACK ===")
-            logger.error(traceback.format_exc())
-            logger.error(f"=== EXCEPTION TYPE: {type(e).__name__} ===")
-            logger.error(f"=== EXCEPTION MESSAGE: {e} ===")
-            if ('connection' in error_str or 'timeout' in error_str or 
-                'rate limit' in error_str or 'temporarily unavailable' in error_str or
-                'service unavailable' in error_str or '502' in error_str or 
-                '503' in error_str or '504' in error_str or '429' in error_str):
-                last_error = e
-                if attempt < max_retries:
-                    delay = base_delay * (2 ** attempt)
-                    logger.info(f"Connection error (attempt {attempt + 1}/{max_retries}), "
-                               f"retrying in {delay}s... Error: {e}")
-                    await asyncio.sleep(delay)
-                else:
-                    logger.error(f"Max retries ({max_retries}) reached for crew execution")
-            else:
-                raise
-    
-    raise last_error
+KAFKA_BROKER   = os.getenv("KAFKA_BROKER_URL")
+KAFKA_TOPIC    = os.getenv("KAFKA_TOPIC", "GEN-AI-DE-INCIDENT-EVENTS")
+KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID", "gen-ai-de-incident-managers")
+KAFKA_USERNAME = os.getenv("KAFKA_USERNAME")
+KAFKA_PASSWORD = os.getenv("KAFKA_PASSWORD")
+
+running = True
+semaphore = None
+active_tasks = {}  # {task: (incident_id, payload, start_time)}
+TIMEOUT_SECONDS = 3600  # 1 hour
+print(telemetry_endpoint,"tetsing1")
+logger.info(f"Worker config loaded")
+logger.info(f"  KAFKA_BROKER    : {KAFKA_BROKER}")
+logger.info(f"  KAFKA_TOPIC     : {KAFKA_TOPIC}")
+logger.info(f"  KAFKA_GROUP_ID  : {KAFKA_GROUP_ID}")
 
 
-async def call_llm(
-    messages: List[Dict[str, str]],
-    tools: Optional[List[Dict[str, Any]]] = None,
-    model: str = OPENAI_MODEL_NAME,
-    temperature: float = 0.0,
-    max_tokens: Optional[int] = None,
-    first_attempt: bool = True
-) -> Dict[str, Any]:
+def get_kafka_consumer():
+    config = {
+        'bootstrap.servers': KAFKA_BROKER,
+        'group.id': KAFKA_GROUP_ID,
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': False,
+        'security.protocol': 'SASL_SSL',
+        'sasl.mechanism': 'SCRAM-SHA-512',
+        'sasl.username': KAFKA_USERNAME,
+        'sasl.password': KAFKA_PASSWORD,
+        'session.timeout.ms': 60000,
+        'max.poll.interval.ms': 7200000,
+    }
+    return Consumer(config)
+
+
+async def process_message(incident_id: str, event_type: str, payload: dict):
+    from flow import IncidentManagementFlow, send_rejection_to_servicenow_async
+    from utils.incident_db_async import get_incident_status_async, upsert_incident_payload_async
+
     tracer = get_tracer(__name__)
-    
-    with tracer.start_as_current_span("call_llm_async") as span:
-        span.set_attribute("model", model)
-        span.set_attribute("temperature", temperature)
-        if tools:
-            span.set_attribute("has_tools", True)
-        else:
-            span.set_attribute("has_tools", False)
 
-        payload = {
-            "model": model,
-            "messages": messages,
-            "temperature": temperature,
-        }
+    async with semaphore:
+        with tracer.start_as_current_span("process_message") as span:
+            span.set_attribute("incident_id", incident_id)
+            span.set_attribute("event_type", event_type)
 
-        if max_tokens:
-            payload["max_tokens"] = max_tokens
+            logger.info(f"→ Processing | incident={incident_id} event={event_type}")
 
-        if tools:
-            payload["tools"] = tools
-            payload["tool_choice"] = "auto"
+            current_status = await get_incident_status_async(incident_id)
+            logger.info(f"  DB status | incident={incident_id} status={current_status}")
+            span.set_attribute("current_status", current_status or "unknown")
 
-        headers = {
-            "Authorization": f"Bearer {llm_config.token}",
-            "Content-Type": "application/json"
-        }
+            if event_type == "new_incident":
+                if current_status in ['resolved', 'rejected']:
+                    logger.info(f"  Skipping | incident={incident_id} reason=already_{current_status}")
+                    span.set_attribute("skipped", True)
+                    return
 
-        try:
-            async with httpx.AsyncClient(timeout=240.0, verify='./IDFCBANKCA.pem') as client:
-                response = await client.post(
-                    f'{llm_config.url}/chat/completions',
-                    headers=headers,
-                    json=payload
+            if event_type == "additional_comments":
+                if current_status not in ['in_progress']:
+                    logger.info(f"  Skipping | incident={incident_id} reason=status_{current_status}_not_in_progress")
+                    span.set_attribute("skipped", True)
+                    return
+
+            flow = IncidentManagementFlow()
+            flow.state.incident_id = incident_id
+            flow.state.payload = payload
+
+            if event_type == "additional_comments":
+                comments = payload.get("additionalComments", "")
+                flow.state.current_comment = comments
+                logger.info(f"  Flow type | incident={incident_id} type=additional_comments")
+                span.set_attribute("flow_type", "additional_comments")
+            else:
+                logger.info(f"  Flow type | incident={incident_id} type=new_incident")
+                span.set_attribute("flow_type", "new_incident")
+
+            try:
+                await flow.akickoff()
+                logger.info(f"✓ Flow completed | incident={incident_id}")
+                span.set_attribute("flow_status", "completed")
+
+            except asyncio.CancelledError:
+                # ── FIX: timeout_checker_thread already sent rejection ──
+                # Just log and update DB — do NOT send to ServiceNow again
+                logger.error(f"Task cancelled (timeout) | incident={incident_id}")
+                span.set_attribute("flow_status", "cancelled")
+                try:
+                    await upsert_incident_payload_async(
+                        incident_id,
+                        json.dumps(payload),
+                        'Failed - Timeout'
+                    )
+                except Exception as db_err:
+                    logger.error(f"DB update failed after cancel | incident={incident_id} error={db_err}")
+                raise  # re-raise so asyncio knows task was cancelled
+
+            except Exception as e:
+                logger.error(f"✗ Flow FAILED | incident={incident_id} error={e}")
+                span.set_attribute("flow_status", "failed")
+                span.set_attribute("error", str(e))
+                span.record_exception(e)
+                (status, info), _ = await send_rejection_to_servicenow_async(payload)
+                payload['__agent_data']['snow_logs'].append({
+                    "type": "rejection", "status": status, "response": info
+                })
+                await upsert_incident_payload_async(
+                    incident_id,
+                    json.dumps(payload),
+                    'Failed - LLM Error'
                 )
+                logger.info(f"  Fallback rejection sent | incident={incident_id}")
 
-            response.raise_for_status()
-            data = response.json()
-
-            message = data["choices"][0]["message"]
-
-            response_text = message.get("content")
-            tool_calls = None
-
-            if message.get("tool_calls"):
-                tool_calls = [
-                    {
-                        "id": tc["id"],
-                        "type": tc["type"],
-                        "function": {
-                            "name": tc["function"]["name"],
-                            "arguments": tc["function"]["arguments"]
-                        }
-                    }
-                    for tc in message["tool_calls"]
-                ]
-
-            return {
-                "response": response_text,
-                "tool_calls": tool_calls,
-                "finish_reason": data["choices"][0]["finish_reason"],
-                "usage": {
-                    "prompt_tokens": data["usage"]["prompt_tokens"],
-                    "completion_tokens": data["usage"]["completion_tokens"],
-                    "total_tokens": data["usage"]["total_tokens"]
-                },
-                "raw_message": message
-            }
-
-        except httpx.RequestError as e:
-            span.record_exception(e)
-            return {
-                "response": None,
-                "tool_calls": None,
-                "finish_reason": "error",
-                "error": str(e),
-                "usage": None,
-                "raw_message": None
-            }
-        except (KeyError, json.JSONDecodeError) as e:
-            span.record_exception(e)
-            return {
-                "response": None,
-                "tool_calls": None,
-                "finish_reason": "error",
-                "error": f"Failed to parse API response: {str(e)}",
-                "usage": None,
-                "raw_message": None
-            }
-        except Exception as e:
-            logger.error(e)
-            span.record_exception(e)
-            if first_attempt:
-                llm_config.set_llm_config()
-                return await call_llm(messages, tools, model, temperature, max_tokens, False)
+def timeout_checker_thread():
+    global active_tasks, running
+    while running:
+        time.sleep(10)
+        now = time.time()
+        for task, (incident_id, payload, start_time) in list(active_tasks.items()):
+            if task not in active_tasks:
+                continue
+            if task.done():
+                continue
+            if now - start_time > TIMEOUT_SECONDS:
+                logger.error(f"Timeout | incident={incident_id} - sending rejection")
+                if task in active_tasks:
+                    del active_tasks[task]
+                task.cancel()
+                logger.info(f"Task cancelled for timeout | incident={incident_id}")
 
 
-async def call_llm_streaming(
-    messages: List[Dict[str, str]],
-    tools: Optional[List[Dict[str, Any]]] = None,
-    model: str = OPENAI_MODEL_NAME,
-    temperature: float = 0.7,
-    max_tokens: Optional[int] = None,
-    first_attempt: bool = True
-):
-    """Async version of call_llm_streaming"""
-    payload = {
-        "model": model,
-        "messages": messages,
-        "temperature": temperature,
-        "stream": True
-    }
+async def run_consumer():
+    global semaphore, active_tasks
 
-    if max_tokens:
-        payload["max_tokens"] = max_tokens
+    asyncio.create_task(llm_config.refresh_loop())
+    logger.info("LLM config initialized")
+    
+    try:
+        from utils.audit_logger import create_audit_table_if_not_exists
+        await create_audit_table_if_not_exists()
+        logger.info("Audit table initialized")
+    except Exception as e:
+        logger.warning(f"Audit table initialization failed: {e}")
 
-    if tools:
-        payload["tools"] = tools
-        payload["tool_choice"] = "auto"
+    semaphore = asyncio.Semaphore(10)
+    active_tasks = {}
 
-    headers = {
-        "Authorization": f"Bearer {llm_config.token}",
-        "Content-Type": "application/json"
-    }
+    tracer = get_tracer(__name__)
+    consumer = get_kafka_consumer()
+
+    timeout_thread = threading.Thread(target=timeout_checker_thread, daemon=True)
+    timeout_thread.start()
+    logger.info("Timeout checker thread started")
 
     try:
-        async with httpx.AsyncClient(timeout=30.0, verify='./IDFCBANKCA.pem') as client:
-            async with client.stream('POST', llm_config.url, headers=headers, json=payload) as response:
-                response.raise_for_status()
-                
-                async for line in response.aiter_lines():
-                    if line:
-                        if line.startswith('data: '):
-                            line = line[6:]
+        consumer.subscribe([KAFKA_TOPIC])
+        logger.info(f"✓ Worker started")
+        logger.info(f"  Topic    : {KAFKA_TOPIC}")
+        logger.info(f"  Group    : {KAFKA_GROUP_ID}")
+        logger.info(f"  Broker   : {KAFKA_BROKER}")
 
-                        if line == '[DONE]':
-                            break
+        while running:
+            msg = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: consumer.poll(1.0)
+            )
 
-                        try:
-                            chunk_data = json.loads(line)
-                            delta = chunk_data["choices"][0]["delta"]
+            if msg is None:
+                continue
 
-                            yield {
-                                "delta": delta.get("content"),
-                                "tool_calls": delta.get("tool_calls"),
-                                "finish_reason": chunk_data["choices"][0].get("finish_reason")
-                            }
-                        except json.JSONDecodeError:
-                            continue
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    logger.debug(f"End of partition {msg.partition()}")
+                    continue
+                else:
+                    logger.error(f"Kafka error: {msg.error()}")
+                    raise KafkaException(msg.error())
 
-    except httpx.RequestError as e:
-        yield {
-            "delta": None,
-            "tool_calls": None,
-            "finish_reason": "error",
-            "error": str(e)
-        }
+            incident_id = None
+            try:
+                raw = msg.value().decode('utf-8')
+                data = json.loads(raw)
 
-    except Exception as e:
-        logger.error(e)
-        if first_attempt:
-            llm_config.set_llm_config()
-            async for chunk in call_llm_streaming(messages, tools, model, temperature, max_tokens, False):
-                yield chunk
+                incident_id = data.get("incident_id")
+                event_type  = data.get("event_type", "new_incident")
+                payload     = data.get("payload", {})
+
+                logger.info(f"→ Message received | incident={incident_id} event={event_type} partition={msg.partition()} offset={msg.offset()}")
+
+                if not incident_id:
+                    logger.warning("Message missing incident_id, skipping")
+                    consumer.commit(message=msg)
+                    continue
+
+                with tracer.start_as_current_span("kafka_message_received") as span:
+                    span.set_attribute("incident_id", incident_id)
+                    span.set_attribute("event_type", event_type)
+                    span.set_attribute("partition", msg.partition())
+                    span.set_attribute("offset", msg.offset())
+
+                task = asyncio.create_task(process_message(incident_id, event_type, payload))
+                active_tasks[task] = (incident_id, payload, time.time())
+
+                # Auto-remove from event loop when done
+                def cleanup_done(t):
+                    if t in active_tasks:
+                        del active_tasks[t]
+                task.add_done_callback(cleanup_done)
+
+                consumer.commit(message=msg)
+                logger.info(f"✓ Offset committed | incident={incident_id}")
+
+            except Exception as e:
+                logger.error(f"✗ Message handling FAILED | incident={incident_id} error={e}")
+                await asyncio.sleep(5)
+
+    except KeyboardInterrupt:
+        logger.info("Worker interrupted")
+    finally:
+        logger.info("Closing consumer...")
+        consumer.close()
+        logger.info("Consumer closed cleanly")
+
+
+def handle_shutdown(signum, frame):
+    global running
+    logger.info(f"Shutdown signal {signum} received...")
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.call_soon(lambda: asyncio.create_task(close_oracle_async_pool()))
+        else:
+            asyncio.run(close_oracle_async_pool())
+    except RuntimeError:
+        asyncio.run(close_oracle_async_pool())
+    running = False
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, handle_shutdown)
+    signal.signal(signal.SIGINT, handle_shutdown)
+    
+    logger.info("Starting incident-manager worker...")
+    asyncio.run(run_consumer())
+
+
+above file is worker.py
+this si incdeint_db.py but we dont use this file :
 
 
 
+import psycopg2.extras
+from connection import get_db
+from typing import Optional, Dict, Any, List
+import json
+
+from encryption_utils import encrypt, decrypt, is_encrypted
+
+TABLE_NAME = "incidents"
+
+def get_last_25_incidents() -> Optional[List]:
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            f"""
+            SELECT id,
+                   incident_id,
+                   payload,
+                   resolution,
+                   created_at
+            FROM {TABLE_NAME}
+            ORDER BY created_at DESC
+            LIMIT 25
+            """
+        )
+        rows = cur.fetchall()
+        cur.close()
+
+    # Decode and decrypt payload JSON string into dict
+    for row in rows:
+        if row.get("payload"):
+            # Check if payload is encrypted
+            if is_encrypted(row["payload"]):
+                try:
+                    decrypted_payload = decrypt(row["payload"])
+                    payload = json.loads(decrypted_payload)
+                except Exception:
+                    # If decryption fails, return as-is
+                    payload = json.loads(row["payload"])
+            else:
+                # Assume it's already decrypted/plaintext
+                payload = json.loads(row["payload"])
+            
+            row["payload"] = {k: v for k, v in payload.items() if v is not None}
+
+    return rows if rows else None
+
+def get_incident_status(incident_id: str) -> str:
+    with get_db() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"SELECT incident_status FROM {TABLE_NAME} WHERE incident_id = %s",
+            (incident_id,)
+        )
+        row = cur.fetchone()
+        cur.close()
+        return row[0] if row else None
 
 
+def set_incident_status(incident_id: str, status: str):
+    with get_db() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"""
+            UPDATE {TABLE_NAME}
+            SET incident_status = %s, updated_at = NOW()
+            WHERE incident_id = %s
+            """,
+            (status, incident_id)
+        )
+        cur.close()
+def get_incident(incident_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch an incident by incident_id."""
+    with get_db() as conn:
+        cur = conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor)
+        cur.execute(
+            f"""
+            SELECT id,
+                   incident_id,
+                   payload,
+                   resolution,
+                   created_at
+            FROM {TABLE_NAME}
+            WHERE incident_id = %s
+            """,
+            (incident_id,)
+        )
+        row = cur.fetchone()
+        cur.close()
 
-agent/excute_egent but we use the excutre_agent_jager one only ok :
-import os
+    if row and row.get("payload"):
+        # Check if payload is encrypted
+        if is_encrypted(row["payload"]):
+            try:
+                decrypted_payload = decrypt(row["payload"])
+                payload = json.loads(decrypted_payload)
+            except Exception:
+                # If decryption fails, return as-is
+                payload = json.loads(row["payload"])
+        else:
+            # Assume it's already decrypted/plaintext
+            payload = json.loads(row["payload"])
+        
+        row["payload"] = {k: v for k, v in payload.items() if v is not None}
+
+    return row
+
+
+def upsert_incident_payload(incident_id: str, payload: str, incident_status: str = None):
+    encrypted_payload = encrypt(payload)
+    
+    with get_db() as conn:
+        cur = conn.cursor()
+        
+        if incident_status:
+            cur.execute(
+                f"""
+                INSERT INTO {TABLE_NAME} (incident_id, payload, incident_status)
+                VALUES (%s, %s, %s)
+                ON CONFLICT (incident_id)
+                DO UPDATE SET
+                    payload = EXCLUDED.payload,
+                    incident_status = EXCLUDED.incident_status,
+                    updated_at = NOW()
+                """,
+                (incident_id, encrypted_payload, incident_status)
+            )
+        else:
+            cur.execute(
+                f"""
+                INSERT INTO {TABLE_NAME} (incident_id, payload)
+                VALUES (%s, %s)
+                ON CONFLICT (incident_id)
+                DO UPDATE SET
+                    payload = EXCLUDED.payload,
+                    updated_at = NOW()
+                """,
+                (incident_id, encrypted_payload)
+            )
+        cur.close()
+def set_incident_resolution(incident_id: str, resolution: str):
+    """Set or update the resolution for an incident."""
+    with get_db() as conn:
+        cur = conn.cursor()
+        cur.execute(
+            f"""
+            UPDATE {TABLE_NAME}
+            SET resolution = %s,
+                updated_at = NOW()
+            WHERE incident_id = %s
+            """,
+            (resolution, incident_id)
+        )
+        cur.close()
+
+this is excute_agent.pyimport os
 import logging
 from typing import Dict, List, Optional, Any
 from pydantic import BaseModel, Field
@@ -1317,965 +1443,37 @@ async def run_execute_agent_async(
     )
 
 
-
-
-this is util.logss.py
-
-import httpx
-import json
-import os
-from typing import Dict, Any, Tuple
-
-# ELK Configuration
-ELK_BASE_URL = os.getenv("ELK_BASE_URL", "https://DCELASDBSPRR07-prod.logging.devops.idfcbank.com:9200")
-ELK_INDEX = os.getenv("ELK_INDEX", "elk-cbs-prod*")
-ELK_AUTH_HEADER = os.getenv("ELK_AUTH_HEADER")
-CA_CERT_PATH = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
-
-ELK_HEADERS = {
-    "Authorization": ELK_AUTH_HEADER,
-    "Content-Type": "application/json"
-}
-
-
-async def test_elk_connection() -> Tuple[bool, str]:
-    
-    try:
-        url = f"{ELK_BASE_URL}/_cluster/health"
-        
-        async with httpx.AsyncClient(timeout=10.0, verify=CA_CERT_PATH) as client:
-            response = await client.get(
-                url=url,
-                headers={"Authorization": ELK_AUTH_HEADER}
-            )
-            
-            response.raise_for_status()
-            health_data = response.json()
-            
-            cluster_name = health_data.get("cluster_name", "unknown")
-            cluster_status = health_data.get("status", "unknown")
-            
-            success_msg = (
-                f"Successfully connected to ELK cluster '{cluster_name}' "
-                f"(status: {cluster_status})"
-            )
-            
-            print(f"✓ {success_msg}")
-            return True, success_msg
-            
-    except httpx.TimeoutException:
-        error_msg = f"Connection timeout - ELK cluster not reachable at {ELK_BASE_URL}"
-        print(f"✗ {error_msg}")
-        return False, error_msg
-        
-    except httpx.HTTPStatusError as e:
-        error_msg = f"HTTP error {e.response.status_code} when connecting to ELK cluster"
-        print(f"✗ {error_msg}")
-        return False, error_msg
-        
-    except Exception as e:
-        error_msg = f"Error connecting to ELK cluster: {str(e)}"
-        print(f"✗ {error_msg}")
-        return False, error_msg
-
-
-async def test_index_presence() -> Tuple[bool, str]:
-    
-    try:
-        index_url = f"{ELK_BASE_URL}/{ELK_INDEX}"
-        print(f"Testing Elasticsearch index '{ELK_INDEX}'")
-        
-        async with httpx.AsyncClient(timeout=5.0, verify=CA_CERT_PATH) as client:
-            response = await client.get(
-                url=index_url,
-                headers=ELK_HEADERS
-            )
-            
-            response.raise_for_status()
-            
-            success_msg = f"Successfully connected to index '{ELK_INDEX}'"
-            print(f"✓ {success_msg}")
-            return True, success_msg
-            
-    except Exception as e:
-        error_msg = f"Error while testing connection for index {ELK_INDEX}. Exception: {e}"
-        print(f"✗ {error_msg}")
-        return False, error_msg
-
-
-async def execute_elk_query(query_json: str, parameter_name: str = None, parameter_value: str = None) -> str:
-    
-    try:
-        # Parse the query JSON
-        query_dict = json.loads(query_json)
-        
-        # If parameter provided, substitute it in the query
-        if parameter_name and parameter_value:
-            query_str = json.dumps(query_dict)
-            # Replace the specific parameter placeholder
-            query_str = query_str.replace(f":{parameter_name}", parameter_value)
-            query_dict = json.loads(query_str)
-        
-        # Ensure size is set (default to 20 if not specified)
-        if "size" not in query_dict:
-            query_dict["size"] = 20
-        
-        # Build the search URL
-        search_url = f"{ELK_BASE_URL}/{ELK_INDEX}/_search"
-        
-        # Execute the search with async client
-        async with httpx.AsyncClient(timeout=30.0, verify=CA_CERT_PATH) as client:
-            response = await client.post(
-                search_url,
-                headers=ELK_HEADERS,
-                json=query_dict
-            )
-            
-            response.raise_for_status()
-            result = response.json()
-            
-            # Extract hits
-            hits = result.get("hits", {}).get("hits", [])
-            total_hits = result.get("hits", {}).get("total", {})
-            
-            if isinstance(total_hits, dict):
-                total_count = total_hits.get("value", 0)
-            else:
-                total_count = total_hits
-            
-            # Format results for agent
-            if total_count == 0:
-                return "No matching records found in ELK logs. Note: Logs are available for 32 days only."
-            
-            output = [f"Found {total_count} matching records in ELK (showing {len(hits)} results):"]
-            output.append("=" * 70)
-            
-            for idx, hit in enumerate(hits, 1):
-                source = hit.get("_source", {})
-                output.append(f"\n[Record {idx}]")
-                
-                # Timestamp
-                timestamp = source.get("@timestamp", "N/A")
-                output.append(f"Timestamp: {timestamp}")
-                
-                # Log type
-                logtype = source.get("logtype", "N/A")
-                output.append(f"Log Type: {logtype}")
-                
-                # Message (truncate if too long)
-                message = source.get("message", "")
-                if len(message) > 500:
-                    message = message[:500] + "..."
-                output.append(f"Message: {message}")
-                
-                # Extract key fields based on log type
-                if logtype == "SMS_logs":
-                    # Per SMS SOP section 6.5 - SMS delivery logs
-                    if "mobile_number" in source:
-                        output.append(f"Mobile Number: {source.get('mobile_number')}")
-                    if "status" in source:
-                        output.append(f"Delivery Status: {source.get('status')}")
-                    if "message_id" in source:
-                        output.append(f"Message ID: {source.get('message_id')}")
-                    if "transaction_time" in source:
-                        output.append(f"Transaction Time: {source.get('transaction_time')}")
-                
-                elif logtype == "Email_logs":
-                    # Per Email SOP section 6.5 - Email delivery logs
-                    if "email_address" in source:
-                        output.append(f"Email Address: {source.get('email_address')}")
-                    if "subject" in source:
-                        output.append(f"Subject: {source.get('subject')}")
-                    if "status" in source:
-                        output.append(f"Delivery Status: {source.get('status')}")
-                    if "message_id" in source:
-                        output.append(f"Message ID: {source.get('message_id')}")
-                
-                # Add any error information
-                if "error" in source or "error_code" in source:
-                    output.append(f"Error: {source.get('error', source.get('error_code', 'Unknown'))}")
-                
-                output.append("-" * 70)
-            
-            return "\n".join(output)
-            
-    except httpx.TimeoutException:
-        return "ELK query timed out after 30 seconds. Please try again or reduce the time range."
-        
-    except httpx.HTTPStatusError as e:
-        return f"ELK Query Error (HTTP {e.response.status_code}): {e.response.text}"
-        
-    except json.JSONDecodeError as e:
-        return f"Invalid JSON query: {str(e)}"
-        
-    except Exception as e:
-        return f"Query execution failed: {str(e)}"
-
-
-
-this is util/async_connection.pu
-import asyncpg
-import os
-from utils.encryption_utils import encrypt
-
-# Create a global async connection pool
-_pool = None
-
-TABLE_NAME = "incidents"
-
-async def get_db_pool():
-    global _pool
-    if _pool is None:
-        connection_string = os.environ.get('INCIDENT_AGENT_POSTGRES_CONNECTION_STRING', 'postgresql://incidentagent:incidentagent123@postgres:5432/incidentagent')
-        _pool = await asyncpg.create_pool(
-            connection_string,
-            min_size=5,
-            max_size=20
-        )
-    return _pool
-
-async def get_incident_status_async(incident_id: str) -> str:
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        result = await conn.fetchrow(
-            f"""
-            SELECT incident_status FROM incidents
-            WHERE incident_id = $1
-            """,
-            incident_id
-        )
-        return result['incident_status'] if result else None
-
-
-async def set_incident_status_async(incident_id: str, status: str):
-    pool = await get_db_pool()
-    async with pool.acquire() as conn:
-        await conn.execute(
-            f"""
-            UPDATE incidents
-            SET incident_status = $1, updated_at = NOW()
-            WHERE incident_id = $2
-            """,
-            status, incident_id
-        )
-async def upsert_incident_payload_async(incident_id: str, payload: str, incident_status: str = None):
-    encrypted_payload = encrypt(payload)
-    pool = await get_db_pool()
-    
-    async with pool.acquire() as conn:
-        if incident_status:
-            await conn.execute(
-                f"""
-                INSERT INTO {TABLE_NAME} (incident_id, payload, incident_status)
-                VALUES ($1, $2, $3)
-                ON CONFLICT (incident_id)
-                DO UPDATE SET
-                    payload = EXCLUDED.payload,
-                    incident_status = EXCLUDED.incident_status,
-                    updated_at = NOW()
-                """,
-                incident_id, encrypted_payload, incident_status
-            )
-        else:
-            await conn.execute(
-                f"""
-                INSERT INTO {TABLE_NAME} (incident_id, payload)
-                VALUES ($1, $2)
-                ON CONFLICT (incident_id)
-                DO UPDATE SET
-                    payload = EXCLUDED.payload,
-                    updated_at = NOW()
-                """,
-                incident_id, encrypted_payload
-            )
-
-
-utils/orcale_connection.py
-import asyncio
-import os
-import json
-import logging
-import threading
-from typing import Optional, Dict
-import oracledb
-from utils.observability import get_tracer
-
-logger = logging.getLogger(__name__)
-
-# ─────────────────────────────────────────
-# DB CONFIG LOADER
-# ─────────────────────────────────────────
-
-_db_config: Optional[dict] = None
-
-def _load_db_config():
-    global _db_config
-    config_path = os.getenv("DB_CONFIG_PATH", "./db_config.json")
-    with open(config_path) as f:
-        _db_config = json.load(f)
-    logger.info(f"Loaded DB config from {config_path}: apps={list(_db_config.keys())}")
-
-def get_db_config() -> dict:
-    if _db_config is None:
-        _load_db_config()
-    return _db_config
-
-# ─────────────────────────────────────────
-# MULTI-POOL MANAGEMENT
-# ─────────────────────────────────────────
-
-_pools: Dict[str, oracledb.ConnectionPool] = {}
-_pool_lock = threading.Lock()
-
-
-def _build_dsn(app: str, db_instance: str) -> str:
-    config = get_db_config()
-    app_config = config.get(app)
-    if not app_config:
-        raise ValueError(f"No DB config found for app '{app}'")
-    
-    oracle_config = app_config.get("oracle", {})
-    instance_config = oracle_config.get(db_instance)
-    if not instance_config:
-        available = list(oracle_config.keys())
-        raise ValueError(f"No DB instance '{db_instance}' for app '{app}'. Available: {available}")
-    
-    host = instance_config["host"]
-    port = instance_config["port"]
-    service = instance_config.get("service") or instance_config.get("service_name")
-    use_tls = instance_config.get("tls", True)
-    protocol = "TCPS" if use_tls else "TCP"
-    
-    dsn = (
-        f"(DESCRIPTION="
-        f"(ADDRESS=(PROTOCOL={protocol})(HOST={host})(PORT={port}))"
-        f"(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME={service})))"
-    )
-    return dsn
-
-
-def _get_credentials(app: str) -> tuple:
-    username = os.getenv(f"{app.upper()}_ORACLE_USERNAME")
-    password = os.getenv(f"{app.upper()}_ORACLE_PASSWORD")
-    if not username or not password:
-        raise ValueError(
-            f"Missing credentials: {app.upper()}_ORACLE_USERNAME and/or "
-            f"{app.upper()}_ORACLE_PASSWORD not set in environment"
-        )
-    return username, password
-
-
-def _get_ssl_dn(app: str, db_instance: str) -> Optional[str]:
-    """Return ssl_server_cert_dn if configured, else None."""
-    config = get_db_config()
-    instance_config = config.get(app, {}).get("oracle", {}).get(db_instance, {})
-    return instance_config.get("ssl_server_cert_dn")
-
-
-def _get_pool(app: str, db_instance: str) -> oracledb.ConnectionPool:
-    pool_key = f"{app}:{db_instance}"
-    
-    if pool_key in _pools:
-        return _pools[pool_key]
-    
-    with _pool_lock:
-        # Double-check after acquiring lock
-        if pool_key in _pools:
-            return _pools[pool_key]
-        
-        logger.info(f"Creating Oracle pool for {pool_key}")
-        dsn = _build_dsn(app, db_instance)
-        username, password = _get_credentials(app)
-        ssl_dn = _get_ssl_dn(app, db_instance)
-        
-        pool_params = {
-            "user": username,
-            "password": password,
-            "min": 2,
-            "max": 10,
-            "increment": 1,
-        }
-        
-        if ssl_dn:
-            pool_params["ssl_server_cert_dn"] = ssl_dn
-            pool_params["ssl_server_dn_match"] = True
-        
-        pool = oracledb.create_pool(
-            dsn=dsn,
-            params=oracledb.PoolParams(**pool_params)
-        )
-        
-        _pools[pool_key] = pool
-        logger.info(f"Oracle pool created for {pool_key} → {dsn}")
-        return pool
-
-
-# ─────────────────────────────────────────
-# QUERY EXECUTION
-# ─────────────────────────────────────────
-
-def _execute_query_sync(query: str, app: str, db_instance: str, params: Optional[dict] = None) -> dict:
-    pool = _get_pool(app, db_instance)
-    with pool.acquire() as connection:
-        with connection.cursor() as cursor:
-            cursor.execute(query, params or {})
-            if cursor.description:
-                data = cursor.fetchall()
-                return {"success": True, "data": data, "error": None}
-            connection.commit()
-            return {"success": True, "data": [], "error": None}
-
-
-async def execute_oracle_query_async(
-    query: str,
-    app: str = "cbs",
-    db_instance: str = "main",
-    params: dict = None
-) -> dict:
-    tracer = get_tracer()
-    with tracer.start_as_current_span("execute_oracle_query_async") as span:
-        span.set_attribute("db.statement", query)
-        span.set_attribute("db.app", app)
-        span.set_attribute("db.instance", db_instance)
-        try:
-            result = await asyncio.to_thread(
-                _execute_query_sync, query, app, db_instance, params
-            )
-            if result["success"] and result["data"]:
-                span.set_attribute("db.rows_returned", len(result["data"]))
-            return result
-        except Exception as e:
-            logger.error(f"DB Error [{app}:{db_instance}]: {e}", exc_info=True)
-            span.record_exception(e)
-            span.set_status(status=False, description=str(e))
-            return {"success": False, "data": None, "error": str(e)}
-
-
-# ─────────────────────────────────────────
-# CLEANUP
-# ─────────────────────────────────────────
-
-async def close_all_oracle_pools() -> None:
-    global _pools
-    for pool_key, pool in _pools.items():
-        try:
-            logger.info(f"Closing Oracle pool: {pool_key}")
-            await asyncio.to_thread(pool.close)
-            logger.info(f"Closed Oracle pool: {pool_key}")
-        except Exception as e:
-            logger.error(f"Failed to close pool {pool_key}: {e}")
-    _pools = {}
-async def close_oracle_async_pool() -> None:
-    await close_all_oracle_pools()
-
-
-
-def validate_db_config():
-    """Call at app startup to fail fast if config is broken."""
-    config = get_db_config()
-    for app_name, app_cfg in config.items():
-        for db_type, instances in app_cfg.items():
-            for instance_name, instance_cfg in instances.items():
-                # Check required fields
-                for field in ("host", "port"):
-                    if field not in instance_cfg:
-                        raise ValueError(
-                            f"db_config.json: {app_name}.{db_type}.{instance_name} missing '{field}'"
-                        )
-                if "service" not in instance_cfg and "service_name" not in instance_cfg:
-                    raise ValueError(
-                        f"db_config.json: {app_name}.{db_type}.{instance_name} missing 'service' or 'service_name'"
-                    )
-            
-                username = os.getenv(f"{app_name.upper()}_ORACLE_USERNAME")
-                password = os.getenv(f"{app_name.upper()}_ORACLE_PASSWORD")
-                if not username or not password:
-                    logger.warning(
-                        f"Missing env vars: {app_name.upper()}_ORACLE_USERNAME / "
-                        f"{app_name.upper()}_ORACLE_PASSWORD"
-                    )
-    logger.info("DB config validation passed")
-
-
-
-thi is of different repo : incicndent agent
-crew_main.py it psuhed the incidhen t iin kafka :
-import os
-from observability import init_telemetry, get_tracer
-import logging
-import html
-# Add these to existing imports
-from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, JSONResponse
-import httpx
-from typing import Optional,List
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
-
-logger = logging.getLogger(__name__)
-
-telemetry_endpoint = os.getenv("TELEMETRY_ENDPOINT")
-if telemetry_endpoint:
-    logger.info("OpenTelemetry tracer initialization started...")
-    try:
-        init_telemetry()
-        logger.info("OpenTelemetry tracer initialized")
-    except Exception as e:
-        logger.warning(f"Failed to initialize OpenTelemetry: {e}")
-
-from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-import asyncio
-import json
-from datetime import datetime
-from dotenv import load_dotenv
-from pydantic import BaseModel, Field, field_validator
-
-from typing import Optional
-import secrets
-import uuid
-from  file_processor import process_attachments
-from oracle_connection import test_oracle_connection
-from incident_db import (
-    get_incident,
-    get_incident_status,
-    set_incident_status,
-    upsert_incident_payload,
-    set_incident_resolution,
-    get_last_25_incidents
-)
-from incident_db_async import upsert_incident_payload_async
-from confluent_kafka import Producer
-
-load_dotenv()
-JIRA_RAG_INGEST_URL = os.getenv(
-    "JIRA_RAG_INGEST_URL",
-    "https://internal-app.uat-devutils.idfcfirstbank.com/api/jira-conf-rag/ingest/incidents"
-)
-logger.info("crew_main.py loaded successfully")
-logger.info(f"INCIDENT_BOT_ENABLED = {os.getenv('INCIDENT_BOT_ENABLED')}")
-logger.info(f"KAFKA_BROKER_URL = {os.getenv('KAFKA_BROKER_URL')}")
-logger.info(f"KAFKA_TOPIC = {os.getenv('KAFKA_TOPIC', 'GEN-AI-DE-INCIDENT-EVENTS')}")
-
-
-# ─────────────────────────────────────────
-# AUTH
-# ─────────────────────────────────────────
-
-def verify_dummy_header(credentials: HTTPBasicCredentials = Depends(HTTPBasic())):
-    expected_username = os.getenv("INCIDENT_AUTH_USERNAME", "admin")
-    expected_password = os.getenv("INCIDENT_AUTH_TOKEN", "dummy-token-12345")
-
-    is_correct_username = secrets.compare_digest(
-        credentials.username.encode("utf8"),
-        expected_username.encode("utf8")
-    )
-    is_correct_password = secrets.compare_digest(
-        credentials.password.encode("utf8"),
-        expected_password.encode("utf8")
-    )
-
-    if not (is_correct_username and is_correct_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
-
-
-# ─────────────────────────────────────────
-# APP SETUP
-# ─────────────────────────────────────────
-from contextlib import asynccontextmanager
-from llm import llm_config
-
-llm_config.set_llm_config()   # synchronous — guarantees a valid token before any request
-
-
-@asynccontextmanager
-async def lifespan(app:FastAPI):
-    asyncio.create_task(llm_config.refresh_loop())
-    yield
-app = FastAPI(lifespan=lifespan)
-
-from clean_extract_bot_data import router as export_router
-app.include_router(export_router)
-
-
-os.makedirs("static", exist_ok=True)
-os.makedirs("templates", exist_ok=True)
-
-app.mount("/incident_agent/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-
-logger.info("FastAPI app initialized")
-
-
-# ─────────────────────────────────────────
-# KAFKA PRODUCER
-# ─────────────────────────────────────────
-
-def get_kafka_producer():
-    return Producer({
-        'bootstrap.servers': os.getenv("KAFKA_BROKER_URL"),
-        'security.protocol': 'SASL_SSL',
-        'sasl.mechanism': 'SCRAM-SHA-512',
-        'sasl.username': os.getenv("KAFKA_USERNAME", "gen-ai-de_msk_uat"),
-        'sasl.password': os.getenv("KAFKA_PASSWORD"),
-    })
-
-
-def publish_to_kafka(incident_id: str, event_type: str, payload: dict):
-    tracer = get_tracer(__name__)
-    with tracer.start_as_current_span("publish_to_kafka") as span:
-        span.set_attribute("incident_id", incident_id)
-        span.set_attribute("event_type", event_type)
-        try:
-            producer = get_kafka_producer()
-            message = {
-                "incident_id": incident_id,
-                "event_type": event_type,
-                "payload": payload
-            }
-            producer.produce(
-                topic=os.getenv("KAFKA_TOPIC", "GEN-AI-DE-INCIDENT-EVENTS"),
-                key=incident_id.encode('utf-8'),
-                value=json.dumps(message).encode('utf-8')
-            )
-            producer.flush()
-            logger.info(f"✓ Kafka published | incident={incident_id} event={event_type}")
-        except Exception as e:
-            logger.error(f"✗ Kafka publish FAILED | incident={incident_id} error={e}")
-            raise
-
-
-
-
-def get_header_details():
-    return {
-        "Content-Type": "application/json",
-        "correlationId": str(uuid.uuid4()),
-        "source": "IncidentBot",
-        "transactionId": str(uuid.uuid4())
-    }
-
-
-def handle_no_comments(incident_id: str):
-    tracer = get_tracer(__name__)
-    with tracer.start_as_current_span("handle_no_comments") as span:
-        span.set_attribute("incident_id", incident_id)
-        logger.info(f"  No comments | incident={incident_id}")
-
-from typing import List, Optional
-from pydantic import BaseModel
-
-class Attachment(BaseModel):
-    fileId: Optional[str] = None
-    fileName: str
-    fileType: str
-    fileSize: Optional[int] = None
-    contentEncoding: str
-    fileContent: str
-
-# ─────────────────────────────────────────
-# MODELS
-# ─────────────────────────────────────────
-
-class ServiceNowIncidentCreateRequest(BaseModel):
-    callerId: Optional[str] = None
-    incidentType: Optional[str] = None
-    businessService: Optional[str] = None
-    tier1: Optional[str] = None
-    tier2: Optional[str] = None
-    tier3: Optional[str] = None
-    impact: Optional[str] = None
-    urgency: Optional[str] = None
-    shortDescription: Optional[str] = None
-    description: Optional[str] = None
-    contactType: Optional[str] = None
-    sourceIncidentNum: Optional[str] = None
-    sourceIncidentId: Optional[str] = None
-    assignmentGroup: Optional[str] = None
-    businessImpact: Optional[str] = None
-    cause: Optional[str] = None
-    businessCorrectiveAction: Optional[str] = None
-    techCorrectiveAction: Optional[str] = None
-    dataSource: Optional[str] = None
-    descriptionOfOutage: Optional[str] = None
-    emailId: Optional[str] = None
-    entityUCIC: Optional[str] = None
-    hashValues: Optional[str] = None
-    ipDetails: Optional[str] = None
-    ldwNotifyInformation: Optional[str] = None
-    loanAccountNumber: Optional[str] = None
-    loginId: Optional[str] = None
-    mobileNumber: Optional[str] = None
-    businessPreventiveAction: Optional[str] = None
-    techPreventiveAction: Optional[str] = None
-    resoultionTeam: Optional[str] = None
-    rootCause: Optional[str] = None
-    systemName: Optional[str] = None
-    urlOrDomain: Optional[str] = None
-    userDetail: Optional[str] = None
-    taskEffectiveNumber: Optional[str] = None
-    individualUCIC: Optional[str] = None
-    sourceIncCreateddttime: Optional[str] = None
-    incidentId: str = Field(..., min_length=1)
-    state: Optional[str] = None
-    causedByPatch: Optional[str] = None
-    resolutionCode: Optional[str] = None
-    solutionType: Optional[str] = None
-    outageType: Optional[str] = None
-    vendorGroup: Optional[str] = None
-    additionalComments: Optional[str] = None
-    onHoldReason: Optional[str] = None
-    resolutionNotes: Optional[str] = None
-    userLocation: Optional[str] = None
-    incidentNumber: str
-    assignedTo: Optional[str] = None
-    files: Optional[List[Attachment]] = None
-@field_validator('shortDescription', 'businessImpact',mode='before')
-@classmethod
-def sanitize_text_feilds(cls,value):
-    if value is None:
-        return value
-    return html.escape(str(value))
-class ServiceNowIncidentResponse(BaseModel):
-    code: str
-    details: str
-
-
-# ─────────────────────────────────────────
-# EXCEPTION HANDLER
-# ─────────────────────────────────────────
-
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    fields = ""
-    for err in exc.errors():
-        field = ".".join(str(x) for x in err["loc"] if x != "body")
-        fields += f", {field}" if fields else field
-    logger.warning(f"Validation error | fields={fields}")
-    return JSONResponse(
-        status_code=422,
-        content={"code": "422", "details": f"{fields} cannot be empty or absent"}
-    )
-
-
-# ─────────────────────────────────────────
-# UI ROUTES
-# ─────────────────────────────────────────
-
-# @app.get("/incident_agent/results")
-# def results_page(request: Request,auth:bool=Depends(verify_dummy_header)):
-#     recent_incidents = get_last_25_incidents()
-#     return templates.TemplateResponse(
-#         "results.html",
-#         {"request": request, "results": recent_incidents}
-#     )
-
-@app.post("/incident_agent/ingest-incidents")
-async def ingest_incidents_proxy(
-    file: UploadFile = File(...),
-    application: str = Form("")
-):
-    logger.info(f"[ingest] Received file={file.filename} application={application}")
-    try:
-        file_contents = await file.read()
-        logger.info(f"[ingest] File size={len(file_contents)} bytes")
-
-        async with httpx.AsyncClient(timeout=600.0, verify=False) as client:
-            response = await client.post(
-                JIRA_RAG_INGEST_URL,
-                files={"file": (file.filename, file_contents, file.content_type or "text/csv")},
-                data={"application": application}
-            )
-
-        logger.info(f"[ingest] jira-rag responded status={response.status_code}")
-
-        try:
-            response_json = response.json()
-        except Exception:
-            response_json = {"raw": response.text}
-
-        return JSONResponse(content=response_json, status_code=response.status_code)
-
-    except Exception as e:
-        logger.error(f"[ingest] FAILED: {e}", exc_info=True)
-        return JSONResponse(
-            content={"status": "error", "message": str(e)},
-            status_code=500
-        )
-@app.get("/incident_agent", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
-        "incidents_received": 0,
-        "incidents_resolved": 0,
-        "reference_collections": 0,
-        "indexed_incidents": 0
-    })
-
-
-# ─────────────────────────────────────────
-# SERVICENOW ENDPOINTS
-# ─────────────────────────────────────────
-
-@app.post("/incident_agent/incident/create")
-async def create_incident_from_servicenow(
-    request: Request,
-    incident_data: ServiceNowIncidentCreateRequest,
-    background_tasks: BackgroundTasks,
-    auth: bool = Depends(verify_dummy_header)
-):
-    tracer = get_tracer(__name__)
-
-    with tracer.start_as_current_span("create_incident_from_servicenow") as span:
-        incident_id = incident_data.incidentId
-        span.set_attribute("incident_id", incident_id)
-        span.set_attribute("has_additional_comments", bool(incident_data.additionalComments))
-
-        logger.info(f"→ Incoming request | incident={incident_id} has_comments={bool(incident_data.additionalComments)}")
-
-        feature = os.getenv("INCIDENT_BOT_ENABLED", False)
-        logger.info(f"  INCIDENT_BOT_ENABLED={feature}")
-        if not feature:
-            logger.warning(f"  Bot disabled, returning 503 | incident={incident_id}")
-            return ServiceNowIncidentResponse(code="503", details="Service Unavailable.")
-
-        incident = get_incident(incident_id)
-        logger.info(f"  DB lookup | incident={incident_id} exists={bool(incident)}")
-
-        if not incident:
-            # NEW INCIDENT
-            file_description = ""
-            if incident_data.files:
-                file_dicts = [f.model_dump() for f in incident_data.files]
-                file_description = process_attachments(file_dicts)
-                logger.info(f"  Files processed | incident={incident_id} count={len(file_dicts)} has_description={bool(file_description)}")
-
-            incident_record = incident_data.model_dump()
-            incident_record.pop("files", None)   
-            incident_record["file_description"] = file_description
-            incident_record["created_at"] = datetime.now().isoformat()
-            incident_record["status"] = "created"
-            incident_record["interaction_counter"] = 0
-            incident_record["headers"] = get_header_details()
-
-            try:
-                await upsert_incident_payload_async(incident_id, json.dumps(incident_record))
-                logger.info(f"  DB saved | incident={incident_id}")
-            except Exception as e:
-                logger.error(f"✗ DB upsert FAILED | incident={incident_id} error={e}")
-                raise HTTPException(status_code=500, detail="Incident server error")
-
-            publish_to_kafka(incident_id, "new_incident", incident_record)
-            logger.info(f"✓ New incident done | incident={incident_id}")
-            return ServiceNowIncidentResponse(code="202", details="Accepted")
-
-
-        else:
-            # EXISTING INCIDENT
-            additional_comments = incident_data.additionalComments
-            payload = incident['payload']
-
-            if additional_comments:
-                current_status = get_incident_status(incident_id)
-                logger.info(f"  Existing incident | incident={incident_id} status={current_status}")
-                span.set_attribute("current_status", current_status or "unknown")
-
-                if current_status == 'on_hold':
-                    payload["additionalComments"] = additional_comments
-
-                    if incident_data.files:
-                        file_dicts = [f.model_dump() for f in incident_data.files]
-                        new_file_description = process_attachments(file_dicts)
-                        if new_file_description:
-                            payload["file_description"] = new_file_description
-                            logger.info(f"  Follow-up files processed | incident={incident_id}")
-
-                    set_incident_status(incident_id, 'in_progress')
-                    publish_to_kafka(incident_id, "additional_comments", payload)
-                    logger.info(f"✓ Additional comments published | incident={incident_id}")
-
-                elif current_status == 'in_progress':
-                    logger.info(f"  Ignored | incident={incident_id} reason=already_in_progress")
-
-                elif current_status in ['resolved', 'rejected']:
-                    logger.info(f"  Ignored | incident={incident_id} reason=final_status={current_status}")
-
-                else:
-                    logger.info(f"  Ignored | incident={incident_id} reason=unknown_status={current_status}")
-
-            else:
-                handle_no_comments(incident_id)
-
-            return ServiceNowIncidentResponse(code="202", details="Accepted")
-
-
-@app.get("/incident_agent/incident/{incident_id}")
-async def get_incident_details(incident_id: str, auth: bool = Depends(verify_dummy_header)):
-    tracer = get_tracer(__name__)
-    with tracer.start_as_current_span("get_incident_details") as span:
-        span.set_attribute("incident_id", incident_id)
-        logger.info(f"→ Get incident details | incident={incident_id}")
-        incident = get_incident(incident_id)
-        if not incident:
-            logger.warning(f"  Not found | incident={incident_id}")
-            raise HTTPException(status_code=404, detail="Incident not found")
-        return incident['payload']
-
-
-# @app.get("/incident_agent/nudge_incident/{incident_id}")
-# async def nudge_incident(incident_id: str):
-#     tracer = get_tracer(__name__)
-#     with tracer.start_as_current_span("nudge_incident") as span:
-#         span.set_attribute("incident_id", incident_id)
-#         logger.info(f"→ Nudge incident | incident={incident_id}")
-#         incident = get_incident(incident_id)
-#         if not incident:
-#             logger.warning(f"  Not found | incident={incident_id}")
-#             raise HTTPException(status_code=404, detail="Incident not found")
-#         payload = incident['payload']
-#         publish_to_kafka(incident_id, "new_incident", payload)
-#         logger.info(f"✓ Nudged | incident={incident_id}")
-#         return {"status": "nudged"}
-
-
-# ─────────────────────────────────────────
-# HEALTH ENDPOINTS
-# ─────────────────────────────────────────
-
-@app.get("/incident_agent/health")
-async def health_check():
-    logger.info("Health check called")
-    return {"status": "healthy"}
-
-
-@app.get("/incident_agent/health/oracle")
-async def oracle_health_check():
-    logger.info("Oracle health check called")
-    result = test_oracle_connection()
-    if result["connected"]:
-        logger.info(f"Oracle connected | sysdate={result['sysdate']}")
-        return {
-            "status": "healthy",
-            "connected": True,
-            "sysdate": result["sysdate"],
-            "message": "Successfully connected to Oracle database"
-        }
-    else:
-        logger.error(f"Oracle connection FAILED | error={result['error']}")
-        return {
-            "status": "unhealthy",
-            "connected": False,
-            "error": result["error"],
-            "message": "Failed to connect to Oracle database"
-        }
+for db-config
+this is my deployer filder file db-config-yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "optimus-api.name" . }}-db-config
+  labels:
+    {{- include "optimus-api.labels" . | nindent 4 }}
+data:
+  db_config.json: {{ .Values.db_config | toJson | quote }}
+
+
+this is how is ue :
+db_config:
+  cbs:
+    oracle:
+      main:
+        host: "CBSNEWPTDB-scan.idfcbank.com"
+        port: 1655
+        service_name: "P012SRV"
+        tls: true
+        ssl_server_cert_dn: "CN=oracletcps_CBSPT.idfcbank.com"
+  optimus:
+    oracle:
+      platform:
+        host: "uat-platform-db.ckwkoaqxbuse.ap-south-1.rds.amazonaws.com"
+        port: 1521
+        service_name: "OPUATDB"
+        tls: false
+      payments-core:
+        host: "uat-payments-core-db.ckwkoaqxbuse.ap-south-1.rds.amazonaws.com"
+        port: 1521
+        service_name: "OPUATDB"
+        tls: false
