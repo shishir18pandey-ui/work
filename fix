@@ -1,392 +1,2281 @@
-0:24:52 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-07 10:24:52,120 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Task: Extract customer identifiers from the incident.                       │
-│                                                                              │
-│  UCIC field: 1039842425                                                      │
-│  Incident: Short Description: Please find the attached screenshot for your   │
-│  reference.   Customer is unable to update the mobile number and the email   │
-│  id in the mobile application Customer ID:                                   │
-│  Description: Please find the attached screenshot for your reference.        │
-│  Customer is unable to update the mobile number and the email id in the      │
-│  mobile application                                                          │
-│  Customer ID: 5815891915                                                     │
-│                                                                              │
-│  Extract these identifiers if present:                                       │
-│  - ucic                                                                      │
-│  - mobile_number                                                             │
-│  - username                                                                  │
-│  - customer_id                                                               │
-│  - txn_id / txn_request_id                                                   │
-│                                                                              │
-│  Then use fetch_optimus_logs tool with:                                      │
-│  - tag_name = the identifier type you found                                  │
-│  - tag_value = the actual value                                              │
-│  - service = pick from tool description based on incident type               │
-│  - time_description = 'last 48 hours' unless user mentions a specific time   │
-│                                                                              │
-│  If no logs found with ucic, retry with mobile_number if available.          │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-2026-08-07 10:25:03,075 - utils.minimax_tool_call_patch - WARNING - [minimax-recovery] recovered 1 leaked tool call(s): ['login_password_check']
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Final Answer:                                                               │
-│  [ChatCompletionMessageToolCall(function=Function(arguments='{"tag_name":    │
-│  "customer_id", "tag_value": "5815891915"}', name='login_password_check'),   │
-│  id='call_275b3cf0af81450b9036f578', type='function')]                       │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+import os
+import re
+import requests
+import httpx
+import json
+from typing import List, Dict, Optional, Any
+import asyncio
+import logging
+from utils.observability import get_tracer
 
-[CrewAIEventsBus] Warning: Event pairing mismatch. 'agent_execution_completed' 
-closed 'llm_call_started' (expected 'agent_execution_started')
-[CrewAIEventsBus] Warning: Event pairing mismatch. 'task_completed' closed 
-'agent_execution_started' (expected 'task_started')
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Identify Customer                                                     │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
-│                                                                              │
-│  Task Started                                                                │
-│  Name: Diagnose Optimus Issue                                                │
-│  ID: 4e5bb897-e720-4370-8c07-1095c3a6af6a                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+logger = logging.getLogger(__name__)
 
-10:25:03 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-07 10:25:03,093 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Task: Given the following incident:                                         │
-│                                                                              │
-│  Short Description: Please find the attached screenshot for your reference.  │
-│  Customer is unable to update the mobile number and the email id in the      │
-│  mobile application Customer ID:                                             │
-│  Description: Please find the attached screenshot for your reference.        │
-│  Customer is unable to update the mobile number and the email id in the      │
-│  mobile application                                                          │
-│  Customer ID: 5815891915                                                     │
-│                                                                              │
-│  Using the Jaeger logs and IDP SQL query results from the discovery phase:   │
-│  1. Identify the root cause from error traces                                │
-│  2. Check HTTP status codes — 4xx means client error, 5xx means server       │
-│  error                                                                       │
-│  3. If login issue — check IDP DB for password expiry, device registration   │
-│  4. Cross reference with historic incidents: ## STRUCTURED SUMMARY OF        │
-│  SIMILAR HISTORIC INCIDENTS                                                  │
-│                                                                              │
-│  ### INCIDENT 1 (Similarity: 75.39%)                                         │
-│  **Incident ID:** INC000007060615                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer is unable to change mobile number from      │
-│  mobile application, no error occurred, just it doesn't get processed.       │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - Issue is restricted within 24 hours after changing the password or MPIN   │
-│  - Once customer sets the new password/MPIN/Biometric for trusted device,    │
-│  system will not allow user to update mobile and Email ID as per the         │
-│  functionality                                                               │
-│  - Ask user to try after 24 hours to change their mobile number              │
-│  - If still issue persists, share error screenshot and exact time and date   │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ### INCIDENT 2 (Similarity: 83.92%)                                         │
-│  **Incident ID:** INC000004923733                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer is unable to update contact details         │
-│  through mobile application                                                  │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - User is trying to change the mobile number which is already available in  │
-│  the system                                                                  │
-│  - Due to this, the system is not allowing user to change the mobile number  │
-│  - User needs to enter a NEW mobile number (not already in system)           │
-│  - Alternatively, user can visit the branch to change the mobile number      │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ### INCIDENT 3 (Similarity: 2.60%)                                          │
-│  **Incident ID:** INC000005925617                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer unable to change contact no. and email id   │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - Customer belongs to NR category (NRI customer)                            │
-│  - Business has restricted Mobile and Email update via Optimus channel       │
-│  - This restriction is in place since one week                               │
-│  - This is a valid scenario - please communicate to Customer accordingly     │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ### INCIDENT 4 (Similarity: 79.62%)                                         │
-│  **Incident ID:** INC000008435203                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer is unable to find the option to update his  │
-│  mobile number and email id                                                  │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - Mobile and email change option is available in mobile app only            │
-│  - Ask customer to reregister the mobile app with trusted device             │
-│  - Trusted device means performed the SIM verification process while         │
-│  registration                                                                │
-│  - After reregistration, check for mobile and email change options           │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ### INCIDENT 5 (Similarity: 2.06%)                                          │
-│  **Incident ID:** INC000006644424                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer unable to register email id from mobile     │
-│  application. Email reflected as updated within 48 hours but still not       │
-│  updated.                                                                    │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - Customer attempted to update email ID but had recently updated their      │
-│  password or changed their MPIN                                              │
-│  - As per system functionality, customer is NOT allowed to change email ID   │
-│  within 24 hours of creating or updating password or MPIN                    │
-│  - Recommend customer to wait for 24 hours after the last password/MPIN      │
-│  change                                                                      │
-│  - Ask customer to retry now to update the email id                          │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## KEY TROUBLESHOOTING STEPS FROM CONVERSATION CONTEXT                      │
-│                                                                              │
-│  1. **24-Hour Restriction Check:** Verify if customer recently changed       │
-│  password, MPIN, or set up biometric for trusted device. System restricts    │
-│  mobile/email update within 24 hours of such changes.                        │
-│                                                                              │
-│  2. **Duplicate Number Check:** Verify if the new mobile number being        │
-│  entered is already registered in the system.                                │
-│                                                                              │
-│  3. **Customer Category Check:** Check if customer is NRI category -         │
-│  Business has restricted mobile and email update via Optimus for NRI         │
-│  customers.                                                                  │
-│                                                                              │
-│  4. **Trusted Device Registration:** Ask customer to reregister mobile app   │
-│  with trusted device (SIM verification process).                             │
-│                                                                              │
-│  5. **Alternative Channel:** If online update not working, advise customer   │
-│  to visit branch for mobile number/email update.                             │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## PATTERNS AND COMMON SOLUTIONS                                            │
-│                                                                              │
-│  **Most Common Resolutions:**                                                │
-│  1. **24-hour restriction after password/MPIN change** - Most frequent root  │
-│  cause (appears in 2 incidents)                                              │
-│  2. **NRI category restriction** - Business-imposed restriction for certain  │
-│  customer categories                                                         │
-│  3. **Trusted device not registered** - Customer needs to reregister with    │
-│  SIM verification                                                            │
-│  4. **Duplicate mobile number** - New number already exists in system        │
-│                                                                              │
-│  **Recommended Actions for Current Incident (Customer ID: 5815891915, UCIC:  │
-│  1039842425):**                                                              │
-│  1. Ask customer if they recently changed password or MPIN (within 24        │
-│  hours)                                                                      │
-│  2. Check if customer is NRI category                                        │
-│  3. Verify if new mobile number is already in system                         │
-│  4. Ask customer to reregister mobile app with trusted device                │
-│  5. If all above fail, advise branch visit for manual update                 │
-│  5. If logs show no errors, check if the issue is configuration-related      │
-│                                                                              │
-│  6. Always return all error code and there message in reponse Run IDP SQL    │
-│  tools if needed to check customer/device status.                            │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-Repaired JSON: [{"tag_name": "customer_id", "tag_value": "5815891915"}, ["TOOL_CALL]\n{tool => 'login_password_check', args => {\n  --tag_name", "customer_id", "tag_value", 5815891915, "\\n}}\n[/TOOL_CALL]"]]
-Repaired JSON: [{"tag_name": "customer_id", "tag_value": "5815891915"}, ["TOOL_CALL]\n{tool => 'login_password_check', args => {\n  --tag_name", "customer_id", "tag_value", 5815891915, "\\n}}\n[/TOOL_CALL]"]]
-╭──────────────────────────────── Tool Output ─────────────────────────────────╮
-│                                                                              │
-│  Error: the Action Input is not a valid key, value dictionary.               │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY')
+OPENAI_API_BASE = os.environ.get('OPENAI_API_BASE')
+OPENAI_MODEL_NAME = os.environ.get('OPENAI_MODEL_NAME')
 
-10:26:09 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-07 10:26:09,182 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-Repaired JSON: [{"tag_name": "customer_id", "tag_value": "5815891915"}, ["TOOL_CALL]\n{tool => 'login_password_check', args => {\n  --tag_name", "customer_id", "tag_value", 5815891915, "\\n}}\n[/TOOL_CALL]"]]
-Repaired JSON: [{"tag_name": "customer_id", "tag_value": "5815891915"}, ["TOOL_CALL]\n{tool => 'login_password_check', args => {\n  --tag_name", "customer_id", "tag_value", 5815891915, "\\n}}\n[/TOOL_CALL]"]]
-╭──────────────────────────────── Tool Output ─────────────────────────────────╮
-│                                                                              │
-│  Error: the Action Input is not a valid key, value dictionary.               │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+class LLMConfig:
+    def __init__(self):
+        self.env = os.getenv('ENV', 'non-local')
+        self.token = None
+        self.url = OPENAI_API_BASE
+        self.model_name = os.getenv('OPENAI_MODEL_NAME', '/app/models/MiniMax-M2.5')
+        
+    def _get_config(self) -> str:
+        def _get_token():
+            response = requests.post(
+                url=os.getenv('ENT_AUTH_APPLICATION_TOKEN_URL'),
+                headers={},
+                data={
+                    'client_id': os.getenv('ENT_AUTH_APPLICATION_CLIENT_ID'),
+                    'client_secret': os.getenv('ENT_AUTH_APPLICATION_SECRET'),
+                    'grant_type': 'client_credentials'
+                }
+            )
+            response_data = response.json()
+            return response_data['access_token']
+        
+        if self.env == 'local':
+            url = self.url
+            token = os.getenv('OPENAI_API_KEY')
+        else: 
+            try:
+                if '-entauth' not in self.url:
+                    pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
+                    match = re.match(pattern, self.url)
+                    base_domain, model_path, version_path = match.groups()
+                    url = f"{base_domain}{model_path}-entauth{version_path}"
+                else:
+                    url = self.url
+                token = _get_token()
+                return url, token
+            except Exception as e:
+                logger.error(e)
 
-10:26:13 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-07 10:26:13,426 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-07 10:26:34,037 - utils.minimax_tool_call_patch - WARNING - [minimax-recovery] recovered 1 leaked tool call(s): ['login_password_check']
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Final Answer:                                                               │
-│  [ChatCompletionMessageToolCall(function=Function(arguments='{"tag_name":    │
-│  "customer_id", "tag_value": "5815891915"}', name='login_password_check'),   │
-│  id='call_524ba0be0b434810ac0ec366', type='function')]                       │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+            # retry
+            pattern = r'(https?://[^/]+)(/[^/]+)(/.*)'
+            match = re.match(pattern, self.url)
+            base_domain, model_path, version_path = match.groups()
+            url = f"{base_domain}{model_path}-entauth{version_path}"
+            token = _get_token()
+            return url, token
 
-[CrewAIEventsBus] Warning: Event pairing mismatch. 'agent_execution_completed' 
-closed 'llm_call_started' (expected 'agent_execution_started')
-[CrewAIEventsBus] Warning: Event pairing mismatch. 'task_completed' closed 
-'agent_execution_started' (expected 'task_started')
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Diagnose Optimus Issue                                                │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+    def set_llm_config(self) -> dict:
+        try:
+            url, token = self._get_config()
+            self.url = url
+            self.token = token
+            os.environ['OPENAI_API_KEY'] = token
+            os.environ['OPENAI_API_BASE'] = url
+            logger.info("OPENAI_API_KEY refreshed")
+        except Exception as e:
+            logger.error(f"OPENAI_API_KEY refresh failed: {e}")
 
-╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
-│                                                                              │
-│  Task Started                                                                │
-│  Name: Report                                                                │
-│  ID: 398667ed-df2c-41aa-9dbf-5adfe153810d                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Task: Review the technical logs from the diagnosis phase.                   │
-│  Synthesize the findings into the required JSON format.                      │
-│                                                                              │
-│  **CRITICAL**: Always return all error code and there message in reponse     │
-│  **CRITICAL**: Mask all PII and remove backend technical jargon. User is     │
-│  not supposed to know about SQL errors.                                      │
-│  **CRITICAL**: Verify if the issue is resolved w.r.t incident description:   │
-│  Short Description: Please find the attached screenshot for your reference.  │
-│  Customer is unable to update the mobile number and the email id in the      │
-│  mobile application Customer ID:                                             │
-│  Description: Please find the attached screenshot for your reference.        │
-│  Customer is unable to update the mobile number and the email id in the      │
-│  mobile application                                                          │
-│  Customer ID: 5815891915, mention yes/no.                                    │
-│  **CRITICAL**: Do not ask repetitive questions to the user.                  │
-│  **IMPORTANT**: The person raising this incident is not a direct customer,   │
-│  but a bank employee who works in one of the branches.                       │
-│  **IMPORTANT**: If an SR needs to be raised, clearly state 'An SR needs to   │
-│  be raised' — do NOT claim it has already been raised.                       │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+    async def refresh_loop(self):
+        while True:
+            self.set_llm_config()
+            await asyncio.sleep(600)
 
-10:26:34 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-07 10:26:34,055 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-Repaired JSON: [{"key": "1039842425"}, ["TOOL_CALL]\n{tool => 'idp_get_user_id_from_ucic', args => {\n  --key", 1039842425, "\\n}}\n[/TOOL_CALL]"]]
-Repaired JSON: [{"key": "1039842425"}, ["TOOL_CALL]\n{tool => 'idp_get_user_id_from_ucic', args => {\n  --key", 1039842425, "\\n}}\n[/TOOL_CALL]"]]
-╭──────────────────────────────── Tool Output ─────────────────────────────────╮
-│                                                                              │
-│  Error: the Action Input is not a valid key, value dictionary.               │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+llm_config = LLMConfig()
 
-10:27:43 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-07 10:27:43,681 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│  Final Answer:                                                               │
-│                                                                              │
-│                                                                              │
-│  [ChatCompletionMessageToolCall(function=Function(arguments='{"key":         │
-│  "1039842425"}', name='idp_get_user_id_from_ucic'), id='call_abc123')]       │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+async def run_crew_with_retry_async(crew_factory, max_retries=3, base_delay=1):
+    from litellm.exceptions import AuthenticationError
+    
+    last_error = None
+    for attempt in range(max_retries + 1):
+        try:
+            crew_coro = crew_factory()
+            result = await crew_coro
+            return result
+        except AuthenticationError as e:
+            error_str = str(e).lower()
+            if ('401' in error_str or 'invalid_token' in error_str or 
+                'authentication' in error_str or 'access token' in error_str or 
+                'invalid_token' in error_str):
+                last_error = e
+                if attempt < max_retries:
+                    delay = base_delay * (2 ** attempt)
+                    logger.info(f"Token expired (attempt {attempt + 1}/{max_retries}), "
+                               f"refreshing token and retrying in {delay}s...")
+                    llm_config.set_llm_config()
+                    await asyncio.sleep(delay)
+                else:
+                    logger.error(f"Max retries ({max_retries}) reached for crew execution")
+            else:
+                raise
+        except Exception as e:
+            import traceback
+            error_str = str(e).lower()
+            logger.error(f"=== FULL EXCEPTION TRACEBACK ===")
+            logger.error(traceback.format_exc())
+            logger.error(f"=== EXCEPTION TYPE: {type(e).__name__} ===")
+            logger.error(f"=== EXCEPTION MESSAGE: {e} ===")
+            if ('connection' in error_str or 'timeout' in error_str or 
+                'rate limit' in error_str or 'temporarily unavailable' in error_str or
+                'service unavailable' in error_str or '502' in error_str or 
+                '503' in error_str or '504' in error_str or '429' in error_str):
+                last_error = e
+                if attempt < max_retries:
+                    delay = base_delay * (2 ** attempt)
+                    logger.info(f"Connection error (attempt {attempt + 1}/{max_retries}), "
+                               f"retrying in {delay}s... Error: {e}")
+                    await asyncio.sleep(delay)
+                else:
+                    logger.error(f"Max retries ({max_retries}) reached for crew execution")
+            else:
+                raise
+    
+    raise last_error
 
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Report                                                                │
-│  Agent: Incident Resolution Agent                                            │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
 
-[CrewAIEventsBus] Warning: Event pairing mismatch. 'crew_kickoff_completed' 
-closed 'task_started' (expected 'crew_kickoff_started')
-Resolver task completed for incident 2c67b8fd3baa07d02101d834c3e45a90
-[CrewAIEventsBus] Warning: Event pairing mismatch. 'method_execution_finished' 
-closed 'task_started' (expected 'method_execution_started')
-2026-08-07 10:27:49,390 - crewai.flow.flow - ERROR - Error executing listener update_servicenow: 'solution'
-2026-08-07 10:27:49,391 - __main__ - ERROR - ✗ Flow FAILED | incident=2c67b8fd3baa07d02101d834c3e45a90 error='solution'
-interaction_counter: 1
-Request - url:https://api.aws-uat.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident json:{'callerId': 'devisivanage.t_tho@idfcfirstext.bank.in', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Account Access Issue', 'tier3': 'Account Setup requirements', 'impact': 'Low', 'urgency': 'Low', 'shortDescription': 'Please find the attached screenshot for your reference.   Customer is unable to update the mobile number and the email id in the mobile application Customer ID:', 'description': 'Please find the attached screenshot for your reference.   Customer is unable to update the mobile number and the email id in the mobile application\r\nCustomer ID: 5815891915', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006217253', 'sourceIncidentId': '', 'assignmentGroup': 'Optimus BTO Support', 'incidentId': '2c67b8fd3baa07d02101d834c3e45a90', 'state': 'On Hold', 'additionalComments': 'BOT is unable to resolve, assign to an Engineer', 'resolutionNotes': '', 'sourceIncCreateddttime': '07-Aug-2026 15:52:59', 'cause': 'Assign to an Engineer.'} headers:{'Content-Type': 'application/json', 'correlationId': '7b0e37d5-d9b2-45b4-8aed-70ec820a8155', 'source': 'IncidentBot', 'transactionId': 'fa49e175-8e20-49ae-99d8-ea0caa49a3f1', 'Authorization': 'Basic MThiNDhmNzctNzMyMy00MWJiLWJmNmUtYzZmODNlODdhOTgyOkI3TGJ1NVhkcX5JT1paaW1SLThNVDE3eWtF'}
-╭────────────────────────────── Crew Completion ───────────────────────────────╮
-│                                                                              │
-│  Crew Execution Completed                                                    │
-│  Name: crew                                                                  │
-│  ID: 878c1e6e-a7ca-485a-a8fc-3280814cde5b                                    │
-│  Final Output:                                                               │
-│                                                                              │
-│  [ChatCompletionMessageToolCall(function=Function(arguments='{"key":         │
-│  "1039842425"}', name='idp_get_user_id_from_ucic'), id='call_abc123')]       │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
-│                                                                              │
-│  Method: run_resolver_crew                                                   │
-│  Status: Completed                                                           │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
-│                                                                              │
-│  Method: update_servicenow                                                   │
-│  Status: Running                                                             │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────── ❌ Flow Method Failed ────────────────────────────╮
-│                                                                              │
-│  Method: update_servicenow                                                   │
-│  Status: Failed                                                              │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+async def call_llm(
+    messages: List[Dict[str, str]],
+    tools: Optional[List[Dict[str, Any]]] = None,
+    model: str = OPENAI_MODEL_NAME,
+    temperature: float = 0.0,
+    max_tokens: Optional[int] = None,
+    first_attempt: bool = True
+) -> Dict[str, Any]:
+    tracer = get_tracer(__name__)
+    
+    with tracer.start_as_current_span("call_llm_async") as span:
+        span.set_attribute("model", model)
+        span.set_attribute("temperature", temperature)
+        if tools:
+            span.set_attribute("has_tools", True)
+        else:
+            span.set_attribute("has_tools", False)
+
+        payload = {
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+        }
+
+        if max_tokens:
+            payload["max_tokens"] = max_tokens
+
+        if tools:
+            payload["tools"] = tools
+            payload["tool_choice"] = "auto"
+
+        headers = {
+            "Authorization": f"Bearer {llm_config.token}",
+            "Content-Type": "application/json"
+        }
+
+        try:
+            async with httpx.AsyncClient(timeout=240.0, verify='./IDFCBANKCA.pem') as client:
+                response = await client.post(
+                    f'{llm_config.url}/chat/completions',
+                    headers=headers,
+                    json=payload
+                )
+
+            response.raise_for_status()
+            data = response.json()
+
+            message = data["choices"][0]["message"]
+
+            response_text = message.get("content")
+            tool_calls = None
+
+            if message.get("tool_calls"):
+                tool_calls = [
+                    {
+                        "id": tc["id"],
+                        "type": tc["type"],
+                        "function": {
+                            "name": tc["function"]["name"],
+                            "arguments": tc["function"]["arguments"]
+                        }
+                    }
+                    for tc in message["tool_calls"]
+                ]
+
+            return {
+                "response": response_text,
+                "tool_calls": tool_calls,
+                "finish_reason": data["choices"][0]["finish_reason"],
+                "usage": {
+                    "prompt_tokens": data["usage"]["prompt_tokens"],
+                    "completion_tokens": data["usage"]["completion_tokens"],
+                    "total_tokens": data["usage"]["total_tokens"]
+                },
+                "raw_message": message
+            }
+
+        except httpx.RequestError as e:
+            span.record_exception(e)
+            return {
+                "response": None,
+                "tool_calls": None,
+                "finish_reason": "error",
+                "error": str(e),
+                "usage": None,
+                "raw_message": None
+            }
+        except (KeyError, json.JSONDecodeError) as e:
+            span.record_exception(e)
+            return {
+                "response": None,
+                "tool_calls": None,
+                "finish_reason": "error",
+                "error": f"Failed to parse API response: {str(e)}",
+                "usage": None,
+                "raw_message": None
+            }
+        except Exception as e:
+            logger.error(e)
+            span.record_exception(e)
+            if first_attempt:
+                llm_config.set_llm_config()
+                return await call_llm(messages, tools, model, temperature, max_tokens, False)
+
+
+async def call_llm_streaming(
+    messages: List[Dict[str, str]],
+    tools: Optional[List[Dict[str, Any]]] = None,
+    model: str = OPENAI_MODEL_NAME,
+    temperature: float = 0.7,
+    max_tokens: Optional[int] = None,
+    first_attempt: bool = True
+):
+    """Async version of call_llm_streaming"""
+    payload = {
+        "model": model,
+        "messages": messages,
+        "temperature": temperature,
+        "stream": True
+    }
+
+    if max_tokens:
+        payload["max_tokens"] = max_tokens
+
+    if tools:
+        payload["tools"] = tools
+        payload["tool_choice"] = "auto"
+
+    headers = {
+        "Authorization": f"Bearer {llm_config.token}",
+        "Content-Type": "application/json"
+    }
+
+    try:
+        async with httpx.AsyncClient(timeout=30.0, verify='./IDFCBANKCA.pem') as client:
+            async with client.stream('POST', llm_config.url, headers=headers, json=payload) as response:
+                response.raise_for_status()
+                
+                async for line in response.aiter_lines():
+                    if line:
+                        if line.startswith('data: '):
+                            line = line[6:]
+
+                        if line == '[DONE]':
+                            break
+
+                        try:
+                            chunk_data = json.loads(line)
+                            delta = chunk_data["choices"][0]["delta"]
+
+                            yield {
+                                "delta": delta.get("content"),
+                                "tool_calls": delta.get("tool_calls"),
+                                "finish_reason": chunk_data["choices"][0].get("finish_reason")
+                            }
+                        except json.JSONDecodeError:
+                            continue
+
+    except httpx.RequestError as e:
+        yield {
+            "delta": None,
+            "tool_calls": None,
+            "finish_reason": "error",
+            "error": str(e)
+        }
+
+    except Exception as e:
+        logger.error(e)
+        if first_attempt:
+            llm_config.set_llm_config()
+            async for chunk in call_llm_streaming(messages, tools, model, temperature, max_tokens, False):
+                yield chunk
 
 
 
 
+
+
+agent/excute_egent but we use the excutre_agent_jager one only ok :
+import os
+import logging
+from typing import Dict, List, Optional, Any
+from pydantic import BaseModel, Field
+
+os.environ["OTEL_SDK_DISABLED"] = "true"
+
+logger = logging.getLogger(__name__)
+
+from crewai import Agent, Task, Crew
+from utils.llm import llm_config
+from tools.query_tools import (
+    JaegerTraceTool,
+    ELKQueryTool,
+    SQLQueryTool,
+    GetTableSchemaTool,
+    ListTablesTool,
+)
+from agents.plan_agent import PlanOutput
+
+from utils.audit_logger import audit_logger
+from tools.query_validator import validate_sql_query
+
+from utils.context_compression import (
+    DEFAULT_MAX_TOKENS as MAX_CONTEXT_TOKENS,
+    estimate_tokens
+)
+from utils.circuit_breaker import get_tool_failure_tracker
+from utils.llm_cache import create_cached_llm
+
+KEEP_RECENT_TOOL_CALLS = 3
+
+class ExecutionResult(BaseModel):
+    resolved: bool = Field(description="Whether the issue was resolved")
+    diagnosis: str = Field(description="Root cause of the issue")
+    solution: str = Field(description="Steps to resolve")
+    questions: List[str] = Field(
+        default_factory=list,
+        description="Clarification questions if needed"
+    )
+    tool_calls: List[Dict] = Field(
+        default_factory=list,
+        description="All tool calls made during execution"
+    )
+    final_state: str = Field(
+        description="Final state description"
+    )
+    confidence: float = Field(
+        default=1.0,
+        description="Confidence score 0-1 for the resolution"
+    )
+    escalation_reason: Optional[str] = Field(
+        default=None,
+        description="Reason for escalation if confidence < 0.3"
+    )
+
+
+class ToolCallRecord(BaseModel):
+    tool_name: str
+    input_params: Dict
+    output: str
+    iteration: int
+    reasoning: str
+
+
+class ErrorChainEntry(BaseModel):
+    """Represents an error found in the trace hierarchy."""
+    service: str
+    operation: str
+    error_message: str
+    iteration: int
+    is_root_cause: bool = False
+    parent_span_id: Optional[str] = None
+    span_id: str
+
+
+class ExecuteAgent:
+    
+    def __init__(self, max_iterations: int = 5):
+        self.max_iterations = max_iterations
+        self.llm = create_cached_llm(
+            model_name=llm_config.model_name,
+            temperature=0.0,
+            base_url=llm_config.url,
+            api_key=llm_config.token
+        )
+
+        self.jaeger_tool = JaegerTraceTool()
+        # self.elk_tool = ELKQueryTool()  # TODO: Enable when ELK is ready
+        # self.sql_tool = SQLQueryTool()  # TODO: Enable when DB is ready
+        # self.schema_tool = GetTableSchemaTool()  # TODO: Enable when DB is ready
+        # self.list_tables_tool = ListTablesTool()  # TODO: Enable when DB is ready
+
+        self.tool_failure_tracker = get_tool_failure_tracker()
+        self.error_chain: List[ErrorChainEntry] = []
+        
+        # ===== ENFORCED ITERATION STATE =====
+        # Track time range iteration programmatically - NOT left to LLM
+        self.current_time_range_index = 0  # ALWAYS start at 0 (most recent)
+        self.current_service = None  # Track current service being queried
+        self.current_tag_name = None  # Track current tag being used
+        self.current_tag_value = None  # Track current tag value
+        self.ranges_exhausted = set()  # Track (service, tag_name, tag_value, range_index) exhausted
+        self.all_services_tried_per_iteration = {}  # Track services/tags tried per iteration
+        # ====================================
+
+    async def execute(
+        self,
+        plan_output: PlanOutput,
+        incident_description: str,
+        app: str,
+        customer_identifiers: Dict[str, str],
+        problem_category: str,
+        incident_id: str = "unknown",
+        discovered_services: str = ""
+    ) -> ExecutionResult:
+        self.incident_id = incident_id
+        self.discovered_services = discovered_services
+        tool_calls = []
+        context = self._build_initial_context(
+            plan_output,
+            incident_description,
+            app,
+            customer_identifiers,
+            problem_category
+        )
+
+        self.current_time_range_index = 0
+        self.current_service = None
+        self.current_tag_name = None
+        self.current_tag_value = None
+        self.ranges_exhausted = set()
+        self.all_services_tried_per_iteration = {}
+
+        for iteration in range(1, self.max_iterations + 1):
+            logger.info(f"[ExecuteAgent] === ITERATION {iteration} START - range={self.current_time_range_index} ===")
+            
+            context = await self._manage_context(context, tool_calls)
+
+            decision = await self._decide_next_action(
+                context,
+                tool_calls,
+                iteration
+            )
+
+            if decision.get("action") == "resolve":
+                if not self._can_resolve():
+                    logger.info(f"[ExecuteAgent] BLOCKING resolve - ranges not exhausted yet. Auto-continuing...")
+                    force_decision = self._force_continue_with_next_range()
+                    
+                    if force_decision.get("action") == "new_iteration_needed":
+                        logger.info(f"[ExecuteAgent] All ranges exhausted - will start NEW ITERATION")
+                        self.current_time_range_index = 0
+                        self.ranges_exhausted = set()
+                        continue
+                    else:
+                        decision = force_decision
+                        tool_name = decision.get("tool")
+                        tool_input = decision.get("input", {})
+
+                        if tool_name == "search_jaeger_traces":
+                            tool_input = self._check_and_enforce_time_range(tool_input)
+                            logger.info(f"[ExecuteAgent] Auto-continuing with time_range_index={tool_input.get('time_range_index')}")
+                        
+                        result = await self._execute_tool(tool_name, tool_input, app)
+                        
+                        call_record = ToolCallRecord(
+                            tool_name=tool_name,
+                            input_params=tool_input,
+                            output=result,
+                            iteration=iteration,
+                            reasoning=decision.get("reasoning", "")
+                        )
+                        tool_calls.append(call_record.model_dump())
+                        
+                        # Auto-advance after this forced call
+                        if tool_name == "search_jaeger_traces":
+                            self._after_tool_execution(tool_name, tool_input, result)
+
+                        # Update context
+                        error_chain_text = self._get_error_chain_text()
+                        context += f"\n\n=== Iteration {iteration}: {tool_name} ===\n{result}"
+                        if error_chain_text:
+                            context += f"\n\n{error_chain_text}"
+                        
+                        # Continue to next iteration if all ranges exhausted
+                        if self.current_time_range_index >= 6:
+                            continue
+                
+                # If we get here, all ranges are exhausted - allow resolve
+                logger.info(f"[ExecuteAgent] RESOLVE ALLOWED - all time ranges exhausted")
+                # Calculate confidence based on iterations and tool calls
+                confidence = self._calculate_confidence(tool_calls, resolved=True)
+                return ExecutionResult(
+                    resolved=True,
+                    diagnosis=decision.get("diagnosis", "Issue resolved"),
+                    solution=decision.get("solution", "No action needed"),
+                    tool_calls=tool_calls,
+                    final_state="Resolved",
+                    confidence=confidence
+                )
+
+            if decision.get("action") == "ask_user":
+                # BLOCK ask_user until at least 3 tool calls have been made
+                if len(tool_calls) < 3:
+                    # Force continue instead - bot must investigate more
+                    logger.info(f"[ExecuteAgent] Blocking ask_user - only {len(tool_calls)} tool calls made, need at least 3")
+                    decision = {
+                        "action": "continue",
+                        "tool": "search_jaeger_traces",
+                        "input": decision.get("input", {})
+                    }
+                else:
+                    return ExecutionResult(
+                        resolved=False,
+                        diagnosis="Additional information needed",
+                        solution="Waiting for user input",
+                        questions=[decision.get("question", "Please provide more information")],
+                        tool_calls=tool_calls,
+                        final_state="Needs user input",
+                        confidence=0.5
+                    )
+
+            if decision.get("action") == "continue":
+                tool_name = decision.get("tool")
+                tool_input = decision.get("input", {})
+                
+                if tool_name == "search_jaeger_traces":
+                    # Enforce starting at time_range_index=0
+                    tool_input = self._check_and_enforce_time_range(tool_input)
+                    logger.info(f"[ExecuteAgent] Executing Jaeger with time_range_index={tool_input.get('time_range_index')}, service={tool_input.get('service')}, tag={tool_input.get('tag_name')}")
+
+                result = await self._execute_tool(tool_name, tool_input, app)
+
+                call_record = ToolCallRecord(
+                    tool_name=tool_name,
+                    input_params=tool_input,
+                    output=result,
+                    iteration=iteration,
+                    reasoning=decision.get("reasoning", "")
+                )
+                tool_calls.append(call_record.model_dump())
+
+                should_break_to_new_iteration = False
+                if tool_name == "search_jaeger_traces":
+                    should_break_to_new_iteration = self._after_tool_execution(tool_name, tool_input, result)
+                
+                if should_break_to_new_iteration:
+                    # Reset for next iteration and break current iteration
+                    self.current_time_range_index = 0
+                    self.ranges_exhausted = set()
+                    logger.info(f"[ExecuteAgent] Breaking to NEW ITERATION - will reset to range 0")
+                    break
+
+                if tool_name == "search_jaeger_traces":
+                    error_analysis = self._analyze_trace_for_errors(result, iteration)
+                    
+                    # If root cause found, resolve immediately
+                    if error_analysis.get("root_cause_found"):
+                        root_cause_entry = next(
+                            (e for e in self.error_chain if e.is_root_cause), None
+                        )
+                        if root_cause_entry:
+                            logger.info(f"[ErrorChain] Root cause found: {root_cause_entry.service} - {root_cause_entry.error_message}")
+                            return ExecutionResult(
+                                resolved=True,
+                                diagnosis=f"Root cause: {root_cause_entry.error_message} in {root_cause_entry.service}",
+                                solution="Issue identified through trace analysis. Further investigation needed for resolution steps.",
+                                tool_calls=tool_calls,
+                                final_state="Resolved",
+                                confidence=0.9
+                            )
+                
+                # Update context with error chain for LLM visibility
+                error_chain_text = self._get_error_chain_text()
+                context += f"\n\n=== Iteration {iteration}: {tool_name} ===\n{result}"
+                if error_chain_text:
+                    context += f"\n\n{error_chain_text}"
+
+        # Max iterations reached - calculate confidence
+        confidence = self._calculate_confidence(tool_calls, resolved=False)
+
+        # Fallback to Human: Escalate if confidence < 0.3
+        if confidence < 0.3:
+            return ExecutionResult(
+                resolved=False,
+                diagnosis="Investigation incomplete - low confidence",
+                solution="BOT unable to resolve - assigning to L2 Engineer",
+                tool_calls=tool_calls,
+                final_state="Escalated",
+                confidence=confidence,
+                escalation_reason="Confidence below 0.3 threshold after max iterations"
+            )
+
+        # Max iterations reached
+        return ExecutionResult(
+            resolved=False,
+            diagnosis="Investigation incomplete - max iterations reached",
+            solution="Manual investigation required",
+            tool_calls=tool_calls,
+            final_state="Incomplete",
+            confidence=confidence
+        )
+
+    async def _manage_context(
+        self,
+        context: str,
+        tool_calls: List[Dict]
+    ) -> str:
+        if not tool_calls:
+            return context
+        
+        # Estimate current token count
+        estimated_tokens = estimate_tokens(context)
+        
+        # If under budget, no compression needed
+        if estimated_tokens <= MAX_CONTEXT_TOKENS:
+            return context
+        
+        # Use context compression utility
+        from utils.context_compression import summarize_tool_calls
+        
+        # Compress tool calls section
+        recent_calls = tool_calls[-KEEP_RECENT_TOOL_CALLS:]
+        older_calls = tool_calls[:-KEEP_RECENT_TOOL_CALLS] if len(tool_calls) > KEEP_RECENT_TOOL_CALLS else []
+        
+        # Build new tool calls section
+        tool_section = "=== RECENT TOOL CALLS (full) ===\n"
+        for call in recent_calls:
+            tool_name = call.get('tool_name', 'unknown')
+            input_params = call.get('input_params', {})
+            output = call.get('output', '')[:500]
+            tool_section += f"\n- Tool: {tool_name}\n  Input: {input_params}\n  Output: {output}...\n"
+        
+        if older_calls:
+            from utils.context_compression import extract_key_info
+            tool_section += "\n=== EARLIER TOOL CALLS (summarized) ===\n"
+            for call in older_calls:
+                tool_name = call.get('tool_name', 'unknown')
+                output = call.get('output', '')
+                key_info = extract_key_info(tool_name, output)
+                tool_section += f"- {tool_name}: {key_info}\n"
+        
+        # Replace tool calls section in context
+        import re
+        tool_calls_pattern = r'=== (PREVIOUS|RECENT|EARLIER) TOOL CALLS ===[\s\S]*?(?==== |\n\n|\Z)'
+        new_context = re.sub(tool_calls_pattern, tool_section.strip(), context)
+        
+        # If still too large, truncate further
+        if estimate_tokens(new_context) > MAX_CONTEXT_TOKENS:
+            # Keep only last 2 recent calls
+            tool_section = "=== TOOL CALLS ===\n"
+            for call in tool_calls[-2:]:
+                tool_name = call.get('tool_name', 'unknown')
+                output = call.get('output', '')[:300]
+                tool_section += f"- {tool_name}: {output}...\n"
+            new_context = re.sub(tool_calls_pattern, tool_section.strip(), new_context)
+        
+        return new_context
+    
+    def _calculate_confidence(
+        self,
+        tool_calls: List[Dict],
+        resolved: bool
+    ) -> float:
+        if not tool_calls:
+            return 0.1
+        
+        if resolved:
+            return min(1.0, 0.5 + (len(tool_calls) * 0.1))
+        
+        error_count = 0
+        for call in tool_calls:
+            output = call.get('output', '').lower()
+            if 'error' in output or 'failed' in output:
+                error_count += 1
+        
+        error_ratio = error_count / len(tool_calls)
+        
+        confidence = 1.0 - (error_ratio * 0.5)
+        
+        if len(tool_calls) < 3:
+            confidence *= 0.8
+        
+        return max(0.1, min(0.9, confidence))
+    
+    def _build_initial_context(
+        self,
+        plan_output: PlanOutput,
+        incident_description: str,
+        app: str,
+        customer_identifiers: Dict[str, str],
+        problem_category: str
+    ) -> str:
+
+        jaeger_data = plan_output.jaeger_results
+        if jaeger_data.get("used"):
+            jaeger_section = f"""
+Jaeger Results (dynamically fetched by Plan Agent):
+  - Traces found: {jaeger_data.get('trace_count', 0)}
+  - Has errors: {jaeger_data.get('has_errors', False)}
+  - Key findings: {jaeger_data.get('raw', 'N/A')[:500]}
+"""
+        else:
+            jaeger_section = "Jaeger Results: Not used by Plan Agent\n"
+        
+        # Add discovered services to context if available
+        services_section = ""
+        if self.discovered_services:
+            services_section = f"\n=== AVAILABLE JAEGER SERVICES ===\n{self.discovered_services}\n"
+        
+        context = f"""
+=== INCIDENT CONTEXT ===
+Application: {app}
+Problem Category: {problem_category}
+
+Customer Identifiers:
+{chr(10).join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"}
+{services_section}
+=== PLAN AGENT FINDINGS ===
+Issue Identified: {plan_output.issue_identified}
+Issue Summary: {plan_output.issue_summary}
+{jaeger_section}
+=== INCIDENT DESCRIPTION ===
+{incident_description}
+
+=== PREVIOUS TOOL CALLS ===
+(No tool calls yet)
+"""
+        return context
+    
+    async def _decide_next_action(
+        self,
+        context: str,
+        tool_calls: List[Dict],
+        iteration: int
+    ) -> Dict:
+        history_text = ""
+        if tool_calls:
+            history_text = "\n\n=== PREVIOUS TOOL CALLS ===\n"
+            for call in tool_calls:
+                history_text += f"\n- Tool: {call['tool_name']}\n  Input: {call['input_params']}\n  Output: {call['output'][:500]}...\n"
+        
+        # Add error chain to context if we have findings
+        error_chain_text = self._get_error_chain_text()
+        
+        prompt = f"""
+{context}
+{history_text}
+{error_chain_text}
+
+=== CURRENT STATE ===
+Iteration: {iteration} of {self.max_iterations}
+
+You are an expert debugging agent. Based on the context above and any previous tool calls, 
+decide what to do next.
+
+Available tools:
+
+- search_jaeger_traces: For distributed tracing, service calls, latency issues
+
+IMPORTANT - Trace Analysis Guidelines (ALWAYS FOLLOW):
+1. When analyzing traces, ALWAYS examine the FULL trace hierarchy (parent + child spans)
+2. If parent service shows error, look at child spans to find the root cause
+3. Trace the error chain: which service called which, and what error occurred in downstream services
+4. Common pattern: Payment API fails → check child spans → find Beneficiary API failed → find actual error message
+5. Use the ReAct loop: if first query returns no results, try different tags (e.g., ucic → customer_id)
+
+IMPORTANT - Jaeger Time Range Iteration (ALWAYS FOLLOW):
+- Jaeger searches ONE 24h time range per call using 'time_range_index' parameter
+- time_range_index=0 means 0-24h ago (most recent), 1 means 24-48h ago, ..., 6 means 144-168h ago
+- ALWAYS start with time_range_index=0
+- If NO TRACES FOUND: call again with time_range_index=1, then 2, etc. until 6
+- If TRACES WITH ERRORS FOUND: stop searching, use that data for diagnosis
+- If NO TRACES FOUND: you MUST continue to next time_range_index (0→1→2→3→4→5→6)
+- CRITICAL: You MUST search ALL 7 time ranges (0-6) before concluding no traces exist
+- Only after searching ALL 7 ranges with NO traces can you conclude it's a data/CBS issue, not a runtime error
+- If WARNING about unknown tag: note the known tags and try those in next iteration
+- MAX 7 calls per iteration (covering 7 days total)
+
+IMPORTANT - Iteration Strategy (ALWAYS FOLLOW):
+- Each iteration = one complete search across all 7 time ranges (0-6)
+- If NO USEFUL DATA after 7 time ranges in one iteration, start NEW ITERATION with:
+  - Different service name (e.g., kyc-service → RE-KYC-API)
+  - OR different tag (e.g., ucic → customer_id)
+- MAX 5 ITERATIONS allowed (worst case: 5 × 7 = 35 API calls)
+- Stop early if root cause is found
+
+IMPORTANT - When calling search_jaeger_traces:
+- Use the 'app' value from the INCIDENT CONTEXT above (e.g., optimus, cbs, idp)
+- Use the 'service' from AVAILABLE JAEGER SERVICES section
+- Use customer identifiers from Customer Identifiers section (e.g., UCIC, customer_id, account_number)
+- ALWAYS include time_range_index parameter (start with 0)
+- NEVER leave these fields empty - always use values from the context
+- If one tag returns no results, try alternative tags in next iteration
+
+Your decision should be based on:
+1. What has already been tried
+2. What the findings suggest needs to be investigated next
+3. Whether the issue is already resolved
+
+CRITICAL RULE - When to ask_user:
+- ONLY use ask_user AFTER you have exhausted ALL available tools (Jaeger, ELK, DB queries)
+- You must complete at least 3 iterations with multiple tool calls before asking questions
+- If no traces/logs found after exhaustive search (5 iterations × 7 time ranges = 35 calls), THEN you may ask_user
+- NEVER ask_user just because you're unsure - try harder first!
+- The user expects you to investigate thoroughly, not give up early
+
+Output in this format:
+ACTION: [resolve|continue|ask_user]
+REASONING: [why you chose this action]
+TOOL: [search_jaeger_traces|none]
+INPUT: [JSON of tool parameters - MUST include app, service, tag_name, tag_value from context]
+DIAGNOSIS: [if resolving, what's the root cause]
+SOLUTION: [if resolving, how to fix it]
+QUESTION: [if asking user, what to ask]
+"""
+# TOOL: [search_elk_logs|execute_db_query|get_table_schema|list_tables|none]
+
+# - search_elk_logs: For detailed application logs, errors, stack traces
+# - execute_db_query: For account data, status, balances, freezes
+# - get_table_schema: To discover table columns before writing queries
+# - list_tables: To find available tables
+        
+        # Use simple LLM call for decision
+        decision_agent = Agent(
+            role="Decision Maker",
+            goal="Decide the next debugging action",
+            backstory=(
+                "You are a debugging orchestrator. Your job is to analyze "
+                "the current state and decide what tool to call next, "
+                "or if the issue is resolved."
+            ),
+            verbose=False,
+            allow_delegation=False,
+            llm=self.llm,
+            temperature=0
+        )
+        
+        decision_task = Task(
+            description=prompt,
+            agent=decision_agent,
+            expected_output=(
+                "Structured decision with ACTION, REASONING, TOOL, INPUT, "
+                "DIAGNOSIS, SOLUTION, and QUESTION fields"
+            )
+        )
+        
+        crew = Crew(
+            agents=[decision_agent],
+            tasks=[decision_task],
+            verbose=False
+        )
+        
+        result = await crew.akickoff()
+        result_text = str(result)
+        
+        # Parse the response
+        return self._parse_decision(result_text)
+    
+    def _parse_decision(self, response: str) -> Dict:
+        import re
+        
+        # Extract action
+        action_match = re.search(r"ACTION:\s*(\w+)", response, re.IGNORECASE)
+        action = action_match.group(1).lower() if action_match else "continue"
+        
+        # Extract reasoning
+        reasoning_match = re.search(r"REASONING:\s*(.+?)(?:INPUT:|DIAGNOSIS:|$)", response, re.DOTALL)
+        reasoning = reasoning_match.group(1).strip() if reasoning_match else ""
+        
+        # Extract tool
+        tool_match = re.search(r"TOOL:\s*(\w+)", response, re.IGNORECASE)
+        tool = tool_match.group(1).lower() if tool_match else ""
+        
+        # Extract input
+        input_match = re.search(r"INPUT:\s*(\{.+?\})", response, re.DOTALL)
+        tool_input = {}
+        if input_match:
+            try:
+                import json
+                tool_input = json.loads(input_match.group(1))
+            except:
+                tool_input = {"query": input_match.group(1)}
+        
+        # Extract diagnosis
+        diagnosis_match = re.search(r"DIAGNOSIS:\s*(.+?)(?:SOLUTION:|$)", response, re.DOTALL)
+        diagnosis = diagnosis_match.group(1).strip() if diagnosis_match else ""
+        
+        # Extract solution
+        solution_match = re.search(r"SOLUTION:\s*(.+?)(?:QUESTION:|$)", response, re.DOTALL)
+        solution = solution_match.group(1).strip() if solution_match else ""
+        
+        # Extract question
+        question_match = re.search(r"QUESTION:\s*(.+)$", response, re.DOTALL)
+        question = question_match.group(1).strip() if question_match else ""
+        
+        return {
+            "action": action,
+            "reasoning": reasoning,
+            "tool": tool,
+            "input": tool_input,
+            "diagnosis": diagnosis,
+            "solution": solution,
+            "question": question
+        }
+
+    def _analyze_trace_for_errors(self, jaeger_result: str, iteration: int) -> Dict:
+        """
+        Analyze Jaeger trace results for errors and build error chain.
+        
+        Returns:
+            dict with:
+                - has_errors: bool
+                - root_cause_found: bool (error with no child errors)
+                - new_errors: list of ErrorChainEntry
+        """
+        import json
+        
+        new_errors = []
+        
+        try:
+            # Try to parse the JSON response
+            data = json.loads(jaeger_result)
+            spans = data.get('data', [])
+            
+            if not spans:
+                return {"has_errors": False, "root_cause_found": False, "new_errors": []}
+            
+            # Build parent-child map
+            parent_to_children: Dict[str, List[Dict]] = {}
+            span_info: Dict[str, Dict] = {}
+            
+            for span in spans:
+                span_id = span.get('spanID', '')
+                refs = span.get('references', [])
+                
+                # Get parent span ID
+                parent_span_id = None
+                for ref in refs:
+                    if ref.get('refType') == 'CHILD_OF':
+                        parent_span_id = ref.get('spanID')
+                        break
+                
+                span_info[span_id] = {
+                    'service': span.get('processID', 'unknown'),
+                    'operation': span.get('operationName', 'unknown'),
+                    'parent_span_id': parent_span_id,
+                    'span_id': span_id
+                }
+                
+                if parent_span_id:
+                    if parent_span_id not in parent_to_children:
+                        parent_to_children[parent_span_id] = []
+                    parent_to_children[parent_span_id].append(span_id)
+            
+            # Find spans with errors (check tags for error=true)
+            error_span_ids = set()
+            for span in spans:
+                tags = span.get('tags', [])
+                for tag in tags:
+                    if tag.get('key') == 'error' and tag.get('value') == True:
+                        error_span_ids.add(span.get('spanID'))
+                        break
+                # Also check logs for error-level events
+                logs = span.get('logs', [])
+                for log in logs:
+                    fields = log.get('fields', [])
+                    for field in fields:
+                        if field.get('key') == 'level' and field.get('value') == 'error':
+                            error_span_ids.add(span.get('spanID'))
+                            break
+            
+            # For each error span, determine if it's root cause (no children with errors)
+            for span_id in error_span_ids:
+                span = next((s for s in spans if s.get('spanID') == span_id), None)
+                if not span:
+                    continue
+                
+                # Check if this span has children that also have errors
+                children = parent_to_children.get(span_id, [])
+                child_has_error = any(child_id in error_span_ids for child_id in children)
+                
+                # Get error message from logs
+                error_message = "Error found in span"
+                logs = span.get('logs', [])
+                for log in logs:
+                    fields = log.get('fields', [])
+                    for field in fields:
+                        if field.get('key') == 'error':
+                            error_message = field.get('value', error_message)
+                            break
+                
+                # Get service name from process
+                process_id = span.get('processID', 'unknown')
+                
+                entry = ErrorChainEntry(
+                    service=process_id,
+                    operation=span.get('operationName', 'unknown'),
+                    error_message=error_message,
+                    iteration=iteration,
+                    is_root_cause=not child_has_error,  # Root if no child errors
+                    parent_span_id=span_info.get(span_id, {}).get('parent_span_id'),
+                    span_id=span_id
+                )
+                new_errors.append(entry)
+            
+            # Update error chain
+            self.error_chain.extend(new_errors)
+            
+            # Mark root causes properly
+            # An error is root cause if it has no children with errors
+            for entry in self.error_chain:
+                if entry.span_id in parent_to_children:
+                    children = parent_to_children[entry.span_id]
+                    # If any child has an error, this is not root cause
+                    if any(child_id in error_span_ids for child_id in children):
+                        entry.is_root_cause = False
+            
+            has_errors = len(new_errors) > 0
+            root_cause_found = any(e.is_root_cause for e in self.error_chain)
+            
+            logger.info(f"[ErrorChain] Found {len(new_errors)} errors, root cause found: {root_cause_found}")
+            
+            return {
+                "has_errors": has_errors,
+                "root_cause_found": root_cause_found,
+                "new_errors": new_errors
+            }
+            
+        except json.JSONDecodeError:
+            # Not JSON, check for simple error patterns
+            result_lower = jaeger_result.lower()
+            if 'error' in result_lower and 'trace' in result_lower:
+                return {"has_errors": True, "root_cause_found": False, "new_errors": []}
+            return {"has_errors": False, "root_cause_found": False, "new_errors": []}
+    
+    def _get_error_chain_text(self) -> str:
+        """Get formatted error chain for context."""
+        if not self.error_chain:
+            return ""
+        
+        lines = ["=== ERROR CHAIN FOUND ==="]
+        for entry in self.error_chain:
+            root_marker = "ROOT CAUSE" if entry.is_root_cause else "symptom"
+            lines.append(f"- {entry.service}: {entry.error_message} (iteration {entry.iteration}, {root_marker})")
+        
+        return "\n".join(lines)
+
+    async def _execute_tool(
+        self,
+        tool_name: str,
+        tool_input: Dict,
+        app: str
+    ) -> str:
+        try:
+            # Query Validation for SQL queries
+            if tool_name == "execute_db_query":
+                query = tool_input.get("query", "")
+                validation = validate_sql_query(query)
+                
+                if not validation["is_safe"]:
+                    # Log the blocked query
+                    await audit_logger.log_sql_query(
+                        incident_id=self.incident_id,
+                        sql_query=query,
+                        result=f"BLOCKED: {validation['reason']}",
+                        db_instance=tool_input.get("db_instance", "main")
+                    )
+                    return f"Query blocked for safety: {validation['reason']}"
+
+            # Execute the tool
+            if tool_name == "search_jaeger_traces":
+                result = await self.jaeger_tool._arun(
+                    app=tool_input.get("app"),
+                    service=tool_input.get("service"),
+                    tag_name=tool_input.get("tag_name"),
+                    tag_value=tool_input.get("tag_value"),
+                    time_range_index=tool_input.get("time_range_index", 0)
+                )
+
+                # Audit log
+                await audit_logger.log_tool_execution(
+                    incident_id=self.incident_id,
+                    tool_name=tool_name,
+                    input_params=tool_input,
+                    output=result
+                )
+                return result
+
+            elif tool_name == "search_elk_logs":
+                result = await self.elk_tool._arun(
+                    query_json=tool_input.get("query_json", "{}"),
+                    parameter_name=tool_input.get("parameter_name"),
+                    parameter_value=tool_input.get("parameter_value")
+                )
+
+                # Audit log
+                await audit_logger.log_tool_execution(
+                    incident_id=self.incident_id,
+                    tool_name=tool_name,
+                    input_params=tool_input,
+                    output=result
+                )
+                return result
+
+            elif tool_name == "execute_db_query":
+                result = await self.sql_tool._arun(
+                    query=tool_input.get("query", "SELECT * FROM DUAL"),
+                    db_instance=tool_input.get("db_instance", "main")
+                )
+
+                # Audit log SQL query
+                await audit_logger.log_sql_query(
+                    incident_id=self.incident_id,
+                    sql_query=tool_input.get("query", ""),
+                    result=result[:500] if len(result) > 500 else result,
+                    db_instance=tool_input.get("db_instance", "main")
+                )
+                return result
+
+            elif tool_name == "get_table_schema":
+                result = await self.schema_tool._arun(
+                    table_name=tool_input.get("table_name", "GLDM"),
+                    app=app
+                )
+
+                # Audit log
+                await audit_logger.log_tool_execution(
+                    incident_id=self.incident_id,
+                    tool_name=tool_name,
+                    input_params=tool_input,
+                    output=result
+                )
+                return result
+
+            elif tool_name == "list_tables":
+                result = await self.list_tables_tool._arun(
+                    pattern=tool_input.get("pattern", "%"),
+                    app=app
+                )
+
+                # Audit log
+                await audit_logger.log_tool_execution(
+                    incident_id=self.incident_id,
+                    tool_name=tool_name,
+                    input_params=tool_input,
+                    output=result
+                )
+                return result
+
+            else:
+                return f"Unknown tool: {tool_name}"
+        
+        except Exception as e:
+            error_msg = f"Tool execution error: {str(e)}"
+            
+            # Log the error
+            await audit_logger.log_tool_execution(
+                incident_id=self.incident_id,
+                tool_name=tool_name,
+                input_params=tool_input,
+                output=error_msg,
+                success=False
+            )
+            
+            return error_msg
+
+    # ===== ENFORCED ITERATION LOGIC (NOT LEFT TO LLM) =====
+    
+    def _is_no_traces_result(self, result: str) -> bool:
+        """Check if the tool result indicates no traces were found."""
+        result_lower = result.lower()
+        no_trace_indicators = [
+            "no traces found",
+            "no traces in time range",
+            "0 traces",
+            "traces found: 0"
+        ]
+        return any(indicator in result_lower for indicator in no_trace_indicators)
+    
+    def _has_invalid_service_tag_warning(self, result: str) -> bool:
+        """Check if result contains WARNING about invalid service or tag."""
+        result_lower = result.lower()
+        # Detect warnings about invalid service or tag
+        warning_indicators = [
+            "warning",
+            "not in known tags",
+            "not a valid service",
+            "unknown tag",
+            "unknown service"
+        ]
+        has_warning = "warning" in result_lower
+        has_invalid = any(indicator in result_lower for indicator in warning_indicators[1:])
+        return has_warning and has_invalid
+    
+    def _check_and_enforce_time_range(self, tool_input: dict) -> dict:
+        service = tool_input.get("service", "")
+        tag_name = tool_input.get("tag_name", "")
+        tag_value = tool_input.get("tag_value", "")
+        
+        requested_index = tool_input.get("time_range_index", 0)
+        
+        if requested_index != self.current_time_range_index:
+            logger.warning(f"[ExecuteAgent] LLM requested range {requested_index}, enforcing tracked range {self.current_time_range_index}")
+        
+        # ALWAYS use our tracked index - never let LLM dictate the range
+        tool_input["time_range_index"] = self.current_time_range_index
+        
+        # Track current service/tag being queried
+        self.current_service = service
+        self.current_tag_name = tag_name
+        self.current_tag_value = tag_value
+        
+        return tool_input
+    
+    def _after_tool_execution(self, tool_name: str, tool_input: dict, result: str) -> bool:
+        """
+        Auto-advance time range after no-traces result - do NOT ask LLM.
+        Returns True if should break to new iteration.
+        """
+        if tool_name != "search_jaeger_traces":
+            return False
+        
+        # Check for invalid service/tag WARNING - this should trigger NEW ITERATION
+        if self._has_invalid_service_tag_warning(result):
+            logger.warning(f"[ExecuteAgent] WARNING: Invalid service/tag detected - breaking to NEW ITERATION")
+            return True  # Signal to break to new iteration
+        
+        # Record this combination as exhausted
+        service = tool_input.get("service", "")
+        tag_name = tool_input.get("tag_name", "")
+        tag_value = tool_input.get("tag_value", "")
+        range_index = tool_input.get("time_range_index", self.current_time_range_index)
+        
+        self.ranges_exhausted.add((service, tag_name, tag_value, range_index))
+        logger.info(f"[ExecuteAgent] Recorded exhaustion: service={service}, tag={tag_name}, range={range_index}")
+        
+        # If no traces found, AUTO-ADVANCE to next time range
+        if self._is_no_traces_result(result):
+            if self.current_time_range_index < 6:
+                self.current_time_range_index += 1
+                logger.info(f"[ExecuteAgent] No traces found at range {range_index}, AUTO-advancing to range {self.current_time_range_index}")
+            else:
+                logger.info(f"[ExecuteAgent] ALL 7 time ranges exhausted (0-6) for service={service}, tag={tag_name}")
+                return True  # Signal to break to new iteration
+        
+        return False  # Continue within same iteration
+    
+    def _can_resolve(self) -> bool:
+        """BLOCK resolve until ALL 7 time ranges (0-6) are exhausted for current service/tag."""
+        # We can only resolve if we've tried range 6 and got no traces
+        if self.current_time_range_index >= 6:
+            # Check if range 6 was exhausted
+            key = (self.current_service, self.current_tag_name, self.current_tag_value, 6)
+            if key in self.ranges_exhausted:
+                logger.info(f"[ExecuteAgent] All 7 ranges exhausted - resolve allowed")
+                return True
+        
+        logger.info(f"[ExecuteAgent] Resolve blocked - current range index: {self.current_time_range_index}, need 6 with no traces")
+        return False
+    
+    def _force_continue_with_next_range(self) -> dict:
+        if self.current_time_range_index < 6:
+            return {
+                "action": "continue",
+                "tool": "search_jaeger_traces",
+                "input": {
+                    "service": self.current_service,
+                    "tag_name": self.current_tag_name,
+                    "tag_value": self.current_tag_value,
+                    "time_range_index": self.current_time_range_index
+                },
+                "reasoning": f"Auto-advancing to time_range_index={self.current_time_range_index} - previous range returned no traces"
+            }
+        else:
+            # All ranges exhausted - trigger new iteration
+            return {
+                "action": "new_iteration_needed",
+                "reasoning": "All 7 time ranges exhausted - need to try different service/tag combination"
+            }
+
+
+async def run_execute_agent_async(
+    plan_output: PlanOutput,
+    incident_description: str,
+    app: str,
+    customer_identifiers: Dict[str, str],
+    problem_category: str,
+    max_iterations: int = 5,
+    incident_id: str = "unknown",
+    discovered_services: str = ""
+) -> ExecutionResult:
+    agent = ExecuteAgent(max_iterations=max_iterations)
+    
+    return await agent.execute(
+        plan_output=plan_output,
+        incident_description=incident_description,
+        app=app,
+        customer_identifiers=customer_identifiers,
+        problem_category=problem_category,
+        incident_id=incident_id,
+        discovered_services=discovered_services
+    )
+
+
+
+
+this is util.logss.py
+
+import httpx
+import json
+import os
+from typing import Dict, Any, Tuple
+
+# ELK Configuration
+ELK_BASE_URL = os.getenv("ELK_BASE_URL", "https://DCELASDBSPRR07-prod.logging.devops.idfcbank.com:9200")
+ELK_INDEX = os.getenv("ELK_INDEX", "elk-cbs-prod*")
+ELK_AUTH_HEADER = os.getenv("ELK_AUTH_HEADER")
+CA_CERT_PATH = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
+
+ELK_HEADERS = {
+    "Authorization": ELK_AUTH_HEADER,
+    "Content-Type": "application/json"
+}
+
+
+async def test_elk_connection() -> Tuple[bool, str]:
+    
+    try:
+        url = f"{ELK_BASE_URL}/_cluster/health"
+        
+        async with httpx.AsyncClient(timeout=10.0, verify=CA_CERT_PATH) as client:
+            response = await client.get(
+                url=url,
+                headers={"Authorization": ELK_AUTH_HEADER}
+            )
+            
+            response.raise_for_status()
+            health_data = response.json()
+            
+            cluster_name = health_data.get("cluster_name", "unknown")
+            cluster_status = health_data.get("status", "unknown")
+            
+            success_msg = (
+                f"Successfully connected to ELK cluster '{cluster_name}' "
+                f"(status: {cluster_status})"
+            )
+            
+            print(f"✓ {success_msg}")
+            return True, success_msg
+            
+    except httpx.TimeoutException:
+        error_msg = f"Connection timeout - ELK cluster not reachable at {ELK_BASE_URL}"
+        print(f"✗ {error_msg}")
+        return False, error_msg
+        
+    except httpx.HTTPStatusError as e:
+        error_msg = f"HTTP error {e.response.status_code} when connecting to ELK cluster"
+        print(f"✗ {error_msg}")
+        return False, error_msg
+        
+    except Exception as e:
+        error_msg = f"Error connecting to ELK cluster: {str(e)}"
+        print(f"✗ {error_msg}")
+        return False, error_msg
+
+
+async def test_index_presence() -> Tuple[bool, str]:
+    
+    try:
+        index_url = f"{ELK_BASE_URL}/{ELK_INDEX}"
+        print(f"Testing Elasticsearch index '{ELK_INDEX}'")
+        
+        async with httpx.AsyncClient(timeout=5.0, verify=CA_CERT_PATH) as client:
+            response = await client.get(
+                url=index_url,
+                headers=ELK_HEADERS
+            )
+            
+            response.raise_for_status()
+            
+            success_msg = f"Successfully connected to index '{ELK_INDEX}'"
+            print(f"✓ {success_msg}")
+            return True, success_msg
+            
+    except Exception as e:
+        error_msg = f"Error while testing connection for index {ELK_INDEX}. Exception: {e}"
+        print(f"✗ {error_msg}")
+        return False, error_msg
+
+
+async def execute_elk_query(query_json: str, parameter_name: str = None, parameter_value: str = None) -> str:
+    
+    try:
+        # Parse the query JSON
+        query_dict = json.loads(query_json)
+        
+        # If parameter provided, substitute it in the query
+        if parameter_name and parameter_value:
+            query_str = json.dumps(query_dict)
+            # Replace the specific parameter placeholder
+            query_str = query_str.replace(f":{parameter_name}", parameter_value)
+            query_dict = json.loads(query_str)
+        
+        # Ensure size is set (default to 20 if not specified)
+        if "size" not in query_dict:
+            query_dict["size"] = 20
+        
+        # Build the search URL
+        search_url = f"{ELK_BASE_URL}/{ELK_INDEX}/_search"
+        
+        # Execute the search with async client
+        async with httpx.AsyncClient(timeout=30.0, verify=CA_CERT_PATH) as client:
+            response = await client.post(
+                search_url,
+                headers=ELK_HEADERS,
+                json=query_dict
+            )
+            
+            response.raise_for_status()
+            result = response.json()
+            
+            # Extract hits
+            hits = result.get("hits", {}).get("hits", [])
+            total_hits = result.get("hits", {}).get("total", {})
+            
+            if isinstance(total_hits, dict):
+                total_count = total_hits.get("value", 0)
+            else:
+                total_count = total_hits
+            
+            # Format results for agent
+            if total_count == 0:
+                return "No matching records found in ELK logs. Note: Logs are available for 32 days only."
+            
+            output = [f"Found {total_count} matching records in ELK (showing {len(hits)} results):"]
+            output.append("=" * 70)
+            
+            for idx, hit in enumerate(hits, 1):
+                source = hit.get("_source", {})
+                output.append(f"\n[Record {idx}]")
+                
+                # Timestamp
+                timestamp = source.get("@timestamp", "N/A")
+                output.append(f"Timestamp: {timestamp}")
+                
+                # Log type
+                logtype = source.get("logtype", "N/A")
+                output.append(f"Log Type: {logtype}")
+                
+                # Message (truncate if too long)
+                message = source.get("message", "")
+                if len(message) > 500:
+                    message = message[:500] + "..."
+                output.append(f"Message: {message}")
+                
+                # Extract key fields based on log type
+                if logtype == "SMS_logs":
+                    # Per SMS SOP section 6.5 - SMS delivery logs
+                    if "mobile_number" in source:
+                        output.append(f"Mobile Number: {source.get('mobile_number')}")
+                    if "status" in source:
+                        output.append(f"Delivery Status: {source.get('status')}")
+                    if "message_id" in source:
+                        output.append(f"Message ID: {source.get('message_id')}")
+                    if "transaction_time" in source:
+                        output.append(f"Transaction Time: {source.get('transaction_time')}")
+                
+                elif logtype == "Email_logs":
+                    # Per Email SOP section 6.5 - Email delivery logs
+                    if "email_address" in source:
+                        output.append(f"Email Address: {source.get('email_address')}")
+                    if "subject" in source:
+                        output.append(f"Subject: {source.get('subject')}")
+                    if "status" in source:
+                        output.append(f"Delivery Status: {source.get('status')}")
+                    if "message_id" in source:
+                        output.append(f"Message ID: {source.get('message_id')}")
+                
+                # Add any error information
+                if "error" in source or "error_code" in source:
+                    output.append(f"Error: {source.get('error', source.get('error_code', 'Unknown'))}")
+                
+                output.append("-" * 70)
+            
+            return "\n".join(output)
+            
+    except httpx.TimeoutException:
+        return "ELK query timed out after 30 seconds. Please try again or reduce the time range."
+        
+    except httpx.HTTPStatusError as e:
+        return f"ELK Query Error (HTTP {e.response.status_code}): {e.response.text}"
+        
+    except json.JSONDecodeError as e:
+        return f"Invalid JSON query: {str(e)}"
+        
+    except Exception as e:
+        return f"Query execution failed: {str(e)}"
+
+
+
+this is util/async_connection.pu
+import asyncpg
+import os
+from utils.encryption_utils import encrypt
+
+# Create a global async connection pool
+_pool = None
+
+TABLE_NAME = "incidents"
+
+async def get_db_pool():
+    global _pool
+    if _pool is None:
+        connection_string = os.environ.get('INCIDENT_AGENT_POSTGRES_CONNECTION_STRING', 'postgresql://incidentagent:incidentagent123@postgres:5432/incidentagent')
+        _pool = await asyncpg.create_pool(
+            connection_string,
+            min_size=5,
+            max_size=20
+        )
+    return _pool
+
+async def get_incident_status_async(incident_id: str) -> str:
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        result = await conn.fetchrow(
+            f"""
+            SELECT incident_status FROM incidents
+            WHERE incident_id = $1
+            """,
+            incident_id
+        )
+        return result['incident_status'] if result else None
+
+
+async def set_incident_status_async(incident_id: str, status: str):
+    pool = await get_db_pool()
+    async with pool.acquire() as conn:
+        await conn.execute(
+            f"""
+            UPDATE incidents
+            SET incident_status = $1, updated_at = NOW()
+            WHERE incident_id = $2
+            """,
+            status, incident_id
+        )
+async def upsert_incident_payload_async(incident_id: str, payload: str, incident_status: str = None):
+    encrypted_payload = encrypt(payload)
+    pool = await get_db_pool()
+    
+    async with pool.acquire() as conn:
+        if incident_status:
+            await conn.execute(
+                f"""
+                INSERT INTO {TABLE_NAME} (incident_id, payload, incident_status)
+                VALUES ($1, $2, $3)
+                ON CONFLICT (incident_id)
+                DO UPDATE SET
+                    payload = EXCLUDED.payload,
+                    incident_status = EXCLUDED.incident_status,
+                    updated_at = NOW()
+                """,
+                incident_id, encrypted_payload, incident_status
+            )
+        else:
+            await conn.execute(
+                f"""
+                INSERT INTO {TABLE_NAME} (incident_id, payload)
+                VALUES ($1, $2)
+                ON CONFLICT (incident_id)
+                DO UPDATE SET
+                    payload = EXCLUDED.payload,
+                    updated_at = NOW()
+                """,
+                incident_id, encrypted_payload
+            )
+
+
+utils/orcale_connection.py
+import asyncio
+import os
+import json
+import logging
+import threading
+from typing import Optional, Dict
+import oracledb
+from utils.observability import get_tracer
+
+logger = logging.getLogger(__name__)
+
+# ─────────────────────────────────────────
+# DB CONFIG LOADER
+# ─────────────────────────────────────────
+
+_db_config: Optional[dict] = None
+
+def _load_db_config():
+    global _db_config
+    config_path = os.getenv("DB_CONFIG_PATH", "./db_config.json")
+    with open(config_path) as f:
+        _db_config = json.load(f)
+    logger.info(f"Loaded DB config from {config_path}: apps={list(_db_config.keys())}")
+
+def get_db_config() -> dict:
+    if _db_config is None:
+        _load_db_config()
+    return _db_config
+
+# ─────────────────────────────────────────
+# MULTI-POOL MANAGEMENT
+# ─────────────────────────────────────────
+
+_pools: Dict[str, oracledb.ConnectionPool] = {}
+_pool_lock = threading.Lock()
+
+
+def _build_dsn(app: str, db_instance: str) -> str:
+    config = get_db_config()
+    app_config = config.get(app)
+    if not app_config:
+        raise ValueError(f"No DB config found for app '{app}'")
+    
+    oracle_config = app_config.get("oracle", {})
+    instance_config = oracle_config.get(db_instance)
+    if not instance_config:
+        available = list(oracle_config.keys())
+        raise ValueError(f"No DB instance '{db_instance}' for app '{app}'. Available: {available}")
+    
+    host = instance_config["host"]
+    port = instance_config["port"]
+    service = instance_config.get("service") or instance_config.get("service_name")
+    use_tls = instance_config.get("tls", True)
+    protocol = "TCPS" if use_tls else "TCP"
+    
+    dsn = (
+        f"(DESCRIPTION="
+        f"(ADDRESS=(PROTOCOL={protocol})(HOST={host})(PORT={port}))"
+        f"(CONNECT_DATA=(SERVER=DEDICATED)(SERVICE_NAME={service})))"
+    )
+    return dsn
+
+
+def _get_credentials(app: str) -> tuple:
+    username = os.getenv(f"{app.upper()}_ORACLE_USERNAME")
+    password = os.getenv(f"{app.upper()}_ORACLE_PASSWORD")
+    if not username or not password:
+        raise ValueError(
+            f"Missing credentials: {app.upper()}_ORACLE_USERNAME and/or "
+            f"{app.upper()}_ORACLE_PASSWORD not set in environment"
+        )
+    return username, password
+
+
+def _get_ssl_dn(app: str, db_instance: str) -> Optional[str]:
+    """Return ssl_server_cert_dn if configured, else None."""
+    config = get_db_config()
+    instance_config = config.get(app, {}).get("oracle", {}).get(db_instance, {})
+    return instance_config.get("ssl_server_cert_dn")
+
+
+def _get_pool(app: str, db_instance: str) -> oracledb.ConnectionPool:
+    pool_key = f"{app}:{db_instance}"
+    
+    if pool_key in _pools:
+        return _pools[pool_key]
+    
+    with _pool_lock:
+        # Double-check after acquiring lock
+        if pool_key in _pools:
+            return _pools[pool_key]
+        
+        logger.info(f"Creating Oracle pool for {pool_key}")
+        dsn = _build_dsn(app, db_instance)
+        username, password = _get_credentials(app)
+        ssl_dn = _get_ssl_dn(app, db_instance)
+        
+        pool_params = {
+            "user": username,
+            "password": password,
+            "min": 2,
+            "max": 10,
+            "increment": 1,
+        }
+        
+        if ssl_dn:
+            pool_params["ssl_server_cert_dn"] = ssl_dn
+            pool_params["ssl_server_dn_match"] = True
+        
+        pool = oracledb.create_pool(
+            dsn=dsn,
+            params=oracledb.PoolParams(**pool_params)
+        )
+        
+        _pools[pool_key] = pool
+        logger.info(f"Oracle pool created for {pool_key} → {dsn}")
+        return pool
+
+
+# ─────────────────────────────────────────
+# QUERY EXECUTION
+# ─────────────────────────────────────────
+
+def _execute_query_sync(query: str, app: str, db_instance: str, params: Optional[dict] = None) -> dict:
+    pool = _get_pool(app, db_instance)
+    with pool.acquire() as connection:
+        with connection.cursor() as cursor:
+            cursor.execute(query, params or {})
+            if cursor.description:
+                data = cursor.fetchall()
+                return {"success": True, "data": data, "error": None}
+            connection.commit()
+            return {"success": True, "data": [], "error": None}
+
+
+async def execute_oracle_query_async(
+    query: str,
+    app: str = "cbs",
+    db_instance: str = "main",
+    params: dict = None
+) -> dict:
+    tracer = get_tracer()
+    with tracer.start_as_current_span("execute_oracle_query_async") as span:
+        span.set_attribute("db.statement", query)
+        span.set_attribute("db.app", app)
+        span.set_attribute("db.instance", db_instance)
+        try:
+            result = await asyncio.to_thread(
+                _execute_query_sync, query, app, db_instance, params
+            )
+            if result["success"] and result["data"]:
+                span.set_attribute("db.rows_returned", len(result["data"]))
+            return result
+        except Exception as e:
+            logger.error(f"DB Error [{app}:{db_instance}]: {e}", exc_info=True)
+            span.record_exception(e)
+            span.set_status(status=False, description=str(e))
+            return {"success": False, "data": None, "error": str(e)}
+
+
+# ─────────────────────────────────────────
+# CLEANUP
+# ─────────────────────────────────────────
+
+async def close_all_oracle_pools() -> None:
+    global _pools
+    for pool_key, pool in _pools.items():
+        try:
+            logger.info(f"Closing Oracle pool: {pool_key}")
+            await asyncio.to_thread(pool.close)
+            logger.info(f"Closed Oracle pool: {pool_key}")
+        except Exception as e:
+            logger.error(f"Failed to close pool {pool_key}: {e}")
+    _pools = {}
+async def close_oracle_async_pool() -> None:
+    await close_all_oracle_pools()
+
+
+
+def validate_db_config():
+    """Call at app startup to fail fast if config is broken."""
+    config = get_db_config()
+    for app_name, app_cfg in config.items():
+        for db_type, instances in app_cfg.items():
+            for instance_name, instance_cfg in instances.items():
+                # Check required fields
+                for field in ("host", "port"):
+                    if field not in instance_cfg:
+                        raise ValueError(
+                            f"db_config.json: {app_name}.{db_type}.{instance_name} missing '{field}'"
+                        )
+                if "service" not in instance_cfg and "service_name" not in instance_cfg:
+                    raise ValueError(
+                        f"db_config.json: {app_name}.{db_type}.{instance_name} missing 'service' or 'service_name'"
+                    )
+            
+                username = os.getenv(f"{app_name.upper()}_ORACLE_USERNAME")
+                password = os.getenv(f"{app_name.upper()}_ORACLE_PASSWORD")
+                if not username or not password:
+                    logger.warning(
+                        f"Missing env vars: {app_name.upper()}_ORACLE_USERNAME / "
+                        f"{app_name.upper()}_ORACLE_PASSWORD"
+                    )
+    logger.info("DB config validation passed")
+
+
+
+thi is of different repo : incicndent agent
+crew_main.py it psuhed the incidhen t iin kafka :
+import os
+from observability import init_telemetry, get_tracer
+import logging
+import html
+# Add these to existing imports
+from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks, UploadFile, File, Form
+from fastapi.responses import HTMLResponse, JSONResponse
+import httpx
+from typing import Optional,List
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+
+logger = logging.getLogger(__name__)
+
+telemetry_endpoint = os.getenv("TELEMETRY_ENDPOINT")
+if telemetry_endpoint:
+    logger.info("OpenTelemetry tracer initialization started...")
+    try:
+        init_telemetry()
+        logger.info("OpenTelemetry tracer initialized")
+    except Exception as e:
+        logger.warning(f"Failed to initialize OpenTelemetry: {e}")
+
+from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.templating import Jinja2Templates
+from fastapi.staticfiles import StaticFiles
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+import asyncio
+import json
+from datetime import datetime
+from dotenv import load_dotenv
+from pydantic import BaseModel, Field, field_validator
+
+from typing import Optional
+import secrets
+import uuid
+from  file_processor import process_attachments
+from oracle_connection import test_oracle_connection
+from incident_db import (
+    get_incident,
+    get_incident_status,
+    set_incident_status,
+    upsert_incident_payload,
+    set_incident_resolution,
+    get_last_25_incidents
+)
+from incident_db_async import upsert_incident_payload_async
+from confluent_kafka import Producer
+
+load_dotenv()
+JIRA_RAG_INGEST_URL = os.getenv(
+    "JIRA_RAG_INGEST_URL",
+    "https://internal-app.uat-devutils.idfcfirstbank.com/api/jira-conf-rag/ingest/incidents"
+)
+logger.info("crew_main.py loaded successfully")
+logger.info(f"INCIDENT_BOT_ENABLED = {os.getenv('INCIDENT_BOT_ENABLED')}")
+logger.info(f"KAFKA_BROKER_URL = {os.getenv('KAFKA_BROKER_URL')}")
+logger.info(f"KAFKA_TOPIC = {os.getenv('KAFKA_TOPIC', 'GEN-AI-DE-INCIDENT-EVENTS')}")
+
+
+# ─────────────────────────────────────────
+# AUTH
+# ─────────────────────────────────────────
+
+def verify_dummy_header(credentials: HTTPBasicCredentials = Depends(HTTPBasic())):
+    expected_username = os.getenv("INCIDENT_AUTH_USERNAME", "admin")
+    expected_password = os.getenv("INCIDENT_AUTH_TOKEN", "dummy-token-12345")
+
+    is_correct_username = secrets.compare_digest(
+        credentials.username.encode("utf8"),
+        expected_username.encode("utf8")
+    )
+    is_correct_password = secrets.compare_digest(
+        credentials.password.encode("utf8"),
+        expected_password.encode("utf8")
+    )
+
+    if not (is_correct_username and is_correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+    return credentials.username
+
+
+# ─────────────────────────────────────────
+# APP SETUP
+# ─────────────────────────────────────────
+from contextlib import asynccontextmanager
+from llm import llm_config
+
+llm_config.set_llm_config()   # synchronous — guarantees a valid token before any request
+
+
+@asynccontextmanager
+async def lifespan(app:FastAPI):
+    asyncio.create_task(llm_config.refresh_loop())
+    yield
+app = FastAPI(lifespan=lifespan)
+
+from clean_extract_bot_data import router as export_router
+app.include_router(export_router)
+
+
+os.makedirs("static", exist_ok=True)
+os.makedirs("templates", exist_ok=True)
+
+app.mount("/incident_agent/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+logger.info("FastAPI app initialized")
+
+
+# ─────────────────────────────────────────
+# KAFKA PRODUCER
+# ─────────────────────────────────────────
+
+def get_kafka_producer():
+    return Producer({
+        'bootstrap.servers': os.getenv("KAFKA_BROKER_URL"),
+        'security.protocol': 'SASL_SSL',
+        'sasl.mechanism': 'SCRAM-SHA-512',
+        'sasl.username': os.getenv("KAFKA_USERNAME", "gen-ai-de_msk_uat"),
+        'sasl.password': os.getenv("KAFKA_PASSWORD"),
+    })
+
+
+def publish_to_kafka(incident_id: str, event_type: str, payload: dict):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("publish_to_kafka") as span:
+        span.set_attribute("incident_id", incident_id)
+        span.set_attribute("event_type", event_type)
+        try:
+            producer = get_kafka_producer()
+            message = {
+                "incident_id": incident_id,
+                "event_type": event_type,
+                "payload": payload
+            }
+            producer.produce(
+                topic=os.getenv("KAFKA_TOPIC", "GEN-AI-DE-INCIDENT-EVENTS"),
+                key=incident_id.encode('utf-8'),
+                value=json.dumps(message).encode('utf-8')
+            )
+            producer.flush()
+            logger.info(f"✓ Kafka published | incident={incident_id} event={event_type}")
+        except Exception as e:
+            logger.error(f"✗ Kafka publish FAILED | incident={incident_id} error={e}")
+            raise
+
+
+
+
+def get_header_details():
+    return {
+        "Content-Type": "application/json",
+        "correlationId": str(uuid.uuid4()),
+        "source": "IncidentBot",
+        "transactionId": str(uuid.uuid4())
+    }
+
+
+def handle_no_comments(incident_id: str):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("handle_no_comments") as span:
+        span.set_attribute("incident_id", incident_id)
+        logger.info(f"  No comments | incident={incident_id}")
+
+from typing import List, Optional
+from pydantic import BaseModel
+
+class Attachment(BaseModel):
+    fileId: Optional[str] = None
+    fileName: str
+    fileType: str
+    fileSize: Optional[int] = None
+    contentEncoding: str
+    fileContent: str
+
+# ─────────────────────────────────────────
+# MODELS
+# ─────────────────────────────────────────
+
+class ServiceNowIncidentCreateRequest(BaseModel):
+    callerId: Optional[str] = None
+    incidentType: Optional[str] = None
+    businessService: Optional[str] = None
+    tier1: Optional[str] = None
+    tier2: Optional[str] = None
+    tier3: Optional[str] = None
+    impact: Optional[str] = None
+    urgency: Optional[str] = None
+    shortDescription: Optional[str] = None
+    description: Optional[str] = None
+    contactType: Optional[str] = None
+    sourceIncidentNum: Optional[str] = None
+    sourceIncidentId: Optional[str] = None
+    assignmentGroup: Optional[str] = None
+    businessImpact: Optional[str] = None
+    cause: Optional[str] = None
+    businessCorrectiveAction: Optional[str] = None
+    techCorrectiveAction: Optional[str] = None
+    dataSource: Optional[str] = None
+    descriptionOfOutage: Optional[str] = None
+    emailId: Optional[str] = None
+    entityUCIC: Optional[str] = None
+    hashValues: Optional[str] = None
+    ipDetails: Optional[str] = None
+    ldwNotifyInformation: Optional[str] = None
+    loanAccountNumber: Optional[str] = None
+    loginId: Optional[str] = None
+    mobileNumber: Optional[str] = None
+    businessPreventiveAction: Optional[str] = None
+    techPreventiveAction: Optional[str] = None
+    resoultionTeam: Optional[str] = None
+    rootCause: Optional[str] = None
+    systemName: Optional[str] = None
+    urlOrDomain: Optional[str] = None
+    userDetail: Optional[str] = None
+    taskEffectiveNumber: Optional[str] = None
+    individualUCIC: Optional[str] = None
+    sourceIncCreateddttime: Optional[str] = None
+    incidentId: str = Field(..., min_length=1)
+    state: Optional[str] = None
+    causedByPatch: Optional[str] = None
+    resolutionCode: Optional[str] = None
+    solutionType: Optional[str] = None
+    outageType: Optional[str] = None
+    vendorGroup: Optional[str] = None
+    additionalComments: Optional[str] = None
+    onHoldReason: Optional[str] = None
+    resolutionNotes: Optional[str] = None
+    userLocation: Optional[str] = None
+    incidentNumber: str
+    assignedTo: Optional[str] = None
+    files: Optional[List[Attachment]] = None
+@field_validator('shortDescription', 'businessImpact',mode='before')
+@classmethod
+def sanitize_text_feilds(cls,value):
+    if value is None:
+        return value
+    return html.escape(str(value))
+class ServiceNowIncidentResponse(BaseModel):
+    code: str
+    details: str
+
+
+# ─────────────────────────────────────────
+# EXCEPTION HANDLER
+# ─────────────────────────────────────────
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    fields = ""
+    for err in exc.errors():
+        field = ".".join(str(x) for x in err["loc"] if x != "body")
+        fields += f", {field}" if fields else field
+    logger.warning(f"Validation error | fields={fields}")
+    return JSONResponse(
+        status_code=422,
+        content={"code": "422", "details": f"{fields} cannot be empty or absent"}
+    )
+
+
+# ─────────────────────────────────────────
+# UI ROUTES
+# ─────────────────────────────────────────
+
+# @app.get("/incident_agent/results")
+# def results_page(request: Request,auth:bool=Depends(verify_dummy_header)):
+#     recent_incidents = get_last_25_incidents()
+#     return templates.TemplateResponse(
+#         "results.html",
+#         {"request": request, "results": recent_incidents}
+#     )
+
+@app.post("/incident_agent/ingest-incidents")
+async def ingest_incidents_proxy(
+    file: UploadFile = File(...),
+    application: str = Form("")
+):
+    logger.info(f"[ingest] Received file={file.filename} application={application}")
+    try:
+        file_contents = await file.read()
+        logger.info(f"[ingest] File size={len(file_contents)} bytes")
+
+        async with httpx.AsyncClient(timeout=600.0, verify=False) as client:
+            response = await client.post(
+                JIRA_RAG_INGEST_URL,
+                files={"file": (file.filename, file_contents, file.content_type or "text/csv")},
+                data={"application": application}
+            )
+
+        logger.info(f"[ingest] jira-rag responded status={response.status_code}")
+
+        try:
+            response_json = response.json()
+        except Exception:
+            response_json = {"raw": response.text}
+
+        return JSONResponse(content=response_json, status_code=response.status_code)
+
+    except Exception as e:
+        logger.error(f"[ingest] FAILED: {e}", exc_info=True)
+        return JSONResponse(
+            content={"status": "error", "message": str(e)},
+            status_code=500
+        )
+@app.get("/incident_agent", response_class=HTMLResponse)
+async def dashboard(request: Request):
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "incidents_received": 0,
+        "incidents_resolved": 0,
+        "reference_collections": 0,
+        "indexed_incidents": 0
+    })
+
+
+# ─────────────────────────────────────────
+# SERVICENOW ENDPOINTS
+# ─────────────────────────────────────────
+
+@app.post("/incident_agent/incident/create")
+async def create_incident_from_servicenow(
+    request: Request,
+    incident_data: ServiceNowIncidentCreateRequest,
+    background_tasks: BackgroundTasks,
+    auth: bool = Depends(verify_dummy_header)
+):
+    tracer = get_tracer(__name__)
+
+    with tracer.start_as_current_span("create_incident_from_servicenow") as span:
+        incident_id = incident_data.incidentId
+        span.set_attribute("incident_id", incident_id)
+        span.set_attribute("has_additional_comments", bool(incident_data.additionalComments))
+
+        logger.info(f"→ Incoming request | incident={incident_id} has_comments={bool(incident_data.additionalComments)}")
+
+        feature = os.getenv("INCIDENT_BOT_ENABLED", False)
+        logger.info(f"  INCIDENT_BOT_ENABLED={feature}")
+        if not feature:
+            logger.warning(f"  Bot disabled, returning 503 | incident={incident_id}")
+            return ServiceNowIncidentResponse(code="503", details="Service Unavailable.")
+
+        incident = get_incident(incident_id)
+        logger.info(f"  DB lookup | incident={incident_id} exists={bool(incident)}")
+
+        if not incident:
+            # NEW INCIDENT
+            file_description = ""
+            if incident_data.files:
+                file_dicts = [f.model_dump() for f in incident_data.files]
+                file_description = process_attachments(file_dicts)
+                logger.info(f"  Files processed | incident={incident_id} count={len(file_dicts)} has_description={bool(file_description)}")
+
+            incident_record = incident_data.model_dump()
+            incident_record.pop("files", None)   
+            incident_record["file_description"] = file_description
+            incident_record["created_at"] = datetime.now().isoformat()
+            incident_record["status"] = "created"
+            incident_record["interaction_counter"] = 0
+            incident_record["headers"] = get_header_details()
+
+            try:
+                await upsert_incident_payload_async(incident_id, json.dumps(incident_record))
+                logger.info(f"  DB saved | incident={incident_id}")
+            except Exception as e:
+                logger.error(f"✗ DB upsert FAILED | incident={incident_id} error={e}")
+                raise HTTPException(status_code=500, detail="Incident server error")
+
+            publish_to_kafka(incident_id, "new_incident", incident_record)
+            logger.info(f"✓ New incident done | incident={incident_id}")
+            return ServiceNowIncidentResponse(code="202", details="Accepted")
+
+
+        else:
+            # EXISTING INCIDENT
+            additional_comments = incident_data.additionalComments
+            payload = incident['payload']
+
+            if additional_comments:
+                current_status = get_incident_status(incident_id)
+                logger.info(f"  Existing incident | incident={incident_id} status={current_status}")
+                span.set_attribute("current_status", current_status or "unknown")
+
+                if current_status == 'on_hold':
+                    payload["additionalComments"] = additional_comments
+
+                    if incident_data.files:
+                        file_dicts = [f.model_dump() for f in incident_data.files]
+                        new_file_description = process_attachments(file_dicts)
+                        if new_file_description:
+                            payload["file_description"] = new_file_description
+                            logger.info(f"  Follow-up files processed | incident={incident_id}")
+
+                    set_incident_status(incident_id, 'in_progress')
+                    publish_to_kafka(incident_id, "additional_comments", payload)
+                    logger.info(f"✓ Additional comments published | incident={incident_id}")
+
+                elif current_status == 'in_progress':
+                    logger.info(f"  Ignored | incident={incident_id} reason=already_in_progress")
+
+                elif current_status in ['resolved', 'rejected']:
+                    logger.info(f"  Ignored | incident={incident_id} reason=final_status={current_status}")
+
+                else:
+                    logger.info(f"  Ignored | incident={incident_id} reason=unknown_status={current_status}")
+
+            else:
+                handle_no_comments(incident_id)
+
+            return ServiceNowIncidentResponse(code="202", details="Accepted")
+
+
+@app.get("/incident_agent/incident/{incident_id}")
+async def get_incident_details(incident_id: str, auth: bool = Depends(verify_dummy_header)):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("get_incident_details") as span:
+        span.set_attribute("incident_id", incident_id)
+        logger.info(f"→ Get incident details | incident={incident_id}")
+        incident = get_incident(incident_id)
+        if not incident:
+            logger.warning(f"  Not found | incident={incident_id}")
+            raise HTTPException(status_code=404, detail="Incident not found")
+        return incident['payload']
+
+
+# @app.get("/incident_agent/nudge_incident/{incident_id}")
+# async def nudge_incident(incident_id: str):
+#     tracer = get_tracer(__name__)
+#     with tracer.start_as_current_span("nudge_incident") as span:
+#         span.set_attribute("incident_id", incident_id)
+#         logger.info(f"→ Nudge incident | incident={incident_id}")
+#         incident = get_incident(incident_id)
+#         if not incident:
+#             logger.warning(f"  Not found | incident={incident_id}")
+#             raise HTTPException(status_code=404, detail="Incident not found")
+#         payload = incident['payload']
+#         publish_to_kafka(incident_id, "new_incident", payload)
+#         logger.info(f"✓ Nudged | incident={incident_id}")
+#         return {"status": "nudged"}
+
+
+# ─────────────────────────────────────────
+# HEALTH ENDPOINTS
+# ─────────────────────────────────────────
+
+@app.get("/incident_agent/health")
+async def health_check():
+    logger.info("Health check called")
+    return {"status": "healthy"}
+
+
+@app.get("/incident_agent/health/oracle")
+async def oracle_health_check():
+    logger.info("Oracle health check called")
+    result = test_oracle_connection()
+    if result["connected"]:
+        logger.info(f"Oracle connected | sysdate={result['sysdate']}")
+        return {
+            "status": "healthy",
+            "connected": True,
+            "sysdate": result["sysdate"],
+            "message": "Successfully connected to Oracle database"
+        }
+    else:
+        logger.error(f"Oracle connection FAILED | error={result['error']}")
+        return {
+            "status": "unhealthy",
+            "connected": False,
+            "error": result["error"],
+            "message": "Failed to connect to Oracle database"
+        }
