@@ -1,102 +1,524 @@
-"""
-Universal Query Tools for Incident Manager.
+this is service_metadata.pyimport os
+import logging
+from typing import Dict, List, Optional, Any
 
-These tools allow the LLM to dynamically generate and execute queries
-for SQL, ELK, Jaeger, and schema discovery without predefined JSON definitions.
-"""
+import yaml
 
-import os
-import json
-import httpx
-import asyncio
-from typing import Dict, Any, Optional, List
-from pydantic import BaseModel, Field
+logger = logging.getLogger(__name__)
 
-# Disable OpenTelemetry for internal tools
-os.environ["OTEL_SDK_DISABLED"] = "true"
+# Load YAML at module import
+_metadata: Dict[str, Any] = {}
+_metadata_loaded = False
 
-from crewai.tools import BaseTool
-from new_flow.utils.logs import execute_elk_query
-from new_flow.utils.oracle_connection import execute_oracle_query_async
-from new_flow.utils.http_calls import http_client_post_async, http_client_get_async
 
-# Import service metadata for validation
-from new_flow.tools.service_metadata import (
-    get_services,
-    get_service_tags,
-    validate_tag_with_warning,
-    get_elk_indexes,
-)
+def _load_metadata() -> Dict[str, Any]:
+    """Load service metadata from YAML file."""
+    global _metadata, _metadata_loaded
+    
+    if _metadata_loaded:
+        return _metadata
+    
+    # Find the YAML file - check multiple locations
+    possible_paths = [
+        os.path.join(os.path.dirname(__file__), "service_metadata.yaml"),
+        os.path.join(os.path.dirname(__file__), "..", "tools", "service_metadata.yaml"),
+        os.path.join(os.path.dirname(os.path.dirname(__file__)), "tools", "service_metadata.yaml"),
+    ]
+    
+    yaml_path = None
+    for path in possible_paths:
+        if os.path.exists(path):
+            yaml_path = path
+            break
+    
+    if not yaml_path:
+        logger.warning("service_metadata.yaml not found - running without predefined tags")
+        _metadata_loaded = True
+        return {}
+    
+    try:
+        with open(yaml_path, 'r') as f:
+            _metadata = yaml.safe_load(f) or {}
+        logger.info(f"Loaded service metadata for apps: {list(_metadata.keys())}")
+    except Exception as e:
+        logger.warning(f"Failed to load service_metadata.yaml: {e}")
+        _metadata = {}
+    
+    _metadata_loaded = True
+    return _metadata
+
+
+def get_app_config(app: str) -> Optional[Dict[str, Any]]:
+    metadata = _load_metadata()
+    app_key = app.lower().strip()
+    return metadata.get(app_key)
+
+
+def get_services(app: str) -> List[str]:
+    config = get_app_config(app)
+    if not config:
+        return []
+    services = config.get("services", {})
+    return list(services.keys())
+
+
+def get_service_tags(app: str, service: str) -> Optional[List[str]]:
+    config = get_app_config(app)
+    if not config:
+        return None
+    
+    services = config.get("services", {})
+    service_key = service.lower().strip()
+    
+    if service_key not in services:
+        return None
+    
+    return services[service_key].get("tags")
+
+
+def get_service_purpose(app: str, service: str) -> Optional[str]:
+    config = get_app_config(app)
+    if not config:
+        return None
+    
+    services = config.get("services", {})
+    service_key = service.lower().strip()
+    
+    if service_key not in services:
+        return None
+    
+    return services[service_key].get("purpose")
+
+
+def is_tag_valid(app: str, service: str, tag: str) -> bool:
+    """
+    Check if a tag is valid for a service.
+    
+    Args:
+        app: Application name
+        service: Service name
+        tag: Tag name to validate
+    
+    Returns:
+        True if tag is valid, or if we don't have metadata (allow all)
+        False only if we have metadata AND tag is not in the list
+    """
+    valid_tags = get_service_tags(app, service)
+    
+    # If we don't have metadata, allow all tags (discovery-first approach)
+    if valid_tags is None:
+        return True
+    
+    return tag.lower().strip() in [t.lower() for t in valid_tags]
+
 
 # Import jaeger_endpoint from app_config (single source of truth)
-from new_flow.tools.app_config import get_jaeger_endpoint
-
-logger = __import__('logging').getLogger(__name__)
-
-
-class SQLQueryInput(BaseModel):
-    """Input for SQL Query Tool."""
-    query: str = Field(description="The SQL query to execute")
-    db_instance: str = Field(default="main", description="Database instance (main, idp, etc.)")
+# This removes YAML dependency for Jaeger endpoints
+from new_flow.tools.app_config import get_jaeger_endpoint as _get_jaeger_endpoint_from_app_config
 
 
-class ELKQueryInput(BaseModel):
-    """Input for ELK Query Tool."""
-    app: str = Field(description="Application name: optimus, cbs, idp (use lowercase). Determines which ELK index to search.")
-    query_json: str = Field(description="ELK query in JSON format. Common fields: customer_id, txn_id, message, logtype, @timestamp")
-    parameter_name: Optional[str] = Field(default=None, description="Parameter name to substitute in query")
-    parameter_value: Optional[str] = Field(default=None, description="Parameter value to substitute")
-
-
-class JaegerQueryInput(BaseModel):
-    """Input for Jaeger Trace Tool.
-    
-    For backward compatibility: if 'app' is not provided, defaults to 'optimus'.
-    If 'service' is not provided, queries all services.
-    
-    IMPORTANT: Use time_range_index to specify which 24h window to search:
-    - 0 = 0-24h ago (most recent)
-    - 1 = 24-48h ago
-    - 2 = 48-72h ago
-    - 3 = 72-96h ago
-    - 4 = 96-120h ago
-    - 5 = 120-144h ago
-    - 6 = 144-168h ago (oldest)
+def get_jaeger_endpoint(app: str) -> Optional[str]:
     """
-    app: Optional[str] = Field(default="optimus", description="Application name: optimus, cbs, idp (use lowercase). Default: optimus")
-    service: str = Field(description="Service name (e.g., upi-api, idp-api, cbs-backend). Use GetServicesTool to discover valid services. If not provided, searches all services.")
-    tag_name: str = Field(description="Identifier type: Use GetServiceTagsTool to get valid tags for the service. Common: customer_id, txn_id, mobile_number, ucic, user_id, session_tracking_id")
-    tag_value: str = Field(description="The identifier value (e.g., customer number, transaction ID)")
-    time_range_index: int = Field(default=0, description="Which 24h time window to search: 0=0-24h, 1=24-48h, 2=48-72h, 3=72-96h, 4=96-120h, 5=120-144h, 6=144-168h. Default 0 (most recent 24h).")
-    return_raw_json: bool = Field(default=False, description="If true, returns full trace JSON for LLM to analyze. Use when you need complete trace data including all spans and tags.")
+    Get Jaeger endpoint for an application.
+    
+    Args:
+        app: Application name
+    
+    Returns:
+        Jaeger API endpoint URL or None
+    """
+    return _get_jaeger_endpoint_from_app_config(app)
 
 
-class TableSchemaInput(BaseModel):
-    """Input for Table Schema Tool."""
-    table_name: str = Field(description="Table name to get schema for")
-    app: str = Field(default="cbs", description="Application name (cbs, optimus, idp)")
+def get_elk_indexes(app: str) -> Dict[str, str]:
+    """
+    Get ELK index patterns for an application.
+    
+    Args:
+        app: Application name
+    
+    Returns:
+        Dict with keys: elk_trace_index, elk_log_index
+    """
+    config = get_app_config(app)
+    if not config:
+        return {}
+    return {
+        "elk_trace_index": config.get("elk_trace_index"),
+        "elk_log_index": config.get("elk_log_index"),
+    }
 
 
-class ListTablesInput(BaseModel):
-    """Input for List Tables Tool."""
-    pattern: str = Field(default="%", description="Table name pattern (e.g., '%GLD%', '%INF%')")
-    app: str = Field(default="cbs", description="Application name (cbs, optimus, idp)")
+def validate_tag_with_warning(app: str, service: str, tag: str) -> str:
+    valid_tags = get_service_tags(app, service)
+    
+    if valid_tags is None:
+        # No metadata - allow with no warning
+        return ""
+    
+    if tag.lower() not in [t.lower() for t in valid_tags]:
+        return (
+            f"⚠️ WARNING: '{tag}' is NOT in known tags for {app}/{service}. "
+            f"Known tags: {valid_tags}. "
+            f"Proceeding anyway with your requested tag..."
+        )
+    
+    return ""
 
 
-class SimilaritySearchInput(BaseModel):
-    """Input for Similarity Search Tool."""
-    query: str = Field(description="Natural language description of the incident")
-    app: str = Field(default="cbs", description="Application name")
-    top_k: int = Field(default=5, description="Number of similar incidents to return")
+# Load metadata on module import
+_load_metadata()
 
 
-# For local testing, use PROD endpoint
-# In K8s, these will be overridden by environment variables
-JAEGER_API_BASE = os.getenv("JAEGER_API_BASE", "https://tracing.prod-opt.idfcfirstbank.com/api")
+
+
+service_metdata.yaml
+# Service Metadata Configuration
+# This provides optional predefined tags for services (if available)
+# Discovery will work even without this - this is just for validation/guidance
+# Zero dependency on support teams for discovery - all discovered via APIs
+
+optimus:
+  jaeger_endpoint: "https://tracing.uat-opt.idfcfirstbank.com/api"
+  jaeger_prod_endpoint: "https://tracing.prod-opt.idfcfirstbank.com/api"
+  elk_trace_index: "prod-jaeger-span-*"
+  elk_log_index: "elk-opt-*"
+  
+  services:
+    idp-api:
+      tags: 
+        - j_id
+        - device_id
+        - session_tracking_id
+        - mobile_number
+        - username
+        - user_id
+        - customer_id
+      purpose: "Login/authentication/registration"
+    PAYMENTS-API:
+      tags:
+        - txn_id
+        - txn_request_id
+        - customer_id
+      purpose: "Fund transfer problems"
+    bulk-payments-api:
+      tags:
+        - bulk_ref_id
+        - customer_id
+      purpose: "Bulk transfer problems"
+    IPO-API:
+      tags:
+        - customer_id
+      purpose: "IPO-related issues"
+    deposits-api:
+      tags:
+        - customer_id
+        - txn_id
+      purpose: "Document download, deposit, FD issues"
+    CREDIT-CARD-API:
+      tags:
+        - customer_id
+        - user_id
+      purpose: "Credit card operations"
+    ecom-api:
+      tags:
+        - customer_id
+        - txn_id
+        - txn_request_id
+      purpose: "E-commerce transactions"
+    WEALTH-API:
+      tags:
+        - customer_id
+        - user_id
+        - session_tracking_id
+      purpose: "Mutual fund portfolio"
+    DEBITCARD-API:
+      tags:
+        - customer_id
+        - user_id
+      purpose: "Debit card operations"
+    upi-api:
+      tags:
+        - customer_id
+        - txn_id
+        - mobile_number
+      purpose: "UPI transactions"
+    FX-API:
+      tags:
+        - customer_id
+        - txn_id
+      purpose: "Pay Abroad transactions"
+    kyc-service:
+      tags:
+        - customer_id
+        - user_id
+      purpose: "KYC operations"
+    beneficiary-api:
+      tags:
+        - customer_id
+        - beneficiary_id
+      purpose: "Beneficiary management"
+    EMANDATE:
+      tags:
+        - customer_id
+        - mandate_id
+      purpose: "Aadhaar mandate operations"
+    CX-API:
+      tags:
+        - mobile_number
+        - customer_id
+        - user_id
+      purpose: "Mobile/email validation"
+    INSURANCE-API:
+      tags:
+        - customer_id
+        - policy_id
+      purpose: "Insurance operations"
+    LAS-API:
+      tags:
+        - customer_id
+        - lai_id
+      purpose: "LAS operations"
+    REMITTANCE-API:
+      tags:
+        - customer_id
+        - remittance_id
+      purpose: "Remittance operations"
+    CAS-API:
+      tags:
+        - customer_id
+        - mf_account_id
+      purpose: "Mutual fund linking"
+    E-CHEQUE-API:
+      tags:
+        - customer_id
+        - cheque_id
+      purpose: "Cheque operations"
+    LOANS-API:
+      tags:
+        - customer_id
+        - loan_id
+      purpose: "Loan operations"
+    billpay-api:
+      tags:
+        - customer_id
+        - user_id
+        - session_tracking_id
+        - txn_id
+        - mobile_number
+      purpose: "Bill payments"
+    APPLY-FM-API:
+      tags:
+        - applicationId
+        - ucic
+        - mobile_number
+        - customer_id
+        - user_id
+      purpose: "Loan applications"
+
+cbs:
+  jaeger_endpoint: "https://tracing.uat-cbs.idfcfirstbank.com/api"
+  jaeger_prod_endpoint: "https://tracing.prod-cbs.idfcfirstbank.com/api"
+  elk_trace_index: "prod-jaeger-span-cbs-*"
+  elk_log_index: "elk-cbs-prod*"
+  
+  services:
+    cbs-backend:
+      tags:
+        - account_number
+        - customer_id
+        - txn_id
+        - ucic
+      purpose: "Core banking backend"
+    cbs-api:
+      tags:
+        - account_number
+        - customer_id
+        - txn_id
+      purpose: "Core banking API"
+    cbs-core:
+      tags:
+        - account_number
+        - customer_id
+        - txn_id
+      purpose: "Core banking core processing"
+
+idp:
+  jaeger_endpoint: "https://tracing.uat-idp.idfcfirstbank.com/api"
+  elk_trace_index: "prod-jaeger-span-idp-*"
+  elk_log_index: "elk-idp-prod*"
+  
+  services:
+    idp-auth:
+      tags:
+        - j_id
+        - user_id
+        - session_tracking_id
+        - mobile_number
+      purpose: "Authentication service"
+    idp-oauth:
+      tags:
+        - user_id
+        - access_token
+        - client_id
+      purpose: "OAuth operations"
+    idp-mfa:
+      tags:
+        - user_id
+        - mobile_number
+        - otp
+      purpose: "MFA operations"
+
+
+
+
+this is app_config.py
+from typing import Dict, List, Optional
+from pydantic import BaseModel
+
+
+class AppConfig(BaseModel):
+    name: str
+    db_instance: str
+    services: List[str]
+    tables: List[str]
+    elk_index: str
+    jaeger_endpoint: Optional[str] = None
+    jaeger_prod_endpoint: Optional[str] = None
+    default_jaeger_service: Optional[str] = None
+    problem_categories: List[str]
+
+
+APPS_CONFIG: Dict[str, AppConfig] = {
+    "cbs": AppConfig(
+        name="Core Banking System",
+        db_instance="main",
+        services=["cbs-backend", "cbs-api", "cbs-core"],
+        tables=["GLDM", "INFZ", "NPAR", "ACD3", "STTM", "DPD", "ACCOUNT"],
+        elk_index="elk-cbs-prod*",
+        jaeger_endpoint="https://tracing.uat-cbs.idfcfirstbank.com/api",
+        jaeger_prod_endpoint="https://tracing.prod-cbs.idfcfirstbank.com/api",
+        default_jaeger_service="cbs-backend",
+        problem_categories=[
+            "account_freeze",
+            "transaction_failure",
+            "balance_issue",
+            "payment_failure",
+            "loan_issue",
+            "kyc_issue"
+        ]
+    ),
+    "optimus": AppConfig(
+        name="Mobile/Net Banking",
+        db_instance="idp",
+        services=["optimus-api", "optimus-login", "optimus-web", "optimus-mobile"],
+        tables=["users", "devices", "sessions", "oauth_tokens", "mfa_records"],
+        elk_index="elk-optimus-prod*",
+        jaeger_endpoint="https://tracing.uat-opt.idfcfirstbank.com/api",
+        jaeger_prod_endpoint="https://tracing.prod-opt.idfcfirstbank.com/api",
+        default_jaeger_service="optimus-api",
+        problem_categories=[
+            "login_failure",
+            "session_timeout",
+            "transaction_failure",
+            "app_crash",
+            "password_reset_failure",
+            "mfa_issue"
+        ]
+    ),
+    "idp": AppConfig(
+        name="Identity Provider",
+        db_instance="idp",
+        services=["idp-auth", "idp-oauth", "idp-mfa"],
+        tables=["users", "oauth_tokens", "mfa_records", "devices", "sessions"],
+        elk_index="elk-idp-prod*",
+        jaeger_endpoint="https://tracing.uat-idp.idfcfirstbank.com/api",
+        jaeger_prod_endpoint="https://tracing.prod-idp.idfcfirstbank.com/api",
+        default_jaeger_service="idp-auth",
+        problem_categories=[
+            "authentication_failure",
+            "oauth_error",
+            "mfa_failure",
+            "token_expired",
+            "device_registration_failure"
+        ]
+    ),
+}
+
+
+def get_app_config(app: str) -> AppConfig:
+    app_key = app.lower().strip()
+    if app_key not in APPS_CONFIG:
+        raise ValueError(
+            f"App '{app}' not supported. Available: {list(APPS_CONFIG.keys())}"
+        )
+    return APPS_CONFIG[app_key]
+
+
+def get_supported_apps() -> List[str]:
+    return list(APPS_CONFIG.keys())
+
+
+
+DEFAULT_APP_CONFIG = AppConfig(
+    name="Unknown Application",
+    db_instance="main",
+    services=[],
+    tables=[],
+    elk_index="elk-*",
+    default_jaeger_service=None,
+    problem_categories=[]
+)
+
+
+def get_app_config_safe(app: str) -> AppConfig:
+    try:
+        return get_app_config(app)
+    except ValueError:
+        return DEFAULT_APP_CONFIG
+
+
+def get_jaeger_endpoint(app: str) -> Optional[str]:
+    if not app:
+        return None
+    try:
+        config = get_app_config(app)
+        return config.jaeger_prod_endpoint
+    except ValueError:
+        return None
+
+
+this si tool.py
+from glob import glob
+import json
+import asyncio
+from new_flow.utils.logs import execute_elk_query
+from new_flow.utils.oracle_connection import execute_oracle_query_async
+from crewai.tools import BaseTool
+import os
+
+from new_flow.utils.http_calls import http_client_post_async, http_client_get_async
+
+os.environ["OTEL_SDK_DISABLED"] = "true"
+
+from glob import glob
+
+import traceback
+import logging
+import threading
+
+logger = logging.getLogger(__name__)
+
+
+import json as _json
+import time as _time
+import base64 as _base64
+import datetime as _datetime
+import httpx
+from collections import defaultdict
+
+JAEGER_API_BASE = os.getenv("JAEGER_API_BASE", "https://tracing.uat-opt.idfcfirstbank.com/api")
 JAEGER_AUTH_TOKEN = "c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbXxTYXR0eUA4NjEyMDA="
-
-MAX_ERROR_TRACES = 10
-MAX_LINES_PER_ERROR_TRACE = 50
 
 _JAEGER_EXCLUDED_OPS = {
     'get', 'set', 'sql:prepare', 'sql:query', 'sql-conn-query', 'sql-rows-next',
@@ -120,9 +542,9 @@ def _jaeger_auth_headers():
         return {"Authorization": f"Basic {JAEGER_AUTH_TOKEN}"}
     return {}
 
+
 def _jaeger_us_to_ist(microseconds_ts):
     from datetime import timezone, timedelta
-    import datetime as _datetime
     seconds = microseconds_ts / 1_000_000
     dt_utc = _datetime.datetime.fromtimestamp(seconds, tz=timezone.utc)
     ist_tz = timezone(timedelta(hours=5, minutes=30))
@@ -146,77 +568,49 @@ def _jaeger_trace_has_error(trace) -> bool:
 
 
 def _jaeger_process_trace(trace):
-    """Process a Jaeger trace and return output lines and status info.
-    
-    Returns a tuple: (output_lines, session_id, status_info)
-    status_info = {
-        "http_codes": set of HTTP status codes,
-        "error_logs": list of error log messages,
-        "error_flag": bool,
-    }
-    """
-    from collections import defaultdict
     spans = trace.get("spans", [])
     processes = trace.get("processes", {})
-    
+
     id_to_span = {s["spanID"]: s for s in spans}
     pid_to_service = {pid: p["serviceName"] for pid, p in processes.items()}
     children_map = defaultdict(list)
-    
+
     all_ids = set(id_to_span.keys())
     child_ids = set()
-    
+
     for span in spans:
         for ref in span.get("references", []):
             parent_id = ref.get("spanID")
             if parent_id in id_to_span:
                 children_map[parent_id].append(span["spanID"])
                 child_ids.add(span["spanID"])
-    
+
     roots = all_ids - child_ids
     if not roots:
-        return [], None, {"http_codes": set(), "error_logs": [], "error_flag": False}
-    
-    import datetime as _datetime
-    import time as _time
-    
+        return []
+
     result = []
-    session_id = None
-    status = {"http_codes": set(), "error_logs": [], "error_flag": False}
-    
+
     def process_span(span_id, depth=0):
-        nonlocal session_id
         span = id_to_span[span_id]
         indent = "    " * depth
         op_name = span.get("operationName", "")
         service_name = pid_to_service.get(span.get("processID"), "")
-        
+
         if depth == 0:
             result.append("Time: " + _jaeger_us_to_ist(span["startTime"]))
-        
+
         is_noise = op_name in _JAEGER_EXCLUDED_OPS or service_name in _JAEGER_EXCLUDED_SERVICES
-        
+
         if not is_noise:
             result.append(f"{indent}{span_id} - {service_name} - {op_name}")
             for tag in span.get("tags", []):
-                key = tag.get("key")
-                val = tag.get("value")
-                if key == "http.status_code":
-                    status["http_codes"].add(str(val))
-                    result.append(f"{indent}HTTP Status: {val}")
-                elif key == "error" and val in (True, "true", "True"):
-                    status["error_flag"] = True
-                elif key == "session_tracking_id" and not session_id:
-                    session_id = val
-            
+                if tag.get("key") == "http.status_code":
+                    result.append(f"{indent}HTTP Status: {tag.get('value')}")
+
             for log in span.get("logs", []):
                 fields = {f.get("key"): f.get("value") for f in log.get("fields", [])}
-                
-                # Extract session_tracing_id from logs
-                sid = fields.get("session_tracing_id")
-                if not session_id and sid and sid not in ("no-session-trace-id", ""):
-                    session_id = sid
-                
+
                 level = str(fields.get("level", "")).lower()
                 event = fields.get("event", "")
                 if level in ("error", "fatal", "critical") and event:
@@ -224,1292 +618,411 @@ def _jaeger_process_trace(trace):
                     method = fields.get("Method") or fields.get("method") or ""
                     ctx = f" [{cls}.{method}]" if (cls or method) else ""
                     result.append(f"{indent}  ERROR{ctx}: {event}")
-                    status["error_logs"].append(event)
-                
+
                 for payload_key in ("request", "response"):
                     if fields.get(payload_key):
                         result.append(f"{indent}  {payload_key}: {str(fields[payload_key])[:_JAEGER_MAX_PAYLOAD_CHARS]}")
-        
+
         for child_id in children_map.get(span_id, []):
             process_span(child_id, depth + 1)
-    
+
     for root_id in roots:
         process_span(root_id)
-    
-    return result, session_id, status
 
+    return result
 
-async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, start_us: int = None, end_us: int = None):
-    import time as _time
-    import json as _json
-    
-    # Get app-specific Jaeger endpoint if available
-    jaeger_endpoint = get_jaeger_endpoint(app)
-    api_base = jaeger_endpoint if jaeger_endpoint else JAEGER_API_BASE
-    
-    # Calculate time range
+async def _check_jaeger_connection():
+    try:
+        headers = _jaeger_auth_headers()
+
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.get(
+                f"{JAEGER_API_BASE}/services",
+                headers=headers,
+            )
+
+        logger.info(
+            "[JAEGER-CONNECTION] status=%s url=%s",
+            response.status_code,
+            f"{JAEGER_API_BASE}/services",
+        )
+
+        if response.status_code == 200:
+            logger.info("[JAEGER-CONNECTION] SUCCESS - Jaeger connection/auth working")
+            return True
+
+        logger.error(
+            "[JAEGER-CONNECTION] FAILED - status=%s body=%s",
+            response.status_code,
+            response.text[:500],
+        )
+        return False
+
+    except Exception as e:
+        logger.exception("[JAEGER-CONNECTION] ERROR: %s", e)
+        return False
+async def _jaeger_fetch(service: str, tag_name: str, tag_value: str):
     now_us = int(_time.time() * 1_000_000)
-    hours_ago = 24  # Default, will be updated if timestamps are passed
-    
-    if start_us is None or end_us is None:
-        start_us = now_us - hours_ago * 3600 * 1_000_000
-        end_us = now_us
-        hours_label = f"{hours_ago}h"
-    else:
-        # Calculate hours from the range for logging
-        hours_diff = (end_us - start_us) / (3600 * 1_000_000)
-        hours_ago = int(hours_diff)  # Update for error message
-        hours_label = f"{hours_diff:.0f}h"
-    
-    # Handle mobile number format
+    start_us = now_us - 72 * 3600 * 1_000_000
+    end_us = now_us
+
     if tag_name == "mobile_number" and not tag_value.startswith("+"):
         if len(tag_value) == 10:
             tag_value = f"+91{tag_value}"
-    
-    # Build query params - use exact service name (Jaeger service names are case-sensitive)
+
+    tags = _json.dumps({tag_name: tag_value})
     headers = _jaeger_auth_headers()
-    params = {"service": service, "start": start_us, "end": end_us, "limit": 100}
-    
-    # Only add tags filter if both tag_name and tag_value are provided and non-empty
-    if tag_name and tag_value and str(tag_name).strip() and str(tag_value).strip():
-        tags = _json.dumps({tag_name: tag_value})
-        params["tags"] = tags
-    
-    logger.info(f"[JAEGER] app={app} service={service} {tag_name}={tag_value} range={hours_label} endpoint={api_base} params={params} headers={headers}")
-    
+    params = {"service": service, "start": start_us, "end": end_us, "limit": 100, "tags": tags}
+
+    logger.info(f"[JAEGER] service={service} {tag_name}={tag_value}")
+
     try:
         async with httpx.AsyncClient(timeout=45) as client:
-            response = await client.get(f"{api_base}/traces", params=params, headers=headers)
+            response = await client.get(f"{JAEGER_API_BASE}/traces", params=params, headers=headers)
             if response.status_code != 200:
-                return {"total_traces_scanned": 0, "failed_traces": [], "error": f"API returned {response.status_code}"}
-            data = response.json()
-
-            traces = data.get("data", [])
-            
-            # Note: Jaeger API may return total=0 but still have data in the array
-            if not traces or len(traces) == 0:
-                return {"total_traces_scanned": 0, "failed_traces": [], "note": f"No traces found in last {hours_ago} hours"}
-            
-            failed = []
-            happy_hits = {}  # Track successful traces by endpoint
-            sessions = set()
-            success_sessions = set()
-            
-            for trace in traces:
-                output_lines, session_id, status_info = _jaeger_process_trace(trace)
-                
-                # Track session
-                if session_id:
-                    sessions.add(session_id)
-                
-                # Determine if trace is an error or success
-                error_codes = sorted(c for c in status_info["http_codes"] if c.startswith(("4", "5")))
-                has_2xx = any(c.startswith("2") for c in status_info["http_codes"])
-                is_error = bool(error_codes) or status_info["error_flag"] or bool(status_info["error_logs"])
-                
-                if not is_error and has_2xx:
-                    # Happy path - track successful endpoint
-                    if session_id:
-                        success_sessions.add(session_id)
-                    if len(output_lines) > 1:
-                        # Extract endpoint from second line (service - operation)
-                        endpoint_key = output_lines[1] if output_lines else ""
-                        happy_hits[endpoint_key] = happy_hits.get(endpoint_key, 0) + 1
-                    continue
-                
-                if is_error and output_lines:
-                    # Truncate to MAX_LINES_PER_ERROR_TRACE
-                    truncated_lines = output_lines[:MAX_LINES_PER_ERROR_TRACE]
-                    if len(output_lines) > MAX_LINES_PER_ERROR_TRACE:
-                        truncated_lines.append(f"... ({len(output_lines) - MAX_LINES_PER_ERROR_TRACE} lines truncated)")
-                    failed.append("\n".join(truncated_lines))
-            
-            return {
-                "total_traces_scanned": len(traces),
-                "failed_traces": failed[:MAX_ERROR_TRACES],  # Limit to MAX_ERROR_TRACES
-                "happy_hits": happy_hits,
-                "sessions": list(sessions),
-                "success_sessions": list(success_sessions),
-                "hours_ago": hours_ago,
-                "service": service,
-                "tag_name": tag_name,
-                "tag_value": tag_value
-            }
+                logger.error(f"[JAEGER] API returned {response.status_code}: {response.text}")
+                return {"service": service, "tag_name": tag_name, "tag_value": tag_value,
+                        "total_traces_scanned": 0, "failed_traces": [],
+                        "error": f"Jaeger API returned {response.status_code}"}
+            data = response.json().get("data", [])
     except Exception as e:
-        return {"total_traces_scanned": 0, "failed_traces": [], "error": str(e)}
-
-
-class SQLQueryTool(BaseTool):
-    """
-    Execute Oracle SQL queries against CBS/Optimus database.
-    
-    Use this tool to:
-    - Check account status, freezes, balances
-    - Query customer data
-    - Look up transaction records
-    
-    The LLM should generate appropriate SQL queries based on the incident.
-    """
-    name: str = "execute_db_query"
-    description: str = (
-        "Executes Oracle SQL query against the database. "
-        "Use this to check account status, freezes, balances, customer data. "
-        "Parameters: query (SQL string), db_instance (main/idp, default main)."
-    )
-    args_schema: type = SQLQueryInput
-    
-    def _run(self, query: str, db_instance: str = "main") -> str:
-        return asyncio.run(self._arun(query, db_instance))
-    
-    async def _arun(self, query: str, db_instance: str = "main") -> str:
-        try:
-            logger.info(f"[SQLQueryTool] Executing: {query[:200]}...")
-            result = await execute_oracle_query_async(
-                query,
-                app="cbs",  # Will be overridden based on context
-                db_instance=db_instance
-            )
-            
-            if result.get("success"):
-                data = result.get("data", [])
-                if not data:
-                    return "Query executed successfully. No results returned."
-                
-                # Format results
-                output = [f"Found {len(data)} rows:"]
-                for row in data[:20]:  # Limit to 20 rows
-                    output.append(str(row))
-                
-                if len(data) > 20:
-                    output.append(f"... and {len(data) - 20} more rows")
-                
-                return "\n".join(output)
-            else:
-                return f"Query Error: {result.get('error')}"
-        
-        except Exception as e:
-            logger.error(f"[SQLQueryTool] Error: {e}")
-            return f"Query Error: {str(e)}"
-
-
-class ELKQueryTool(BaseTool):
-    name: str = "search_elk_logs"
-    description: str = (
-        "Search Elasticsearch for application logs. "
-        "Use for transaction errors, API failures, detailed debugging. "
-        "Parameters: app (optimus/cbs/idp), query_json (ELK query), parameter_name, parameter_value."
-    )
-    args_schema: type = ELKQueryInput
-    
-    def _run(self, app: str, query_json: str, parameter_name: str = None, parameter_value: str = None) -> str:
-        return asyncio.run(self._arun(app, query_json, parameter_name, parameter_value))
-    
-    async def _arun(self, app: str, query_json: str, parameter_name: str = None, parameter_value: str = None) -> str:
-        try:
-            elk_indexes = get_elk_indexes(app)
-            elk_index = elk_indexes.get("elk_log_index")  # Default to log index
-            
-            logger.info(f"[ELKQueryTool] Executing query for app={app}, index={elk_index}...")
-            
-            # Import execute_elk_query from utils.logs - but we need to pass index
-            # For now, we'll use the existing function and it will use default index
-            # A future update can pass app-specific index
-            
-            result = await execute_elk_query(
-                query_json,
-                parameter_name=parameter_name,
-                parameter_value=parameter_value
-            )
-            
-            # Prepend app info to result
-            if result:
-                result = f"[App: {app} | Index: {elk_index}]\n{result}"
-            
-            return result
-        
-        except Exception as e:
-            logger.error(f"[ELKQueryTool] Error: {e}")
-            return f"ELK Query Error: {str(e)}"
-
-
-
-def _parse_known_tags_from_warning(warning: str) -> List[str]:
-    import re
-    # Match content between "Known tags: [" and "]"
-    match = re.search(r"Known tags: \[(.*?)\]", warning)
-    if match:
-        tags_str = match.group(1)
-        # Parse the list - could be quoted strings or plain values
-        tags = re.findall(r"['\"]([^'\"]+)['\"]", tags_str)
-        if not tags:
-            # Try plain comma-separated values
-            tags = [t.strip() for t in tags_str.split(',')]
-        return [t.strip() for t in tags if t.strip()]
-    return []
-
-
-def _jaeger_has_root_cause(result: dict) -> bool:
-    failed = result.get("failed_traces", [])
-    if not failed:
-        return False
-    
-    # Check if any failed trace has a clear error message (not just HTTP errors)
-    for trace in failed:
-        # Look for error patterns that indicate root cause found
-        if "ERROR:" in trace or "error" in trace.lower():
-            # Check for specific error messages (not just status codes)
-            if any(pattern in trace for pattern in ["Exception", "Error:", "Failed:", "DENIED", "FORBIDDEN", "ACCESS_DENIED"]):
-                return True
-    return False
-
-
-class JaegerTraceTool(BaseTool):
-    name: str = "fetch_jaeger_traces"
-    description: str = (
-        "Fetch distributed traces from Jaeger for troubleshooting. "
-        "Parameters: app (optimus/cbs/idp), service, tag_name, tag_value, hours_ago. "
-        "IMPORTANT: Use GetServicesTool and GetServiceTagsTool to discover valid services and tags first. "
-        "If no traces in 24h, tool will automatically try 48h and 72h."
-    )
-    args_schema: type = JaegerQueryInput
-    
-    def _run(self, app: str = None, service: str = None, tag_name: str = None, tag_value: str = None, 
-             hours_ago: int = 24, service_name: str = None, identifier_name: str = None, 
-             identifier_value: str = None, return_raw_json: bool = False, **kwargs) -> str:
-        # Handle backward compatibility with old parameter names
-        if service_name and not service:
-            service = service_name
-        if identifier_name and not tag_name:
-            tag_name = identifier_name
-        if identifier_value and not tag_value:
-            tag_value = identifier_value
-        if not app:
-            app = "optimus"  # Default
-            
-        return asyncio.run(self._arun(app, service, tag_name, tag_value, hours_ago, return_raw_json))
-    
-    async def _arun(self, app: str = None, service: str = None, tag_name: str = None, 
-                   tag_value: str = None, time_range_index: int = 0, return_raw_json: bool = False, **kwargs) -> str:
-        """
-        Fetch Jaeger traces for a SPECIFIC 24h time range.
-        
-        time_range_index:
-        - 0 = 0-24h ago (most recent)
-        - 1 = 24-48h ago
-        - 2 = 48-72h ago
-        - 3 = 72-96h ago
-        - 4 = 96-120h ago
-        - 5 = 120-144h ago
-        - 6 = 144-168h ago (oldest)
-        
-        The Execute Agent is responsible for looping through time ranges (0-6)
-        and deciding when to stop based on the results.
-        """
-        
-        if kwargs.get('service_name') and not service:
-            service = kwargs.get('service_name')
-        if kwargs.get('identifier_name') and not tag_name:
-            tag_name = kwargs.get('identifier_name')
-        if kwargs.get('identifier_value') and not tag_value:
-            tag_value = kwargs.get('identifier_value')
-        
-        # Support legacy hours_ago parameter for backward compatibility
-        if kwargs.get('hours_ago') and time_range_index == 0:
-            # Convert hours_ago to time_range_index
-            hours = kwargs.get('hours_ago')
-            if hours <= 24:
-                time_range_index = 0
-            elif hours <= 48:
-                time_range_index = 1
-            elif hours <= 72:
-                time_range_index = 2
-            elif hours <= 96:
-                time_range_index = 3
-            elif hours <= 120:
-                time_range_index = 4
-            elif hours <= 144:
-                time_range_index = 5
-            else:
-                time_range_index = 6
-        
-        if not app:
-            app = "optimus"
-        if not service:
-            service = ""
-
-        validation_warning = validate_tag_with_warning(app, service, tag_name)
-        
-        # Search ONLY ONE 24h time range based on time_range_index
-        import time as _time
-        now_us = int(_time.time() * 1_000_000)
-        
-        # Define time ranges: (start_offset_hours, end_offset_hours)
-        time_ranges = [
-            (0, 24), (24, 48), (48, 72), (72, 96), 
-            (96, 120), (120, 144), (144, 168)
-        ]
-        
-        # Clamp to valid range
-        time_range_index = max(0, min(6, time_range_index))
-        start_offset, end_offset = time_ranges[time_range_index]
-        
-        start_us = now_us - end_offset * 3600 * 1_000_000
-        end_us = now_us - start_offset * 3600 * 1_000_000
-        range_label = f"{start_offset}-{end_offset}h ago"
-
-        logger.info(f"[JaegerTraceTool] Searching {range_label} for service={service}, tag={tag_name}={tag_value}")
-
-        result = await _jaeger_fetch(app, service, tag_name, tag_value, start_us, end_us)
-
-        scanned = result.get("total_traces_scanned", 0)
-
-        if scanned and scanned > 0:
-            # Found traces
-            
-            # Check if raw JSON is requested
-            if return_raw_json:
-                import json
-                return json.dumps(result, indent=2, default=str)
-            
-            output = []
-            
-            # Add validation warning if present
-            if validation_warning:
-                output.append(validation_warning)
-                output.append("\n" + "="*60 + "\n")
-            
-            output.append(f"Found {scanned} traces in time range {range_label}:")
-            
-            failed = result.get("failed_traces", [])
-            happy_hits = result.get("happy_hits", {})
-            sessions = result.get("sessions", [])
-            success_sessions = result.get("success_sessions", [])
-            
-            # Add happy path tracking info
-            if happy_hits:
-                output.append("\n=== HAPPY PATH (Successful Traces) ===")
-                for endpoint, count in happy_hits.items():
-                    output.append(f"  {endpoint} → Success: {count}")
-            
-            # Add session info
-            if sessions:
-                output.append(f"\n=== SESSIONS ===")
-                output.append(f"  Total sessions: {len(sessions)}")
-                output.append(f"  Successful sessions: {len(success_sessions)}")
-            
-            if failed:
-                if len(failed) > MAX_ERROR_TRACES:
-                    output.append(f"\n[Showing {MAX_ERROR_TRACES} of {len(failed)} failed traces - truncated for context]")
-                    for trace in failed[:MAX_ERROR_TRACES]:
-                        output.append(f"\n{trace}")
-                else:
-                    output.append(f"\n=== {len(failed)} FAILED TRACES ===")
-                    for trace in failed:
-                        output.append(f"\n{trace}")
-                
-                # If root cause found, note it but let LLM decide next step
-                if _jaeger_has_root_cause(result):
-                    output.append("\n[ROOT CAUSE IDENTIFIED in this time range]")
-            else:
-                output.append(f"\n[Showing {min(scanned, 5)} traces for analysis]")
-            
-            return "\n".join(output)
-        
-        # No traces found in this time range
-        output = []
-        if validation_warning:
-            output.append(validation_warning)
-            output.append("\n" + "="*60 + "\n")
-        
-        output.append(
-            f"No traces found in time range {range_label} for this identifier.\n\n"
-            f"Use time_range_index={time_range_index + 1} to search the next older time range (24h older)."
-        )
-        return "\n".join(output)
-
-
-class GetTableSchemaTool(BaseTool):
-    """
-    Get column information for a database table.
-    
-    Use this tool before writing SQL queries to understand available columns.
-    """
-    name: str = "get_table_schema"
-    description: str = (
-        "Get column names and types for a database table. "
-        "Use this before writing SQL queries to understand available columns."
-    )
-    args_schema: type = TableSchemaInput
-    
-    def _run(self, table_name: str, app: str = "cbs") -> str:
-        """Get table schema synchronously."""
-        return asyncio.run(self._arun(table_name, app))
-    
-    async def _arun(self, table_name: str, app: str = "cbs") -> str:
-        """Get table schema from Oracle metadata."""
-        # Query Oracle ALL_TAB_COLUMNS
-        query = """
-            SELECT column_name, data_type, data_length, nullable, column_id
-            FROM all_tab_columns 
-            WHERE owner = 'FISONLPD' AND table_name = UPPER(:table_name)
-            ORDER BY column_id
-        """
-        
-        try:
-            result = await execute_oracle_query_async(
-                query,
-                app=app,
-                db_instance="main",
-                params={"table_name": table_name}
-            )
-            
-            if result.get("success"):
-                data = result.get("data", [])
-                if not data:
-                    return f"No columns found for table '{table_name}'. Check if table name is correct."
-                
-                output = [f"Schema for {table_name}:"]
-                for col in data:
-                    col_name = col[0] if len(col) > 0 else ""
-                    col_type = col[1] if len(col) > 1 else ""
-                    col_len = col[2] if len(col) > 2 else ""
-                    nullable = col[3] if len(col) > 3 else ""
-                    output.append(f"  {col_name:30} {col_type:15} nullable={nullable}")
-                
-                return "\n".join(output)
-            else:
-                return f"Error: {result.get('error')}"
-        
-        except Exception as e:
-            return f"Error getting schema: {str(e)}"
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# List Tables Tool
-# ─────────────────────────────────────────────────────────────────────────────
-
-class ListTablesTool(BaseTool):
-    """
-    List database tables matching a pattern.
-    
-    Use this to discover available tables in the database.
-    """
-    name: str = "list_tables"
-    description: str = (
-        "List database tables matching a pattern. "
-        "Use this to discover available tables. "
-        "Example pattern: '%GLD%' or '%INF%'."
-    )
-    args_schema: type = ListTablesInput
-    
-    def _run(self, pattern: str = "%", app: str = "cbs") -> str:
-        """List tables synchronously."""
-        return asyncio.run(self._arun(pattern, app))
-    
-    async def _arun(self, pattern: str = "%", app: str = "cbs") -> str:
-        """List tables from Oracle."""
-        query = """
-            SELECT table_name 
-            FROM user_tables 
-            WHERE table_name LIKE UPPER(:pattern)
-            ORDER BY table_name
-        """
-        
-        try:
-            result = await execute_oracle_query_async(
-                query,
-                app=app,
-                db_instance="main",
-                params={"pattern": pattern}
-            )
-            
-            if result.get("success"):
-                data = result.get("data", [])
-                if not data:
-                    return f"No tables found matching pattern '{pattern}'."
-                
-                tables = [row[0] for row in data]
-                return f"Found {len(tables)} tables:\n" + "\n".join(f"  - {t}" for t in tables)
-            else:
-                return f"Error: {result.get('error')}"
-        
-        except Exception as e:
-            return f"Error listing tables: {str(e)}"
-
-
-# ─────────────────────────────────────────────────────────────────────────────
-# Similarity Search Tool
-# ─────────────────────────────────────────────────────────────────────────────
-
-class SimilaritySearchTool(BaseTool):
-    """
-    Search for similar historic incidents.
-    
-    Use this to find resolved incidents with similar problems.
-    The LLM can use these to understand how similar issues were resolved.
-    """
-    name: str = "search_historic_incidents"
-    description: str = (
-        "Search for similar historic incidents to understand how similar "
-        "problems were resolved. Returns top similar incidents with their resolutions."
-    )
-    args_schema: type = SimilaritySearchInput
-    
-    def _run(self, query: str, app: str = "cbs", top_k: int = 5) -> str:
-        """Search historic incidents synchronously."""
-        return asyncio.run(self._arun(query, app, top_k))
-    
-    async def _arun(self, query: str, app: str = "cbs", top_k: int = 5) -> str:
-        """Search historic incidents using semantic search."""
-        try:
-            # Import here to avoid circular imports
-            from agents.context_builder import run_incident_context_crew_async
-            
-            context = await run_incident_context_crew_async(
-                f"Find similar incidents: {query}",
-                application=app
-            )
-            
-            if context and context.strip():
-                return context
-            else:
-                return "No similar historic incidents found."
-        
-        except Exception as e:
-            logger.error(f"[SimilaritySearchTool] Error: {e}")
-            return f"Error searching historic incidents: {str(e)}"
-
-
-
-def get_tools_for_agent(agent_type: str) -> List[BaseTool]:
-    if agent_type == "plan":
-        return [
-            SimilaritySearchTool(),
-            JaegerTraceTool(),
-        ]
-    elif agent_type == "execute":
-        return [
-            JaegerTraceTool(),
-            ELKQueryTool(),
-            SQLQueryTool(),
-            GetTableSchemaTool(),
-            ListTablesTool(),
-        ]
-    else:
-        return []
-
-def get_all_tools() -> List[BaseTool]:
-    """Get all universal tools."""
-    return [
-        SimilaritySearchTool(),
-        JaegerTraceTool(),
-        ELKQueryTool(),
-        SQLQueryTool(),
-        GetTableSchemaTool(),
-        ListTablesTool(),
-    ]
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-import os
-import logging
-from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field
-
-os.environ["OTEL_SDK_DISABLED"] = "true"
-
-logger = logging.getLogger(__name__)
-
-from crewai import Agent, Task, Crew
-from new_flow.utils.llm import llm_config
-from new_flow.tools.query_tools import JaegerTraceTool
-from new_flow.utils.audit_logger import audit_logger
-from new_flow.utils.llm_cache import create_cached_llm
-
-
-class JaegerExecutionResult(BaseModel):
-    resolved: bool = Field(description="Whether issue was found/resolved")
-    diagnosis: str = Field(description="Root cause or findings")
-    solution: str = Field(description="Steps to resolve")
-    questions: List[str] = Field(
-        default_factory=list,
-        description="Clarification questions if needed"
-    )
-    tool_calls: List[Dict] = Field(
-        default_factory=list,
-        description="All Jaeger calls made during execution"
-    )
-    final_state: str = Field(description="Final state description")
-    confidence: float = Field(default=0.5, description="Confidence score 0-1")
-    iterations_completed: int = Field(default=0, description="Number of iterations completed")
-    ranges_exhausted_per_iteration: List[int] = Field(
-        default_factory=list,
-        description="Number of time ranges tried in each iteration"
-    )
-
-
-class JaegerOnlyAgent:
-    def __init__(self, max_iterations: int = 5, customer_identifiers: Dict[str, str] = None):
-        self.max_iterations = max_iterations
-        self.jaeger_tool = JaegerTraceTool()
-        self.customer_identifiers = customer_identifiers or {}
-        
-        self.llm = create_cached_llm(
-            model_name=llm_config.model_name,
-            temperature=0.0,
-            base_url=llm_config.url,
-            api_key=llm_config.token
-        )
-        
-        # State tracking
-        self.incident_id = "unknown"
-        self.current_service = None
-        self.current_tag_name = None
-        self.current_tag_value = None
-    
-    async def execute(
-        self,
-        app: str,
-        service: str,
-        tag_name: str,
-        tag_value: str,
-        incident_id: str = "unknown",
-        context: str = ""
-    ) -> JaegerExecutionResult:
-        self.incident_id = incident_id
-        tool_calls = []
-        ranges_exhausted_per_iteration = []
-        
-        for iteration in range(1, self.max_iterations + 1):
-            logger.info(f"[JaegerOnlyAgent] === ITERATION {iteration} START ===")
-            logger.info(f"[JaegerOnlyAgent] Service: {service}, Tag: {tag_name}={tag_value}")
-            
-            ranges_tried = 0
-            iteration_results = []
-            
-            # Deterministic 7-call loop (time_range_index 0-6)
-            for time_range_index in range(7):
-                logger.info(f"[JaegerOnlyAgent] Calling Jaeger with time_range_index={time_range_index}")
-                
-                # Execute Jaeger call
-                result = await self._execute_jaeger(
-                    app=app,
-                    service=service,
-                    tag_name=tag_name,
-                    tag_value=tag_value,
-                    time_range_index=time_range_index
-                )
-                
-                ranges_tried += 1
-                
-                # Record the call
-                call_record = {
-                    "tool_name": "search_jaeger_traces",
-                    "input_params": {
-                        "app": app,
-                        "service": service,
-                        "tag_name": tag_name,
-                        "tag_value": tag_value,
-                        "time_range_index": time_range_index
-                    },
-                    "output": result,
-                    "iteration": iteration,
-                    "time_range_index": time_range_index
-                }
-                tool_calls.append(call_record)
-                iteration_results.append(result)
-                
-                # Check for break conditions
-                break_reason = self._check_break_conditions(result)
-                
-                if break_reason == "invalid_service_tag":
-                    # WARNING/ERROR about invalid service or tag → break to new iteration
-                    logger.warning(f"[JaegerOnlyAgent] Invalid service/tag detected - breaking to NEW ITERATION")
-                    ranges_exhausted_per_iteration.append(ranges_tried)
-                    
-                    # Ask LLM for new service/tag
-                    service, tag_name, tag_value = await self._decide_next_service_tag(
-                        context=context,
-                        previous_results=tool_calls,
-                        iteration=iteration,
-                        reason="invalid_service_tag"
-                    )
-                    
-                    if not service or not tag_name:
-                        # LLM couldn't find valid service/tag
-                        logger.warning(f"[JaegerOnlyAgent] LLM couldn't determine new service/tag - ending")
-                        return JaegerExecutionResult(
-                            resolved=False,
-                            diagnosis="Could not find valid service/tag combination",
-                            solution="Manual investigation required",
-                            tool_calls=tool_calls,
-                            final_state="Incomplete - no valid service/tag",
-                            confidence=0.3,
-                            iterations_completed=iteration,
-                            ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
-                        )
-                    
-                    # Break to next iteration with new service/tag
-                    break
-                
-                elif break_reason == "no_traces_continue":
-                    # No traces found → continue to next time range
-                    logger.info(f"[JaegerOnlyAgent] No traces at range {time_range_index}, continuing...")
-                    continue
-                
-                elif break_reason == "traces_found":
-                    # Traces found → return to LLM for decision
-                    logger.info(f"[JaegerOnlyAgent] Traces found at range {time_range_index}")
-                    ranges_exhausted_per_iteration.append(ranges_tried)
-                    
-                    # Ask LLM what to do next
-                    decision = await self._decide_after_traces(
-                        context=context,
-                        jaeger_result=result,
-                        tool_calls=tool_calls,
-                        iteration=iteration
-                    )
-                    
-                    if decision.get("action") == "resolve":
-                        return JaegerExecutionResult(
-                            resolved=True,
-                            diagnosis=decision.get("diagnosis", "Issue identified in traces"),
-                            solution=decision.get("solution", "See trace analysis"),
-                            tool_calls=tool_calls,
-                            final_state="Resolved",
-                            confidence=0.8,
-                            iterations_completed=iteration,
-                            ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
-                        )
-                    elif decision.get("action") == "new_iteration":
-                        # LLM wants to try new service/tag
-                        new_service = decision.get("new_service")
-                        new_tag_name = decision.get("new_tag_name")
-                        new_tag_value = decision.get("new_tag_value")
-                        
-                        if new_service and new_tag_name:
-                            service = new_service
-                            tag_name = new_tag_name
-                            tag_value = new_tag_value
-                            logger.info(f"[JaegerOnlyAgent] LLM decided to try new service={service}, tag={tag_name}")
-                            break
-                        else:
-                            # No new service/tag provided, continue with next iteration
-                            pass
-                    
-                    # Continue to next time range
-                    continue
-            
-            # End of inner loop - check if all 7 ranges exhausted
-            if ranges_tried >= 7:
-                logger.info(f"[JaegerOnlyAgent] All 7 time ranges exhausted for iteration {iteration}")
-                ranges_exhausted_per_iteration.append(ranges_tried)
-                
-                # Ask LLM for next action
-                decision = await self._decide_after_all_ranges(
-                    context=context,
-                    tool_calls=tool_calls,
-                    iteration=iteration
-                )
-                
-                if decision.get("action") == "new_iteration":
-                    new_service = decision.get("new_service")
-                    new_tag_name = decision.get("new_tag_name")
-                    new_tag_value = decision.get("new_tag_value")
-                    
-                    if new_service and new_tag_name:
-                        service = new_service
-                        tag_name = new_tag_name
-                        tag_value = new_tag_value
-                        logger.info(f"[JaegerOnlyAgent] Starting new iteration with service={service}, tag={tag_name}")
-                        continue
-                    else:
-                        # No new service/tag - end execution
-                        return JaegerExecutionResult(
-                            resolved=False,
-                            diagnosis="All time ranges exhausted - no traces found",
-                            solution="Manual investigation required",
-                            tool_calls=tool_calls,
-                            final_state="Incomplete - no traces found",
-                            confidence=0.4,
-                            iterations_completed=iteration,
-                            ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
-                        )
-                elif decision.get("action") == "resolve":
-                    return JaegerExecutionResult(
-                        resolved=True,
-                        diagnosis=decision.get("diagnosis", "Investigation complete"),
-                        solution=decision.get("solution", "No action needed"),
-                        tool_calls=tool_calls,
-                        final_state="Resolved",
-                        confidence=0.6,
-                        iterations_completed=iteration,
-                        ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
-                    )
-                else:
-                    # LLM wants to stop
-                    return JaegerExecutionResult(
-                        resolved=False,
-                        diagnosis="Investigation ended by LLM",
-                        solution="See tool calls for details",
-                        tool_calls=tool_calls,
-                        final_state="Stopped",
-                        confidence=0.5,
-                        iterations_completed=iteration,
-                        ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
-                    )
-        
-        # Max iterations reached
-        logger.warning(f"[JaegerOnlyAgent] Max {self.max_iterations} iterations reached")
-        return JaegerExecutionResult(
-            resolved=False,
-            diagnosis="Max iterations reached - investigation incomplete",
-            solution="Manual investigation required",
-            tool_calls=tool_calls,
-            final_state="Incomplete - max iterations",
-            confidence=0.3,
-            iterations_completed=self.max_iterations,
-            ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
-        )
-    
-    async def _execute_jaeger(
-        self,
-        app: str,
-        service: str,
-        tag_name: str,
-        tag_value: str,
-        time_range_index: int
-    ) -> str:
-        """Execute a single Jaeger trace query."""
-        try:
-            result = await self.jaeger_tool._arun(
-                app=app,
-                service=service,
-                tag_name=tag_name,
-                tag_value=tag_value,
-                time_range_index=time_range_index
-            )
-            
-            # Audit log
-            await audit_logger.log_tool_execution(
-                incident_id=self.incident_id,
-                tool_name="search_jaeger_traces",
-                input_params={
-                    "app": app,
-                    "service": service,
-                    "tag_name": tag_name,
-                    "tag_value": tag_value,
-                    "time_range_index": time_range_index
-                },
-                output=result
-            )
-            
-            return result
-            
-        except Exception as e:
-            error_msg = f"Jaeger execution error: {str(e)}"
-            logger.error(f"[JaegerOnlyAgent] {error_msg}")
-            return error_msg
-    
-    def _check_break_conditions(self, result: str) -> str:
-        result_lower = result.lower()
-        
-        # Check for warning about invalid service or tag
-        warning_indicators = [
-            "warning",
-            "not in known tags",
-            "not a valid service",
-            "unknown tag",
-            "unknown service"
-        ]
-        has_warning = "warning" in result_lower
-        has_invalid = any(indicator in result_lower for indicator in warning_indicators[1:])
-        
-        if has_warning and has_invalid:
-            return "invalid_service_tag"
-        
-        # Check for no traces
-        no_trace_indicators = [
-            "no traces found",
-            "no traces in time range",
-            "0 traces",
-            "traces found: 0"
-        ]
-        if any(indicator in result_lower for indicator in no_trace_indicators):
-            return "no_traces_continue"
-        
-        # Traces found
-        return "traces_found"
-    
-
-    async def _decide_next_service_tag(
-        self,
-        context: str,
-        previous_results: List[Dict],
-        iteration: int,
-        reason: str
-    ) -> tuple:
-        history_text = self._format_tool_calls(previous_results)
-        
-        prompt = f"""
-{context}
-
-=== CURRENT STATE ===
-Iteration: {iteration} of {self.max_iterations}
-Reason for new service/tag: {reason}
-
-=== PREVIOUS JAEGER CALLS ===
-{history_text}
-
-=== TASK ===
-The previous service and/or tag combination was invalid (warning/error from Jaeger).
-You need to decide a NEW service and tag combination to try.
-
-Available services (from discovery):
-- Use GetServicesTool to discover valid services for the app
-- Common services: upi-api, idp-api, cbs-backend, kyc-service, etc.
-
-IMPORTANT: Only use "customer_id" or "mobile_number" as TAG_NAME. Do NOT use "ucic", "txn_id", or any other tag.
-- If TAG_NAME is "customer_id", the value will be automatically retrieved from customer_identifiers
-- If TAG_NAME is "mobile_number", provide the mobile number value directly
-
-Output in this format:
-SERVICE: [new service name]
-TAG_NAME: [new tag name]
-REASONING: [why you chose this combination]
-"""
-        
-        decision_agent = Agent(
-            role="Service/Tag Selector",
-            goal="Select valid service and tag for Jaeger search",
-            backstory=(
-                "You are a Jaeger search expert. Your job is to select "
-                "valid service and tag combinations based on previous errors."
-            ),
-            verbose=False,
-            allow_delegation=False,
-            llm=self.llm,
-            temperature=0
-        )
-        
-        decision_task = Task(
-            description=prompt,
-            agent=decision_agent,
-            expected_output="SERVICE, TAG_NAME, TAG_VALUE, REASONING"
-        )
-        
-        crew = Crew(
-            agents=[decision_agent],
-            tasks=[decision_task],
-            verbose=False
-        )
-        
-        result = await crew.akickoff()
-        result_text = str(result)
-        
-        # Parse the response
-        return self._parse_service_tag_decision(result_text)
-    
-    async def _decide_after_traces(
-        self,
-        context: str,
-        jaeger_result: str,
-        tool_calls: List[Dict],
-        iteration: int
-    ) -> Dict:
-        """
-        Ask LLM what to do after traces are found.
-        
-        Returns:
-            dict with action, diagnosis, solution, or new service/tag
-        """
-        history_text = self._format_tool_calls(tool_calls)
-        
-        prompt = f"""
-{context}
-
-=== CURRENT STATE ===
-Iteration: {iteration} of {self.max_iterations}
-
-=== LATEST JAEGER RESULT ===
-{jaeger_result[:1000]}
-
-=== PREVIOUS JAEGER CALLS ===
-{history_text}
-
-=== TASK ===
-Traces were found in the search. Decide what to do next:
-
-Options:
-1. RESOLVE: If root cause is identified in the traces
-2. NEW_ITERATION: If you want to try a different service/tag combination
-3. CONTINUE: Continue searching more time ranges
-
-IMPORTANT: Only use "customer_id" or "mobile_number" as NEW_TAG_NAME. Do NOT use "ucic", "txn_id", or any other tag.
-
-Output in this format:
-ACTION: [resolve|new_iteration|continue]
-DIAGNOSIS: [if resolving, what's the root cause]
-SOLUTION: [if resolving, how to fix it]
-NEW_SERVICE: [if new_iteration, new service name]
-NEW_TAG_NAME: [if new_iteration, new tag name]
-NEW_TAG_VALUE: [if new_iteration, new tag value]
-REASONING: [why you chose this action]
-"""
-        
-        decision_agent = Agent(
-            role="Trace Analyzer",
-            goal="Analyze Jaeger traces and decide next action",
-            backstory=(
-                "You are a debugging expert. Analyze Jaeger traces to "
-                "identify root causes and decide next steps."
-            ),
-            verbose=False,
-            allow_delegation=False,
-            llm=self.llm,
-            temperature=0
-        )
-        
-        decision_task = Task(
-            description=prompt,
-            agent=decision_agent,
-            expected_output="ACTION, DIAGNOSIS, SOLUTION, NEW_SERVICE, NEW_TAG_NAME, NEW_TAG_VALUE, REASONING"
-        )
-        
-        crew = Crew(
-            agents=[decision_agent],
-            tasks=[decision_task],
-            verbose=False
-        )
-        
-        result = await crew.akickoff()
-        result_text = str(result)
-        
-        return self._parse_action_decision(result_text)
-    
-    async def _decide_after_all_ranges(
-        self,
-        context: str,
-        tool_calls: List[Dict],
-        iteration: int
-    ) -> Dict:
-        history_text = self._format_tool_calls(tool_calls)
-        
-        prompt = f"""
-{context}
-
-=== CURRENT STATE ===
-Iteration: {iteration} of {self.max_iterations}
-
-All 7 time ranges (0-6) have been exhausted with NO TRACES FOUND.
-This means there are no traces for this service/tag combination in the last 7 days.
-
-=== PREVIOUS JAEGER CALLS ===
-{history_text}
-
-=== TASK ===
-Decide what to do next:
-
-Options:
-1. NEW_ITERATION: Try a different service/tag combination (recommended)
-2. RESOLVE: Conclude that there's no runtime error (data issue)
-3. STOP: End investigation
-
-IMPORTANT: Only use "customer_id" or "mobile_number" as NEW_TAG_NAME. Do NOT use "ucic", "txn_id", or any other tag.
-
-Output in this format:
-ACTION: [new_iteration|resolve|stop]
-NEW_SERVICE: [if new_iteration, new service name]
-NEW_TAG_NAME: [if new_iteration, new tag name]
-NEW_TAG_VALUE: [if new_iteration, new tag value]
-DIAGNOSIS: [if resolving, what's the conclusion]
-REASONING: [why you chose this action]
-"""
-        
-        decision_agent = Agent(
-            role="Iteration Planner",
-            goal="Decide next action after exhausting time ranges",
-            backstory=(
-                "You are a debugging orchestrator. After exhausting all time ranges, "
-                "decide whether to try new service/tag or conclude investigation."
-            ),
-            verbose=False,
-            allow_delegation=False,
-            llm=self.llm,
-            temperature=0
-        )
-        
-        decision_task = Task(
-            description=prompt,
-            agent=decision_agent,
-            expected_output="ACTION, NEW_SERVICE, NEW_TAG_NAME, NEW_TAG_VALUE, DIAGNOSIS, REASONING"
-        )
-        
-        crew = Crew(
-            agents=[decision_agent],
-            tasks=[decision_task],
-            verbose=False
-        )
-        
-        result = await crew.akickoff()
-        result_text = str(result)
-        
-        return self._parse_action_decision(result_text)
-    
-    def _format_tool_calls(self, tool_calls: List[Dict]) -> str:
-        """Format tool calls for LLM context."""
-        if not tool_calls:
-            return "No previous calls"
-        
-        lines = []
-        for call in tool_calls[-10:]:  # Last 10 calls
-            params = call.get("input_params", {})
-            output = call.get("output", "")[:300]
-            iteration = call.get("iteration", "?")
-            range_idx = call.get("time_range_index", "?")
-            lines.append(
-                f"- Iteration {iteration}, Range {range_idx}: "
-                f"service={params.get('service')}, tag={params.get('tag_name')}={params.get('tag_value')}"
-            )
-            lines.append(f"  Output: {output}...")
-        
-        return "\n".join(lines)
-    
-    def _parse_service_tag_decision(self, response: str) -> tuple:
-        """Parse LLM response for service/tag decision."""
-        import re
-        
-        service_match = re.search(r"SERVICE:\s*(.+?)(?:TAG_NAME:|$)", response, re.DOTALL)
-        tag_name_match = re.search(r"TAG_NAME:\s*(.+?)(?:REASONING:|$)", response, re.DOTALL)
-        
-        # Clean up captured values - split on first newline to remove extra text
-        service = service_match.group(1).strip().split('\n')[0] if service_match else None
-        tag_name = tag_name_match.group(1).strip().split('\n')[0] if tag_name_match else None
-        
-        # Handle multiple customer identifier types (customer_id, mobile_number)
-        if tag_name in self.customer_identifiers:
-            tag_value = self.customer_identifiers.get(tag_name, "")
-        elif tag_name == "customer_id" and self.customer_identifiers:
-            tag_value = self.customer_identifiers.get("customer_id", "")
-        else:
-            tag_value = ""
-        
-        logger.info(f"[JaegerOnlyAgent] LLM chose: service={service}, tag={tag_name}={tag_value}")
-        
-        return (service, tag_name, tag_value)
-    
-    def _parse_action_decision(self, response: str) -> Dict:
-        """Parse LLM response for action decision."""
-        import re
-        
-        action_match = re.search(r"ACTION:\s*(\w+)", response, re.IGNORECASE)
-        diagnosis_match = re.search(r"DIAGNOSIS:\s*(.+?)(?:SOLUTION:|$)", response, re.DOTALL)
-        solution_match = re.search(r"SOLUTION:\s*(.+?)(?:NEW_SERVICE:|$)", response, re.DOTALL)
-        new_service_match = re.search(r"NEW_SERVICE:\s*(.+?)(?:NEW_TAG_NAME:|$)", response, re.DOTALL)
-        new_tag_name_match = re.search(r"NEW_TAG_NAME:\s*(.+?)(?:NEW_TAG_VALUE:|$)", response, re.DOTALL)
-        new_tag_value_match = re.search(r"NEW_TAG_VALUE:\s*(.+?)(?:REASONING:|$)", response, re.DOTALL)
-        
-        # Clean up captured values - split on first newline to remove extra text
-        def clean_value(match):
-            if match:
-                return match.group(1).strip().split('\n')[0]
-            return None
-        
-        return {
-            "action": action_match.group(1).lower() if action_match else "continue",
-            "diagnosis": diagnosis_match.group(1).strip().split('\n')[0] if diagnosis_match else "",
-            "solution": solution_match.group(1).strip().split('\n')[0] if solution_match else "",
-            "new_service": clean_value(new_service_match),
-            "new_tag_name": clean_value(new_tag_name_match),
-            "new_tag_value": clean_value(new_tag_value_match),
+        logger.error(f"[JAEGER] Request failed: {e}")
+        return {"service": service, "tag_name": tag_name, "tag_value": tag_value,
+                "total_traces_scanned": 0, "failed_traces": [], "error": str(e)}
+
+    if not data:
+        return {"service": service, "tag_name": tag_name, "tag_value": tag_value,
+                "total_traces_scanned": 0, "failed_traces": [],
+                "message": f"No traces found for {tag_name}={tag_value} in {service}"}
+
+    failed_traces_raw = [t for t in data if _jaeger_trace_has_error(t)]
+
+    failed_traces_text = []
+    for trace in failed_traces_raw:
+        lines = _jaeger_process_trace(trace)
+        if lines:
+            failed_traces_text.append("\n".join(lines))
+
+    logger.info(f"[JAEGER] Done: scanned={len(data)} failed={len(failed_traces_text)}")
+
+    return {
+        "service": service,
+        "tag_name": tag_name,
+        "tag_value": tag_value,
+        "total_traces_scanned": len(data),
+        "total_failed": len(failed_traces_text),
+        "failed_traces": failed_traces_text
+    }
+
+
+# ─────────────────────────────────────────
+# TOKEN MANAGER — CBS only, unchanged
+# ─────────────────────────────────────────
+asyncio.run(_check_jaeger_connection())
+class GiftWrappingTokenManager:
+
+    def __init__(self):
+        self.token = None
+        self.token_expiry = None
+        self._token_lock = threading.Lock()
+
+    async def _get_token(self):
+        client_id = os.getenv('GIFTWRAP_ENT_AUTH_CLIENT_ID')
+        client_secret = os.getenv('GIFTWRAP_ENT_AUTH_CLIENT_SECRET')
+        oauth_url = os.getenv('GIFTWRAP_ENT_AUTH_TOKEN_URL')
+
+        if not client_id or not client_secret:
+            raise ValueError("GIFTWRAP_ENT_AUTH_CLIENT_ID and GIFTWRAP_ENT_AUTH_CLIENT_SECRET must be set")
+
+        form_data = {
+            'client_id': client_id,
+            'client_secret': client_secret,
+            'grant_type': 'client_credentials'
         }
 
+        headers = {
+            'Content-Type': 'application/x-www-form-urlencoded'
+        }
+        response = await http_client_post_async(url=oauth_url, headers=headers, data=None, form_data=form_data)
+        json_resp = response.json
+        return json_resp['access_token']
 
-async def run_jaeger_only_async(
-    plan_output,
-    incident_description: str,
-    app: str,
-    customer_identifiers: Dict[str, str],
-    problem_category: str,
-    max_iterations: int = 5,
-    incident_id: str = "unknown",
-    discovered_services: str = ""
-) -> JaegerExecutionResult:
-    """
-    Convenience function to run Jaeger-only execution.
-    
-    Args:
-        plan_output: PlanOutput from plan agent (contains suggested_service, customer_identifiers)
-        incident_description: Description of the incident
-        app: Application name (optimus, cbs, idp)
-        customer_identifiers: Dict of customer identifiers from incident
-        problem_category: Category of the problem
-        max_iterations: Maximum iterations (default 5)
-        incident_id: Incident ID for logging
-        discovered_services: Available Jaeger services
-        
-    Returns:
-        JaegerExecutionResult with findings
-    """
-    # Import PlanOutput for type hint
-    from new_flow.agents.plan_agents import PlanOutput
-    
-    # Extract service and tag from plan_output
-    service = ""
-    tag_name = ""
-    tag_value = ""
-    
-    if plan_output and isinstance(plan_output, PlanOutput):
-        service = plan_output.suggested_service or ""
-        
-        # Extract first customer identifier as tag
-        if customer_identifiers:
-            # Prioritize customer_id as the tag
-            if customer_identifiers and "customer_id" in customer_identifiers:
-                tag_name = "customer_id"
-                tag_value = customer_identifiers["customer_id"]
-            else:
-                tag_name = ""
-                tag_value = ""
-    
-    # Build context for LLM decisions
-    context = f"""
-=== INCIDENT CONTEXT ===
-Application: {app}
-Problem Category: {problem_category}
-Incident Description: {incident_description}
+    async def get_valid_token(self):
+        import time
+        with self._token_lock:
+            if self.token is None or self.token_expiry is None or time.time() >= self.token_expiry:
+                self.token = await self._get_token()
+                self.token_expiry = time.time() + (30 * 60) - 60
+            return self.token
 
-Customer Identifiers:
-{chr(10).join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"}
+giftwrap_token_manager = GiftWrappingTokenManager()
 
-Available Services:
-{discovered_services}
+async def make_giftwrap_api_call_async(endpoint: str, method: str, parameters: dict, headers: dict = None, query_params: dict = None):
+    import uuid
 
-=== PLAN AGENT FINDINGS ===
-Issue Summary: {plan_output.issue_summary if plan_output else 'N/A'}
-Suggested Service: {service}
-"""
-    
-    agent = JaegerOnlyAgent(max_iterations=max_iterations, customer_identifiers=customer_identifiers)
-    
-    return await agent.execute(
-        app=app,
-        service=service,
-        tag_name=tag_name,
-        tag_value=tag_value,
-        incident_id=incident_id,
-        context=context
+    base_url = os.getenv('GIFTWRAP_API_BASE_URL')
+
+    token = await giftwrap_token_manager.get_valid_token()
+
+    request_headers = {
+        'Authorization': f'Bearer {token}',
+        'Content-Type': 'application/json',
+        'User-Agent': 'incident-agent/1.0',
+        'X-B3-Sampled': '1',
+        'X-B3-SpanId': f'{uuid.uuid4()}',
+        'X-B3-TraceId': f'{uuid.uuid4()}'
+    }
+
+    if headers:
+        request_headers.update(headers)
+
+    url = f"{base_url}{endpoint}"
+    if query_params:
+        query_string = '&'.join([f"{k}={v}" for k, v in query_params.items() if v is not None])
+        if query_string:
+            url = f"{url}?{query_string}"
+
+    logger.info(f"[GiftWrapping API Async] Calling {method} {url}")
+    logger.info(f"[GiftWrapping API Async] Parameters: {parameters}")
+    logger.info(f"[GiftWrapping API Async] Headers: {request_headers}")
+
+    if method == 'GET':
+        response = await http_client_get_async(url=url, headers=request_headers)
+    elif method == 'POST':
+        response = await http_client_post_async(url, headers=request_headers, json=parameters)
+    else:
+        raise ValueError(f"Unsupported HTTP method: {method}")
+
+    return response.json
+
+
+# ─────────────────────────────────────────
+# ENTRY POINT — app-based routing
+# ─────────────────────────────────────────
+
+def get_tool_list(app: str = "cbs"):
+    app_key = app.lower().strip()
+    logger.info(f"Loading tools for app: {app_key}")
+
+    if app_key == "cbs":
+        return _load_tools_from_folder("./tools/cbs", app="cbs", include_normalize=True)
+    elif app_key == "optimus":
+        return _load_tools_from_folder("./tools/optimus", app="optimus", include_normalize=False)
+    else:
+        logger.warning(f"Unknown app '{app}' — defaulting to CBS tools")
+        return _load_tools_from_folder("./tools/cbs", app="cbs", include_normalize=True)
+
+
+# ─────────────────────────────────────────
+# SHARED TOOL LOADER
+# ─────────────────────────────────────────
+
+def _load_tools_from_folder(folder: str, app: str, include_normalize: bool = False):
+    json_tool_list = glob(f'{folder}/*.json')
+
+    tool_parameter_list = []
+    for path in json_tool_list:
+        with open(path, 'r') as f:
+            d = json.loads(f.read())
+            tool_parameter_list += d
+
+    tool_list = []
+    for tool in tool_parameter_list:
+        logger.info(f"Adding tool: {tool['name']} (type={tool.get('type')}, db_instance={tool.get('db_instance', 'main')})")
+        tool_list.append(_make_tool(tool, app))
+
+    if include_normalize:
+        tool_list.append(NormalizeAccountTool())
+
+    return tool_list
+
+
+def _make_tool(tool, app: str):
+    tool_name = tool['name']
+    tool_type = tool.get('type', 'UNKNOWN')
+    tool_query = tool.get('query', '')
+
+    # Capture app and db_instance in closure for SQL tools
+    _app = app
+    _db_instance = tool.get('db_instance', 'main')
+
+    if not tool.get('parameters'):
+        tool['parameters'] = [{'name': 'key', 'description': 'Input value'}]
+
+    param_name = tool['parameters'][0]['name']
+    param_description = tool['parameters'][0]['description']
+
+    # ── SQL ──
+    if tool_type == 'SQL':
+        class SQLTool(BaseTool):
+            name: str = tool_name
+            description: str = (
+                tool['purpose'] + '\nEnter the ' + param_name + ' in key, it should contain ' + param_description
+            )
+
+            def regularize_id(self, incoming_id: str) -> str:
+                raw = str(incoming_id).strip()
+                raw = raw.removeprefix('003')
+                return raw.lstrip('0')
+
+            def _run(self, key: str):
+                return asyncio.run(self._arun(key))
+
+            async def _arun(self, key: str):
+                clean_value = self.regularize_id(str(key).strip())
+
+                # CBS-specific account number formatting
+                if self.name in ["verify_sms_required_flag", "get_account_level_mobile",
+                                 "get_email_preference_flag", "check_posting_restriction_mask",
+                                 "find_ucic_from_account"]:
+                    processed_value = f"003{clean_value.zfill(16)}"
+                elif self.name in ["get_account_level_email", "get_ucic_email",
+                                   "check_transaction_freeze", "check_npa_debit_freeze"]:
+                    processed_value = f"{clean_value.zfill(16)}"
+                elif self.name in ["find_account_from_ucic"]:
+                    clean_value = clean_value[:-1]
+                    processed_value = f"{clean_value.zfill(16)}"
+                else:
+                    # Optimus SQL tools and any future apps — no special formatting
+                    processed_value = clean_value
+
+                final_query = tool_query.replace(f":{param_name}", f"'{processed_value}'")
+                logger.info(f"[{self.name}] app={_app} db={_db_instance} query={final_query}")
+                try:
+                    return await execute_oracle_query_async(
+                        final_query,
+                        app=_app,
+                        db_instance=_db_instance
+                    )
+                except Exception as e:
+                    return f"Query Error: {str(e)}"
+
+        return SQLTool()
+
+    # ── ELK ──
+    elif tool_type == 'ELK':
+        class ELKTool(BaseTool):
+            name: str = tool['name']
+            description: str = (
+                tool['purpose'] + '\nEnter the ' + tool['parameters'][0]['name'] +
+                ' in key, it should contain ' + tool['parameters'][0]['description']
+            )
+
+            def _run(self, key: str):
+                return asyncio.run(self._arun(key))
+
+            async def _arun(self, key: str):
+                try:
+                    pname = tool['parameters'][0]['name']
+                    query_json = tool['query']
+                    result = await execute_elk_query(query_json, parameter_name=pname, parameter_value=key)
+                    return result
+                except Exception as e:
+                    return f"ELK query failed: {str(e)}"
+
+        return ELKTool()
+
+    # ── JAEGER ──
+    elif tool_type == 'JAEGER':
+        from pydantic import BaseModel
+
+        jaeger_service = tool.get('service', '')
+
+        class JaegerToolSchema(BaseModel):
+            tag_name: str
+            tag_value: str
+
+        class JaegerTool(BaseTool):
+            name: str = tool_name
+            description: str = (
+                tool['purpose']
+                + f"\nThis queries the '{jaeger_service}' service."
+                + "\ntag_name: identifier type (ucic, customer_id, mobile_number, username, user_id)"
+                + "\ntag_value: the actual identifier value"
+                + "\nNote: if ucic/customer_id is provided, the tool automatically tries "
+                  "both tag keys internally — you do not need to retry manually."
+                + "\nOnly failed/error traces are returned (non-2xx HTTP status, error tags, "
+                  "or error-level log events). If no failures are found, the issue may not be "
+                  "reproducible in logs, or login is working fine for this identifier."
+            )
+
+            args_schema: type = JaegerToolSchema
+
+            def _run(self, tag_name: str, tag_value: str):
+                return asyncio.run(self._arun(tag_name, tag_value))
+
+            async def _arun(self, tag_name: str, tag_value: str):
+                tag_name = tag_name.strip().lower()
+                tag_value = str(tag_value).strip()
+
+                tried = []
+                attempt_order = [tag_name]
+
+                if tag_name in ("ucic", "customer_id", "individualucic", "entityucic"):
+                    for candidate in ("ucic", "customer_id"):
+                        if candidate not in attempt_order:
+                            attempt_order.append(candidate)
+
+                last_result = None
+
+                for candidate_tag in attempt_order:
+                    tried.append(candidate_tag)
+                    try:
+                        result = await _jaeger_fetch(
+                            service=jaeger_service,
+                            tag_name=candidate_tag,
+                            tag_value=tag_value
+                        )
+                    except Exception as e:
+                        logger.error(f"[JaegerTool {self.name}] failed on tag_name={candidate_tag}: {e}")
+                        result = {"total_traces_scanned": 0, "failed_traces": [], "error": str(e)}
+
+                    last_result = result
+
+                    scanned = result.get("total_traces_scanned", 0)
+                    if scanned and scanned > 0:
+                        result["tag_name_used"] = candidate_tag
+                        result["tag_names_tried"] = tried
+                        logger.info(f"[JaegerTool {self.name}] found {scanned} traces using tag_name={candidate_tag}")
+                        return result
+
+                logger.info(f"[JaegerTool {self.name}] no traces found after trying tag_names={tried}")
+                if last_result is not None:
+                    last_result["tag_names_tried"] = tried
+                    return last_result
+                return {"total_traces_scanned": 0, "failed_traces": [], "tag_names_tried": tried}
+
+        return JaegerTool()
+
+    # ── UNKNOWN ──
+    else:
+        class TempTool(BaseTool):
+            name: str = tool_name
+            description: str = tool['purpose']
+
+            def _run(self, *args, **kwargs):
+                return "NOT AVAILABLE"
+
+            async def _arun(self, key: str):
+                return "NOT AVAILABLE"
+
+        return TempTool()
+
+
+
+
+class NormalizeAccountTool(BaseTool):
+    name: str = "normalize_account_number"
+    description: str = (
+        "Normalizes account numbers to a standard format for comparison. "
+        "Input: Account number in any format. Output: Normalized account number. "
+        "Use this to compare account numbers from different sources."
     )
+
+    def _run(self, account_number: str):
+        return asyncio.run(self._arun(account_number))
+
+    async def _arun(self, account_number: str):
+        raw = str(account_number).strip()
+        raw = raw.removeprefix('003')
+        return raw.lstrip('0')
