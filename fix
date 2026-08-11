@@ -1,579 +1,798 @@
-2026-08-11 06:39:08,905 - new_flow.flow - INFO - agents.plan_agent import PlanOutput=optimus
-06:39:08 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-11 06:39:08,918 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-06:40:53 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-11 06:40:53,146 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-06:40:53 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-11 06:40:53,149 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-06:41:22 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-11 06:41:22,260 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-06:41:22 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-11 06:41:22,263 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-06:41:44 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-11 06:41:44,908 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-2026-08-11 06:41:44,908 - crewai.utilities.reasoning_handler - WARNING - Agent planning reached maximum attempts (3) without being ready. Proceeding with current plan.
-06:41:44 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-11 06:41:44,912 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Triage Analyst                                                       │
-│                                                                              │
-│  Task: Analyze the following investigation results and create a plan:        │
-│                                                                              │
-│  === INCIDENT ANALYSIS (from Intent Classifier) ===                          │
-│                                                                              │
-│  Incident Summary:                                                           │
-│  - Application: Mobile/Net Banking                                           │
-│  - Problem Category: transaction_failure                                     │
-│                                                                              │
-│  Customer Identifiers:                                                       │
-│  - ucic: 1040229139                                                          │
-│  - customer_id: 1040229139                                                   │
-│                                                                              │
-│  LLM Analysis:                                                               │
-│  - User Goal: Customer wants to be able to transfer money successfully       │
-│  - Issue Description: Customer is unable to do transfer of money - the       │
-│  money transfer functionality is not working                                 │
-│  - Problem Summary: The customer is reporting a technical issue where they   │
-│  cannot perform money transfers. The transfer feature appears to be          │
-│  non-functional or blocked, preventing the customer from completing their    │
-│  intended money transfer transaction. This is a functional issue with the    │
-│  money transfer capability of the system that needs to be investigated and   │
-│  resolved.                                                                   │
-│                                                                              │
-│  Original Description:                                                       │
-│  Short Description: <script>alert('XSS')</script> Customer is unable to do   │
-│  transfer of money                                                           │
-│  Description: Customer is unable to do transfer of money                     │
-│                                                                              │
-│  Please investigate this issue starting with Similarity Search for similar   │
-│  historic incidents,                                                         │
-│  then check Jaeger traces to understand the current error context.           │
-│                                                                              │
-│                                                                              │
-│  === SIMILARITY SEARCH RESULTS ===                                           │
-│  ## SIMILAR HISTORIC INCIDENTS SEARCH RESULTS                                │
-│                                                                              │
-│  ### Current Incident Analysis:                                              │
-│  - **Application:** Mobile/Net Banking                                       │
-│  - **Problem Category:** transaction_failure                                 │
-│  - **Customer ID/UCIC:** 1040229139                                          │
-│  - **Issue:** Customer unable to transfer money - money transfer             │
-│  functionality not working                                                   │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## TOP 5 SIMILAR HISTORIC INCIDENTS:                                        │
-│                                                                              │
-│  ### 1. INC000007727585 (Similarity: 81.22%)                                 │
-│  **Short Description:** Customer not able to do fund transfer through        │
-│  Mobile application - getting error "Unable to do fund transfer try again    │
-│  after sometime"                                                             │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - Team investigated the case with backend logs                              │
-│  - Found that customer had successfully completed IMPS transactions on:      │
-│    - November 24 2025, 21:42:12.557                                          │
-│    - November 23 2025, 17:44:47.808                                          │
-│  - No session or logs found for the error occurrence                         │
-│  - **Required:** Confirmation of issue occurrence date and time to check     │
-│  the logs                                                                    │
-│                                                                              │
-│  **Key Finding:** Customer had prior successful transactions, suggesting     │
-│  intermittent issue                                                          │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ### 2. INC000004698420 (Similarity: 80.80%)                                 │
-│  **Short Description:** Fund transfers not enabled - Customer may not able   │
-│  to login Netbanking or mobile app not working                               │
-│                                                                              │
-│  **Root Cause:** **Fund transfer widget is not present in the account**      │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - Assigned to LiabilityOpsSupportDsk to check and assist                    │
-│  - Added fund transfer widget to the account to enable functionality         │
-│                                                                              │
-│  **Key Finding:** Account configuration issue - missing fund transfer        │
-│  widget                                                                      │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ### 3. INC000008136511 (Similarity: 79.93%)                                 │
-│  **Short Description:** Customer is not able to transfer any fund from his   │
-│  account through mobile banking or net banking                               │
-│                                                                              │
-│  **Root Cause:** **Mode of Operation of account is "JOINTLY_BY_ALL" and      │
-│  transaction/statement permissions are not allowed through Net/Mobile        │
-│  banking**                                                                   │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - Corrective action: Updated account permissions to allow transactions      │
-│  through Net/Mobile banking                                                  │
-│                                                                              │
-│  **Key Finding:** Joint account with restricted permissions - needed to      │
-│  enable transaction permissions                                              │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ### 4. INC000006013108 (Similarity: 79.61%)                                 │
-│  **Short Description:** Customer not able to transfer funds from net         │
-│  banking and mobile banking                                                  │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - Investigation showed customer successfully logged through mobile app on   │
-│  11th March 2025                                                             │
-│  - Customer successfully completed NEFT transaction through mobile app on    │
-│  11th March 2025                                                             │
-│  - **Corrective Action:** Asked customer to re-try and confirm               │
-│                                                                              │
-│  **Key Finding:** Issue was transient - customer able to perform             │
-│  transactions after retry                                                    │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ### 5. INC000003299935 (Similarity: 79.30%)                                 │
-│  **Short Description:** Customer unable to make transfer fund from Mobile    │
-│  app and net banking - Getting Error "Receipt bank is block and Transaction  │
-│  Fail"                                                                       │
-│                                                                              │
-│  **Root Cause:** **"REMITTING ACCOUNT BLOCKED/FROZEN"**                      │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - Identified from logs that transaction failed due to remitting account     │
-│  being blocked/frozen                                                        │
-│  - Required account unblocking/activation                                    │
-│                                                                              │
-│  **Key Finding:** Account status issue - account was blocked/frozen          │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SUMMARY OF COMMON RESOLUTIONS:                                           │
-│                                                                              │
-│  | Issue Type | Resolution |                                                 │
-│  |------------|------------|                                                 │
-│  | **Missing Fund Transfer Widget** | Add fund transfer widget to account    │
-│  (LiabilityOpsSupportDsk) |                                                  │
-│  | **Account Blocked/Frozen** | Unblock/unfreeze the remitting account |     │
-│  | **Joint Account Permissions** | Enable transaction and statement          │
-│  permissions for Net/Mobile banking |                                        │
-│  | **Intermittent/Transient Issue** | Ask customer to retry after            │
-│  confirming successful prior transactions |                                  │
-│  | **No Logs Found** | Request specific date/time of error occurrence for    │
-│  log analysis |                                                              │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## RECOMMENDED TROUBLESHOOTING STEPS FOR CURRENT INCIDENT (UCIC:            │
-│  1040229139):                                                                │
-│                                                                              │
-│  1. **Check Account Status:** Verify if account is active, not               │
-│  blocked/frozen                                                              │
-│  2. **Check Fund Transfer Widget:** Confirm fund transfer widget is present  │
-│  in the account                                                              │
-│  3. **Check Account Permissions:** Verify transaction permissions are        │
-│  enabled for Net/Mobile banking                                              │
-│  4. **Check Mode of Operation:** If joint account, ensure proper             │
-│  authorization settings                                                      │
-│  5. **Check Backend Logs:** Look for transaction failure reasons in logs     │
-│  6. **Verify Customer History:** Check if customer has successfully          │
-│  performed transfers before                                                  │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## PATTERNS IDENTIFIED:                                                     │
-│                                                                              │
-│  - **Most Common Root Causes:**                                              │
-│    1. Account configuration issues (missing widget, permissions not          │
-│  enabled)                                                                    │
-│    2. Account blocked/frozen status                                          │
-│    3. Joint account operation mode restrictions                              │
-│                                                                              │
-│  - **Resolution Teams Involved:**                                            │
-│    - LiabilityOpsSupportDsk (for account configuration)                      │
-│    - Optimus BTO Support (for investigation)                                 │
-│                                                                              │
-│  This analysis provides the context needed to investigate and resolve the    │
-│  current incident with customer ID 1040229139.                               │
-│                                                                              │
-│  === CONTEXT ===                                                             │
-│  Application: optimus                                                        │
-│  Problem Category: transaction_failure                                       │
-│  Customer Identifiers:                                                       │
-│    - ucic: 1040229139                                                        │
-│    - customer_id: 1040229139                                                 │
-│                                                                              │
-│  === AVAILABLE JAEGER SERVICES ===                                           │
-│  Discovered 216 services from Jaeger:                                        │
-│                                                                              │
-│    - APPLY-FM-API                                                            │
-│    - APPLY-HL-API                                                            │
-│    - APPLY-LOAN-API                                                          │
-│    - APPLY-LOAN-API-MESSAGE-HANDLER                                          │
-│    - APPROVAL-API                                                            │
-│    - AUDITLOG-EVENT-CONSUMER                                                 │
-│    - AUTH-ADMIN-API                                                          │
-│    - AUTH-SERVICE                                                            │
-│    - AUTHZ-ADMIN-API                                                         │
-│    - AVC-API                                                                 │
-│    - BAS-API                                                                 │
-│    - BAS-API-MESSAGE-HANDLER                                                 │
-│    - BXP-LOGIN-PROVIDER                                                      │
-│    - CA-BO-MobileApp                                                         │
-│    - CARDLESS-CASH-WITHDRAWAL-API-MESSAGE-HANDLER                            │
-│    - CAS-API                                                                 │
-│    - CAS-API-MESSAGE-HANDLER                                                 │
-│    - CBS-DORMANCY                                                            │
-│    - CEL-UI                                                                  │
-│    - CHEQUE-CONSENT-SERVICE                                                  │
-│    - CREATE-ACCOUNT-API                                                      │
-│    - CREDIT-CARD-ACQUISITION-OFFERS-MESSAGE-HANDLER                          │
-│    - CREDIT-CARD-API                                                         │
-│    - CREDIT-CARD-API-MESSAGE-HANDLER                                         │
-│    - CRON-JOBS                                                               │
-│    - CUSTOMER-ACQUISITION-SERVICE-MESSAGE-HANDLER                            │
-│    - CUSTOMER-FEEDBACK-SERVICE                                               │
-│    - CUSTOMER-LOGIN-PROVIDER                                                 │
-│    - CX-API                                                                  │
-│    - DEAF-API                                                                │
-│    - DEBITCARD-API                                                           │
-│    - DEMAT-API                                                               │
-│    - DEPOSITS-API-MESSAGE-HANDLER                                            │
-│    - DEPOSITS-API-TEMPORAL-WORKER                                            │
-│    - DEVICE-FINGERPRINT-SERVICE                                              │
-│    - DEVICE-MANAGEMENT-SERVICE                                               │
-│    - DEVICE-MANAGEMENT-SERVICE-CS-MESSAGE-HANDLER                            │
-│    - DSB-API                                                                 │
-│    - E-CHEQUE-API                                                            │
-│    - ECOM-MERCHANT-LOGIN-PROVIDER                                            │
-│    - ECOM-UI-WEB                                                             │
-│    - EMANDATE                                                                │
-│    - EMPLOYEE-LOGIN-PROVIDER                                                 │
-│    - ENTERPRISE-AUTHORIZATION-SERVICE                                        │
-│    - ESIGN-API                                                               │
-│    - EXTERNAL-LOGIN-PROVIDER                                                 │
-│    - FAQ-API                                                                 │
-│    - FEATURE-TOGGLE-API                                                      │
-│    - FEATURE-TOGGLE-API-MESSAGE-HANDLER                                      │
-│    - FRAUD-MONITORING-SERVICE                                                │
-│    - FX-API                                                                  │
-│    - FX-API-MESSAGE-HANDLER                                                  │
-│    - GRADE-API                                                               │
-│    - GRADE_API_APPLAUNCH_MESSAGE_HANDLER                                     │
-│    - GRADE_API_MESSAGE_HANDLER                                               │
-│    - GST-API                                                                 │
-│    - HYDRA-MANAGER-API                                                       │
-│    - INSURANCE-API                                                           │
-│    - IPO-API                                                                 │
-│    - KORE-AI-EVENT-CONSUMER                                                  │
-│    - KRATOS-CSR                                                              │
-│    - KRATOS-QUANTUMCASH                                                      │
-│    - KRATOS-TRADEX                                                           │
-│    - KYC-SERVICE-MESSAGE-HANDLER                                             │
-│    - LAI-API-MESSAGE-HANDLER                                                 │
-│    - LAS-API                                                                 │
-│    - LIABILITY-PLATFORM-MESSAGE-HANDLER                                      │
-│    - LOANS-API                                                               │
-│    - LOANS-API-MESSAGE-HANDLER                                               │
-│    - LOGIN-AUDITLOG-EVENT-CONSUMER                                           │
-│    - MANDATE-HUB-API                                                         │
-│    - MDH-MESSAGE-HANDLER                                                     │
-│    - MDS-MDH-MESSAGE-HANDLER                                                 │
-│    - MERCHANT-ONBOARDING-API                                                 │
-│    - METADATA-SERVICE                                                        │
-│    - MF-COMPLIANCE-API                                                       │
-│    - MF-COMPLIANCE-API-MESSAGE-HANDLER                                       │
-│    - MIGRATION-API                                                           │
-│    - MOCK-MESSAGE-EXCHANGE-SERVICE                                           │
-│    - Mobile-app                                                              │
-│    - NR-API                                                                  │
-│    - NTB-FD-STABLE-MONEY-MESSAGE-HANDLER                                     │
-│    - OAUTH-SERVER                                                            │
-│    - OFFERS-DATAMART-API                                                     │
-│    - OFFERS-DATAMART-API-MESSAGE-HANDLER                                     │
-│    - ON-API                                                                  │
-│    - OPS-USER-API                                                            │
-│    - OPTIMUS-AUTH-INTEGRATION-API                                            │
-│    - OPTIMUS-EVENT-CONSUMER                                                  │
-│    - OPTIMUS-PRIME-API                                                       │
-│    - OVERDRAFT-API                                                           │
-│    - PAYMENT-GATEWAY-SERVICE                                                 │
-│    - PDF-API                                                                 │
-│    - RAS-API                                                                 │
-│    - RAS-API-MDH-MESSAGE-HANDLER                                             │
-│    - RAS-API-MESSAGE-HANDLER                                                 │
-│    - RAS-API-TEMPORAL-WORKER                                                 │
-│    - RE-KYC-API                                                              │
-│    - REDIS-EXPIRED-EVENT-CONSUMER                                            │
-│    - REWARDS-INTEGRATION-API                                                 │
-│    - RFX-INWARD-API                                                          │
-│    - RISK-CONTROL-API                                                        │
-│    - RISK-CONTROL-BIOCATCH-DATA-CONSUMER                                     │
-│    - RISK-CONTROL-CUSTOMER-DATA-CONSUMER                                     │
-│    - RISK-CONTROL-CUSTOMER-FAILURE-LOGIN-DATA-CONSUMER                       │
-│    - RISK-CONTROL-FINGERPRINT-DATA-CONSUMER                                  │
-│    - RISK-CONTROL-FRAUD-RISK-INDICATOR-DATA-CONSUMER                         │
-│    - RISK-CONTROL-IP-PROFILE-TRUST-VALIDATION-DATA-CONSUMER                  │
-│    - RISK-CONTROL-RASP-THREAT-DETECTION-ALERT-DATA-CONSUMER                  │
-│    - RISK-CONTROL-REQUEST-DATA-CONSUMER                                      │
-│    - RISK-CONTROL-SERVICE                                                    │
-│    - RISK-CONTROL-SUSPECT-DATA-CONSUMER                                      │
-│    - RISK-CONTROL-SUSPECT-DATA-DEGRADATION-CONSUMER                          │
-│    - SALARY-OD-API                                                           │
-│    - SECUREPASS-AUTHENTICATOR                                                │
-│    - SERVICE-REQUEST-API                                                     │
-│    - SESSION-MANAGEMENT-SERVICE                                              │
-│    - SESSION-TRANSFER-SERVICE                                                │
-│    - SGB-API                                                                 │
-│    - SSO-API                                                                 │
-│    - TOKEN-MANAGEMENT-SERVICE                                                │
-│    - TRACING-API                                                             │
-│    - UI-FM-MICROSITE                                                         │
-│    - UI-WEB                                                                  │
-│    - UIDAI-INTEGRATION-API                                                   │
-│    - USER-PROFILE-API-MESSAGE-HANDLER                                        │
-│    - USER-PROFILE-SVC                                                        │
-│    - USER-SESSION-ACTIVITY-EVENT-CONSUMER                                    │
-│    - WALLET-INTEGRATION-API                                                  │
-│    - WEALTH-API                                                              │
-│    - WEALTH-API-MESSAGE-HANDLER                                              │
-│    - WEALTH-API-VALUEFY-MESSAGE-HANDLER                                      │
-│    - account-aggregator-api                                                  │
-│    - account-aggregator-api-bureau-accounts-handler                          │
-│    - account-aggregator-api-external-message-handler                         │
-│    - account-aggregator-api-message-handler                                  │
-│    - account-aggregator-api-tsp-consent-handler                              │
-│    - account-aggregator-api-tsp-data-ready-handler                           │
-│    - ai-chat-optimus-adapter                                                 │
-│    - ai-chat-service                                                         │
-│    - ai-voice-optimus-adapter                                                │
-│    - apply-pl-api                                                            │
-│    - approval-workflow-engine                                                │
-│    - assisted-service                                                        │
-│    - beneficiary-api                                                         │
-│    - billpay-api                                                             │
-│    - billpay-api-message-handler                                             │
-│    - bulk-payments-api                                                       │
-│    - bulk-payments-api-message-handler                                       │
-│    - cardless-cash-withdrawal                                                │
-│    - cel-arap                                                                │
-│    - cel-auth                                                                │
-│    - cel-core                                                                │
-│    - cel-cron-executor                                                       │
-│    - cel-erp-invoice-ingestion                                               │
-│    - cel-investment                                                          │
-│    - cel-orch                                                                │
-│    - cel-schedule                                                            │
-│    - cel-smart-collection                                                    │
-│    - cel-tax-payment                                                         │
-│    - channel-service                                                         │
-│    - corporate-portal-api                                                    │
-│    - crypto-service                                                          │
-│    - customer-acquisition-service                                            │
-│    - customer-communication-gateway                                          │
-│    - customer-details-service                                                │
-│    - deposits-api                                                            │
-│    - deposits-api-cdms-message-handler                                       │
-│    - deposits-api-giftwrapper-cbs-message-handler                            │
-│    - ecom-api                                                                │
-│    - email-verification-api                                                  │
-│    - event-tracker-service                                                   │
-│    - fastag-service                                                          │
-│    - fastag-service-message-handler                                          │
-│    - fi-curing-api                                                           │
-│    - fx_temporal_worker_name                                                 │
-│    - gestalt                                                                 │
-│    - grafana                                                                 │
-│    - idp-api                                                                 │
-│    - idp-api-message-handler                                                 │
-│    - jaeger                                                                  │
-│    - kyc-service                                                             │
-│    - lic-agent-portal-api                                                    │
-│    - login-event-consumer                                                    │
-│    - mapper-api                                                              │
-│    - mdh-data-service                                                        │
-│    - message-exchange-service                                                │
-│    - msme-tally-integrator-api                                               │
-│    - msme-tally-processor-api                                                │
-│    - multifactor-authentication-api                                          │
-│    - nginx                                                                   │
-│    - onboarding                                                              │
-│    - optimus-notification-service                                            │
-│    - optimus-notification-service-message-handler                            │
-│    - optimus-offers-service                                                  │
-│    - payments-api                                                            │
-│    - payments-api-message-handler                                            │
-│    - pfm-api                                                                 │
-│    - pfm-api-message-handler                                                 │
-│    - pfm-api-realtime-txn-message-handler                                    │
-│    - platform-service                                                        │
-│    - platform-service-message-handler                                        │
-│    - risk-monitor-api                                                        │
-│    - socket-tracing-service                                                  │
-│    - tfx-deal                                                                │
-│    - tfx-remittance-api                                                      │
-│    - tfx-sso-integration-service                                             │
-│    - totp-service                                                            │
-│    - track-my-application-api                                                │
-│    - traefik-infra                                                           │
-│    - transaction-insights-api                                                │
-│    - universal-search-api                                                    │
-│    - upcoming-api                                                            │
-│    - upi-api                                                                 │
-│    - upi-api-message-handler                                                 │
-│    - user-profile-api-cdms-message-handler                                   │
-│                                                                              │
-│  Note: These are ALL services that have sent traces in the last 1 hour.      │
-│  Use any service name directly with fetch_jaeger_traces tool.                │
-│                                                                              │
-│  You have access to a Jaeger tracing tool. If you need more information      │
-│  about service calls, latency issues, or distributed traces, use the tool    │
-│  to fetch data.                                                              │
-│                                                                              │
-│  IMPORTANT: When you use the Jaeger tool, include the key findings in your   │
-│  response below.                                                             │
-│                                                                              │
-│  Provide your analysis in this format:                                       │
-│  ISSUE_UNDERSTOOD: yes/no                                                    │
-│  ISSUE_SUMMARY: [brief description of what the issue is - include any        │
-│  Jaeger trace findings here]                                                 │
-│  JAEGER_FINDINGS: [you MUST use the Jaeger tool to fetch traces - summarize  │
-│  the key trace data including service names, errors, latency issues, etc.    │
-│  NEVER write 'NOT_USED' - always fetch and analyze traces]                   │
-│  NEXT_STEPS: [what Execute Agent should do next]                             │
-│  NEEDS_MORE_INFO: yes/no                                                     │
-│  QUESTION_FOR_USER: [if needs more info, what to ask]                        │
-│                                                                              │
-│                                                                              │
-│  Planning:                                                                   │
-│                                                                              │
-│                                                                              │
-│  ## Refined Execution Plan                                                   │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  **ISSUE_UNDERSTOOD:** yes                                                   │
-│                                                                              │
-│  **ISSUE_SUMMARY:**                                                          │
-│  Customer (UCIC: 1040229139) unable to transfer money via Mobile/Net         │
-│  Banking. The short description contains an XSS test string which is         │
-│  irrelevant to the actual issue.                                             │
-│                                                                              │
-│  **JAEGER_FINDINGS:**                                                        │
-│  NOT_USED - Tool unavailable                                                 │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  **EXECUTION STEPS:**                                                        │
-│                                                                              │
-│  1. **Query CBS for Account Status** - Retrieve account 1040229139 status    │
-│  (active/blocked/frozen)                                                     │
-│                                                                              │
-│  2. **Check Mobile/Net Banking Registration** - Verify if customer           │
-│  1040229139 is registered for Mobile/Net Banking services                    │
-│                                                                              │
-│  3. **Check Fund Transfer Widget** - Verify if fund transfer widget is       │
-│  enabled for customer 1040229139                                             │
-│                                                                              │
-│  4. **Verify Transaction Permissions** - Check if Net/Mobile banking         │
-│  transaction permissions are enabled                                         │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  **READY**                                                                   │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+import os
+from typing import Dict, Optional
+from pydantic import BaseModel, Field
 
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Triage Analyst                                                       │
-│                                                                              │
-│  Final Answer:                                                               │
-│                                                                              │
-│                                                                              │
-│  I'll analyze the investigation results and fetch Jaeger traces to           │
-│  understand the current error context. Let me start by querying relevant     │
-│  services for money transfer functionality.                                  │
-│  <tool_code>                                                                 │
-│  {                                                                           │
-│    tool => 'fetch_jaeger_traces',                                            │
-│    args => '                                                                 │
-│  <service>payments-api</service>                                             │
-│  <limit>20</limit>                                                           │
-│  <start_time>2025-01-15T00:00:00Z</start_time>                               │
-│  '                                                                           │
-│  }                                                                           │
-│  </tool_code>                                                                │
-│  <tool_code>                                                                 │
-│  {                                                                           │
-│    tool => 'fetch_jaeger_traces',                                            │
-│    args => '                                                                 │
-│  <service>upi-api</service>                                                  │
-│  <limit>20</limit>                                                           │
-│  <start_time>2025-01-15T00:00:00Z</start_time>                               │
-│  '                                                                           │
-│  }                                                                           │
-│  </tool_code>                                                                │
-│  <tool_code>                                                                 │
-│  {                                                                           │
-│    tool => 'fetch_jaeger_traces',                                            │
-│    args => '                                                                 │
-│  <service>tfx-remittance-api</service>                                       │
-│  <limit>20</limit>                                                           │
-│  <start_time>2025-01-15T00:00:00Z</start_time>                               │
-│  '                                                                           │
-│  }                                                                           │
-│  </tool_code>                                                                │
-│  <tool_code>                                                                 │
-│  {                                                                           │
-│    tool => 'fetch_jaeger_traces',                                            │
-│    args => '                                                                 │
-│  <service>beneficiary-api</service>                                          │
-│  <limit>20</limit>                                                           │
-│  <start_time>2025-01-15T00:00:00Z</start_time>                               │
-│  '                                                                           │
-│  }                                                                           │
-│  </tool_code>                                                                │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+os.environ["OTEL_SDK_DISABLED"] = "true"
 
-2026-08-11 06:41:52,551 - new_flow.utils.llm_cache - INFO - LLM cache miss - created new instance for /app/models/MiniMax-M2.5
-2026-08-11 06:41:52,551 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
-2026-08-11 06:41:52,552 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: optimus-api, Tag: customer_id=1040229139
-2026-08-11 06:41:52,552 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
-2026-08-11 06:41:52,552 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=optimus-api, tag=customer_id=1040229139
-2026-08-11 06:41:52,552 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1040229139 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786344112552081, 'end': 1786430512552081, 'limit': 100, 'tags': '{"customer_id": "1040229139"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-11 06:42:37,559 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
-2026-08-11 06:42:37,559 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
-2026-08-11 06:42:37,559 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=optimus-api, tag=customer_id=1040229139
-2026-08-11 06:42:37,559 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1040229139 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786257757559655, 'end': 1786344157559655, 'limit': 100, 'tags': '{"customer_id": "1040229139"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-11 06:43:22,564 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
-2026-08-11 06:43:22,564 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
-2026-08-11 06:43:22,564 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=optimus-api, tag=customer_id=1040229139
-2026-08-11 06:43:22,564 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1040229139 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786171402564559, 'end': 1786257802564559, 'limit': 100, 'tags': '{"customer_id": "1040229139"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-11 06:43:28,264 - utils.llm - INFO - OPENAI_API_KEY refreshed
-2026-08-11 06:44:07,569 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
-2026-08-11 06:44:07,570 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
-2026-08-11 06:44:07,570 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=optimus-api, tag=customer_id=1040229139
-2026-08-11 06:44:07,570 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1040229139 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786085047570064, 'end': 1786171447570064, 'limit': 100, 'tags': '{"customer_id": "1040229139"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-11 06:44:52,575 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 3, continuing...
-2026-08-11 06:44:52,575 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=4
-2026-08-11 06:44:52,575 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 96-120h ago for service=optimus-api, tag=customer_id=1040229139
-2026-08-11 06:44:52,575 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1040229139 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1785998692575151, 'end': 1786085092575151, 'limit': 100, 'tags': '{"customer_id": "1040229139"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-11 06:45:37,579 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 4, continuing...
-2026-08-11 06:45:37,580 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=5
-2026-08-11 06:45:37,580 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 120-144h ago for service=optimus-api, tag=customer_id=1040229139
-2026-08-11 06:45:37,580 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1040229139 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1785912337580058, 'end': 1785998737580058, 'limit': 100, 'tags': '{"customer_id": "1040229139"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-11 06:46:22,584 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 5, continuing...
-2026-08-11 06:46:22,584 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=6
-2026-08-11 06:46:22,584 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 144-168h ago for service=optimus-api, tag=customer_id=1040229139
-2026-08-11 06:46:22,584 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1040229139 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1785825982584649, 'end': 1785912382584649, 'limit': 100, 'tags': '{"customer_id": "1040229139"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-shishir.pandey_tho@0325LTPB0124444 ~ % 
+from crewai import Agent, Task, Crew, LLM
+from new_flow.utils.llm import llm_config
+from new_flow.tools.query_tools import JaegerTraceTool
+from new_flow.tools.app_config import get_app_config
+
+
+class PlanOutput(BaseModel):
+    issue_identified: bool = Field(description="True if enough info to proceed")
+    issue_summary: str = Field(description="What's the issue from similarity + jaeger")
+    jaeger_results: Dict = Field(
+        default_factory=dict,
+        description="From jaeger traces"
+    )
+    next_steps: str = Field(description="Guidance for Execute Agent")
+    needs_more_info: bool = Field(description="True if need user input")
+    question_for_user: Optional[str] = Field(
+        default=None,
+        description="What to ask user"
+    )
+    suggested_service: Optional[str] = Field(
+        default=None,
+        description="Jaeger service to query"
+    )
+    customer_identifiers: Dict[str, str] = Field(
+        default_factory=dict,
+        description="All customer identifiers extracted from the incident"
+    )
+
+
+async def run_plan_agent_async(
+    enriched_prompt: str,
+    app: str,
+    customer_identifiers: Dict[str, str],
+    problem_category: str,
+    incident_context: str = "",
+    discovered_services: str = "",
+) -> PlanOutput:
+
+    llm = LLM(
+        model="openai/" + os.environ.get('OPENAI_MODEL_NAME'),
+        temperature=0.0,
+        base_url=llm_config.url,
+        api_key=llm_config.token
+    )
+    
+    try:
+        app_config = get_app_config(app)
+        default_service = app_config.default_jaeger_service
+    except ValueError:
+        default_service = None
+    
+    # Initialize Jaeger tool - LLM will decide when and how to use it
+    jaeger_tool = JaegerTraceTool()
+    
+    similarity_result = incident_context if incident_context else "No similar incidents found."
+    
+    # Build customer identifiers string for LLM
+    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
+    
+    analysis_agent = Agent(
+        role="Triage Analyst",
+        goal="Analyze investigation results and create a plan for resolution",
+        backstory=(
+            "You are a senior incident analyst. Your job is to analyze "
+            "Similarity Search results and Jaeger traces to understand "
+            "what the issue is and guide the next steps.\n\n"
+            "You have access to tools to fetch additional data when needed.\n\n"
+            "You must determine:\n"
+            "1. Is the issue clear from the data?\n"
+            "2. If yes, what's the next step (ELK or DB)?\n"
+            "3. If no, use tools to gather more info"
+        ),
+        tools=[],
+        verbose=True,
+        allow_delegation=False,
+        llm=llm,
+        temperature=0,
+        max_iter=3,
+        reasoning=True,
+        max_reasoning_attempts=3
+    )
+    
+    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
+    
+    # Add discovered services to context if available
+    services_section = ""
+    if discovered_services:
+        services_section = f"\n=== AVAILABLE JAEGER SERVICES ===\n{discovered_services}\n"
+    
+    analysis_task = Task(
+        description=(
+            f"Analyze the following investigation results and create a plan:\n\n"
+            f"=== INCIDENT ANALYSIS (from Intent Classifier) ===\n{enriched_prompt}\n\n"
+            f"=== SIMILARITY SEARCH RESULTS ===\n{similarity_result}\n\n"
+            f"=== CONTEXT ===\n"
+            f"Application: {app}\n"
+            f"Problem Category: {problem_category}\n"
+            f"Customer Identifiers:\n{identifiers_text}\n"
+            f"{services_section}\n"
+            f"You have access to a Jaeger tracing tool. If you need more information about "
+            f"service calls, latency issues, or distributed traces, use the tool to fetch data.\n\n"
+            f"IMPORTANT: When you use the Jaeger tool, include the key findings in your response below.\n\n"
+            f"Provide your analysis in this format:\n"
+            f"ISSUE_UNDERSTOOD: yes/no\n"
+            f"ISSUE_SUMMARY: [brief description of what the issue is - include any Jaeger trace findings here]\n"
+            f"JAEGER_FINDINGS: [you MUST use the Jaeger tool to fetch traces - summarize the key trace data including service names, errors, latency issues, etc. NEVER write 'NOT_USED' - always fetch and analyze traces]\n"
+            f"NEXT_STEPS: [what Execute Agent should do next]\n"
+            f"NEEDS_MORE_INFO: yes/no\n"
+            f"QUESTION_FOR_USER: [if needs more info, what to ask]\n"
+        ),
+        agent=analysis_agent,
+        expected_output=(
+            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, JAEGER_FINDINGS, "
+            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields."
+        )
+    )
+    
+    crew = Crew(
+        agents=[analysis_agent],
+        tasks=[analysis_task],
+        verbose=False
+    )
+    
+    result = await crew.akickoff()
+    result_text = str(result)
+    
+    return _parse_plan_output(
+        result_text,
+        {},
+        customer_identifiers,
+        default_service
+    )
+
+
+def _parse_plan_output(
+    llm_response: str,
+    jaeger_results: Dict,
+    customer_identifiers: Dict[str, str],
+    default_service: str
+) -> PlanOutput:
+    
+    issue_understood = "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower() if "ISSUE_UNDERSTOOD:" in llm_response else "no"
+    
+    issue_summary = ""
+    if "ISSUE_SUMMARY:" in llm_response:
+        summary_part = llm_response.split("ISSUE_SUMMARY:")[-1]
+        next_section = summary_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in summary_part else summary_part
+        issue_summary = next_section.strip()
+    
+    # Parse JAEGER_FINDINGS from LLM response
+    jaeger_findings = ""
+    if "JAEGER_FINDINGS:" in llm_response:
+        findings_part = llm_response.split("JAEGER_FINDINGS:")[-1]
+        # Find the next field
+        next_field_match = findings_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in findings_part else findings_part
+        jaeger_findings = next_field_match.strip()
+    
+    # Build jaeger_results from LLM findings
+    # CRITICAL: Jaeger MUST be used - if NOT_USED, force re-investigation
+    if jaeger_findings and jaeger_findings.upper() != "NOT_USED":
+        parsed_jaeger = {
+            "raw": jaeger_findings,
+            "has_errors": "error" in jaeger_findings.lower() or "failed" in jaeger_findings.lower() or "exception" in jaeger_findings.lower(),
+            "trace_count": 0,
+            "used": True
+        }
+        # Try to extract trace count
+        import re
+        match = re.search(r"(\d+)\s*traces?", jaeger_findings, re.IGNORECASE)
+        if match:
+            parsed_jaeger["trace_count"] = int(match.group(1))
+        jaeger_results = parsed_jaeger
+    else:
+        # CRITICAL: Jaeger was NOT used - this is a failure!
+        # Force the issue to be marked as not understood so Execute Agent will use Jaeger
+        issue_understood = "no"
+        issue_summary = "Jaeger traces not fetched - investigation incomplete. Execute Agent must fetch Jaeger traces."
+        jaeger_results = {"used": False, "raw": "", "trace_count": 0, "has_errors": False, "error": "Jaeger not used by Plan Agent"}
+    
+    next_steps = ""
+    if "NEXT_STEPS:" in llm_response:
+        steps_part = llm_response.split("NEXT_STEPS:")[-1]
+        next_section = steps_part.split("NEEDS_MORE_INFO:")[0] if "NEEDS_MORE_INFO:" in steps_part else steps_part
+        next_steps = next_section.strip()
+    
+    needs_more_info = "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower() if "NEEDS_MORE_INFO:" in llm_response else False
+    
+    question = None
+    if "QUESTION_FOR_USER:" in llm_response:
+        question_part = llm_response.split("QUESTION_FOR_USER:")[-1]
+        question = question_part.strip()
+    
+    return PlanOutput(
+        issue_identified=issue_understood == "yes",
+        issue_summary=issue_summary or "Unable to determine issue from initial investigation",
+        jaeger_results=jaeger_results,
+        next_steps=next_steps or "Use ELK or DB queries based on findings",
+        needs_more_info=needs_more_info,
+        question_for_user=question,
+        suggested_service=default_service,
+        customer_identifiers=customer_identifiers
+    )
+
+above is plan agent 
+
+this flow.py
+from pydantic import BaseModel
+from typing import List, Optional, Dict
+import httpx
+import os
+import json
+import re
+from dotenv import load_dotenv
+from crewai.flow.flow import Flow, start, listen, router
+from new_flow.utils.incident_db_async import upsert_incident_payload_async
+from new_flow.agents.context_builder import run_incident_context_crew_async
+from new_flow.agents.intent_classifier import run_classifier_with_enrichment_async
+from new_flow.agents.plan_agents import run_plan_agent_async
+from new_flow.agents.execute_agent_jaeger import run_jaeger_only_async
+from new_flow.agents.summary_agent import run_summary_agent_async
+from new_flow.agents.self_critique import run_self_critique_async, should_escalate
+from new_flow.utils.llm import run_crew_with_retry_async
+from new_flow.tools.discovery_tools import discover_jaeger_services_impl
+
+
+load_dotenv()
+
+CA_CERT_FILE = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "/app/models/MiniMax-M2.5")
+CHAT_COMPLETIONS_URL = f"{OPENAI_API_BASE}/chat/completions"
+
+import logging
+from utils.observability import get_tracer
+
+logger = logging.getLogger(__name__)
+
+
+def extract_json_from_output(output: str) -> dict:
+    if not output or not output.strip():
+        logger.warning("Empty output received, returning fallback response")
+        return {"diagnosis": "Unable to process incident", "solution": "Please try again later", "questions": [], "resolved": "no"}
+    
+    # Try direct JSON parsing
+    try:
+        return json.loads(output.strip())
+    except json.JSONDecodeError:
+        pass
+    
+    json_patterns = [
+        r'```json\s*([\s\S]*?)\s*```',  # ```json ... ```
+        r'```\s*([\s\S]*?)\s*```',       # ``` ... ```
+    ]
+    
+    for pattern in json_patterns:
+        match = re.search(pattern, output)
+        if match:
+            json_str = match.group(1).strip()
+            try:
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass
+    
+   
+    json_like_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+    match = re.search(json_like_pattern, output)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+    
+    logger.error(f"Failed to parse JSON from output: {output}...")
+    return {
+        "diagnosis": "Unable to process incident response",
+        "solution": "Please try again later",
+        "questions": ["System encountered an issue processing the incident"],
+        "resolved": "no"
+    }
+
+
+class IncidentState(BaseModel):
+    incident_id: str = ""
+    payload: dict = {}
+    incident_description: str = ""
+    incident_context: str = ""
+    user_qa_pairs: List[dict] = []
+    intent: str = ""
+    agent_output: dict = {}
+    snow_status: str = ""
+    ucic: str = ""
+    current_comment: Optional[str] = None
+    app: str = "" 
+    customer_identifiers: Dict[str, str] = {}
+    problem_category: str = "" 
+    plan_output: Optional[Dict] = None
+    execution_result: Optional[Dict] = None
+    summary_output: Optional[Dict] = None
+    enriched_prompt: str = ""
+    discovered_services: str = ""
+
+
+async def send_update_to_servicenow_async(payload: Dict, question: str, resolution: str):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_update_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("question_length", len(question) if question else 0)
+        span.set_attribute("resolution_length", len(resolution) if resolution else 0)
+        
+        url = os.environ['SNOW_ENDPOINT']
+
+        incident_id = payload.get("incidentId")
+        headers = payload.get("headers", {})
+        request_payload = {
+            "callerId": payload.get("callerId"),
+            "incidentType": payload.get("incidentType"),
+            "businessService": payload.get("businessService"),
+            "tier1": payload.get("tier1"),
+            "tier2": payload.get("tier2"),
+            "tier3": payload.get("tier3"),
+            "impact": payload.get("impact"),
+            "urgency": payload.get("urgency"),
+            "shortDescription": payload.get("shortDescription"),
+            "description": payload.get("description"),
+            "contactType": payload.get("contactType"),
+            "sourceIncidentNum": payload.get("sourceIncidentNum"),
+            "sourceIncidentId": payload.get("sourceIncidentId"),
+            "assignmentGroup": payload.get("assignmentGroup"),
+            "incidentId": payload.get("incidentId"),
+            "state": payload.get("state"),
+            "causedByPatch": payload.get("causedByPatch"),
+            "resolutionCode": payload.get("resolutionCode"),
+            "solutionType": payload.get("solutionType"),
+            "outageType": payload.get("outageType"),
+            "additionalComments": question,
+            "resolutionNotes": resolution,
+            "cause": payload.get("cause"),
+            "onHoldReason": payload.get("onHoldReason"),
+            "correlationDisplay": payload.get("correlationDisplay"),
+            "vendorGroup": payload.get("vendorGroup")
+        }
+
+        # Remove None values
+        request_payload = {k: v for k, v in request_payload.items() if v is not None}
+
+        headers.update({
+            "Authorization": f"Basic {os.environ['SNOW_TOKEN']}",
+        })
+
+        interaction_counter = payload.get("interaction_counter")
+        print(f"interaction_counter: {interaction_counter}")
+        if interaction_counter <= 3:
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    print(f"Request - url:{url} json:{request_payload} headers:{headers}")
+                    response = await client.post(url, json=request_payload, headers=headers)
+
+                    if response.status_code == 200:
+                        print(f"Successfully updated incident {incident_id} in ServiceNow")
+                        print(f"Response: {response.json()}")
+                        return True,{"status_code":response.status_code,"response":response.json()}
+                    else:
+                        logger.warning(
+                            f"Failed to update incident {incident_id} in ServiceNow. "
+                            f"Status code: {response.status_code}, Response: {response.text}"
+                        )
+                        try:
+                            return False,{"status_code":response.status_code,"response":response.json()}
+                        except:
+                            return False,{"status_code":response.status_code,"response_text":response.text}
+
+            except Exception as e:
+                logger.error(f"Error calling ServiceNow API for incident {incident_id}: {str(e)}")
+                return False,{"status_code": 0 ,"response_text":"Exception : "+str(e)}
+
+
+async def send_rejection_to_servicenow_async(payload, additonal_comment: str = 'BOT is unable to resolve, assign to an Engineer'):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_rejection_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        payload.update({"state": "On Hold","cause": "Assign to an Engineer."})
+        result = await send_update_to_servicenow_async(payload, additonal_comment, '')
+        return result, 'rejected'        
+
+
+async def send_question_to_servicenow_async(payload, question):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_question_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        payload.update({"state": "On Hold", "onHoldReason": "User Action Required"})
+        result = await send_update_to_servicenow_async(payload, question, '')
+        return result, 'on_hold'         
+
+
+async def send_resolution_to_servicenow_async(payload, resolution):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_resolution_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("resolution_length", len(resolution) if resolution else 0)
+        payload.update({
+            # "cause": "Resolved by Bot.",
+            # "state": "Resolved",
+            # "resolutionCode": "Solved (Permanently)",
+            # "solutionType": "Other",
+            # "outageType": "No Outage"
+            "state":"On Hold",
+            "onHoldReason": "User Action Required"
+        })
+        result = await send_update_to_servicenow_async(payload, resolution, None)
+        return result, 'on_hold'    
+
+
+def payload_to_incident_description(payload):
+    from new_flow.utils.files_processor import process_attachments 
+
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("payload_to_incident_description") as span:
+        span.set_attribute("short_description_length", len(payload.get('shortDescription','')))
+        span.set_attribute("description_length", len(payload.get('description','')))
+        span.set_attribute("individualUCIC", payload.get('individualUCIC','i'))
+        
+        short_description = payload.get('shortDescription','')
+        description = payload.get('description','')
+        individualUCIC = payload.get('individualUCIC','i')
+        result = f"Short Description: {short_description}\nDescription: {description}"
+
+        file_text = process_attachments(payload.get('files') or [])   
+        if file_text:                                                  
+            result = result + "\n\n" + file_text                       
+        print(f"Generated incident description for UCIC {individualUCIC}")
+        return result, individualUCIC
+
+
+
+class IncidentManagementFlow(Flow[IncidentState]):
+
+    @start()
+    async def initialize_and_classify(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("initialize_and_classify") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+
+            self.state.incident_description, self.state.ucic = payload_to_incident_description(self.state.payload)
+
+            if '__agent_data' not in self.state.payload:
+                self.state.payload['__agent_data'] = {
+                    'snow_logs': [], 'qa_pairs': [], 'comments': []
+                }
+
+            snow_logs = self.state.payload.get('__agent_data', {}).get('snow_logs', [])
+            if snow_logs and snow_logs[-1]['type'] == 'question' and self.state.current_comment:
+                 self.state.payload['__agent_data']['qa_pairs'].append({
+                     "question": snow_logs[-1]["question"],
+                     "answer": self.state.current_comment
+                 })
+
+            self.state.user_qa_pairs = self.state.payload['__agent_data'].get('qa_pairs', [])
+
+            comment = self.state.current_comment if self.state.current_comment else None
+
+            classifier_output = await run_crew_with_retry_async(
+                lambda: run_classifier_with_enrichment_async(
+                    payload=self.state.payload,
+                    incident_description=self.state.incident_description,
+                    user_qa_pairs=self.state.user_qa_pairs,
+                    comment=comment
+                )
+            )
+            self.state.intent = classifier_output.intent
+            self.state.customer_identifiers = classifier_output.customer_identifiers
+            self.state.problem_category = classifier_output.problem_category
+            self.state.app = classifier_output.app
+            self.state.enriched_prompt = classifier_output.enriched_prompt
+            
+            self.state.payload['__agent_data']['classifier_output'] = classifier_output.model_dump()
+            
+            print(f"Enhanced classifier | incident={self.state.incident_id} | app={self.state.app} | category={self.state.problem_category}")
+            
+            print(f"Initialized and classified incident {self.state.incident_id} with intent: {self.state.intent}")
+            return self.state.intent
+
+    @router(initialize_and_classify)
+    async def start_process(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("logic_router") as span:
+            span.set_attribute("intent", self.state.intent)
+            span.set_attribute("sop_exists", self.state.payload['__agent_data'].get('sop') is not None)
+            span.set_attribute("sop_value", self.state.payload['__agent_data'].get('sop'))
+
+            counter = self.state.payload.get("interaction_counter", 0)
+            self.state.payload["interaction_counter"] = counter + 1
+            if counter >= 3:
+                print(f"Interaction limit exceeded for incident {self.state.incident_id}")
+                return "limit_exceeded"
+
+            if self.state.intent == "closure": 
+                print(f"Closure intent for incident {self.state.incident_id}")
+                return "handle_closure"
+            if self.state.intent == "rebuttal": 
+                print(f"Rebuttal intent for incident {self.state.incident_id}")
+                return "handle_rebuttal"
+
+            classifier_data = self.state.payload.get('__agent_data', {}).get('classifier_output', {})
+            if classifier_data.get('needs_user_input'):
+                print(f"Need more info for incident {self.state.incident_id}")
+                self.state.agent_output = {
+                    "resolved": "no",
+                    "diagnosis": "Additional information needed",
+                    "solution": "Please provide more details",
+                    "questions": [classifier_data.get('clarification_question', 'Could you please provide more information? Please provide trace ID/ Correlation ID/ Customer Number/ Account Number if possible')]
+                }
+                return "update_servicenow"
+            
+            print(f"Fresh incident {self.state.incident_id}, gather context")
+            return "gather_context"
+
+
+    @listen('gather_context')
+    async def semantic_search(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("gather_context") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("incident_description_length", len(self.state.incident_description))
+
+            # Use already-generated description from initialize_and_classify
+            # desc = f"{self.state.incident_description}\nUCIC: {self.state.ucic}"
+            desc = self.state.enriched_prompt
+            app = self.state.payload.get("tier1", "CBS")
+            incident_context = await run_crew_with_retry_async(
+                lambda: run_incident_context_crew_async(desc,application=app)
+            )
+            self.state.incident_context = incident_context if incident_context else "No context found"
+
+            return 'run_resolver'
+
+
+    @listen(semantic_search)
+    async def run_resolver_crew(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("run_resolver") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("qa_pairs_count", len(self.state.user_qa_pairs))
+
+            app = self.state.payload.get("tier1", "cbs").lower().strip()
+            self.state.app = app
+            span.set_attribute("app", app)
+            logger.info(f"Resolver | incident={self.state.incident_id} app={app}")
+
+            return await self._run_agentic_resolver(app)
+
+    async def _run_agentic_resolver(self, app: str):
+        tracer = get_tracer(__name__)
+
+        customer_ids = self.state.customer_identifiers if hasattr(self.state, 'customer_identifiers') else {}
+        problem_cat = self.state.problem_category if hasattr(self.state, 'problem_category') else ""
+
+        try:
+            self.state.discovered_services = await discover_jaeger_services_impl(app)
+            logger.info(f"agents.plan_agent import PlanOutput={app}")
+        except Exception as e:
+            logger.warning(f"Failed to discover services: {e}")
+            self.state.discovered_services = "Service discovery unavailable"
+
+        with tracer.start_as_current_span("plan_agent") as span:
+            span.set_attribute("app", app)
+            plan_output = await run_crew_with_retry_async(
+                lambda: run_plan_agent_async(
+                    enriched_prompt=self.state.enriched_prompt,
+                    app=app,
+                    customer_identifiers=customer_ids,
+                    problem_category=problem_cat,
+                    incident_context=self.state.incident_context,
+                    discovered_services=self.state.discovered_services
+                )
+            )
+            self.state.plan_output = plan_output.model_dump() if hasattr(plan_output, 'model_dump') else plan_output
+            print(f"Plan Agent completed for incident {self.state.incident_id}")
+        
+        if plan_output.needs_more_info:
+            self.state.agent_output = {
+                "resolved": "no",
+                "diagnosis": "Additional information needed",
+                "solution": plan_output.question_for_user or "Please provide more details",
+                "questions": [plan_output.question_for_user] if plan_output.question_for_user else []
+            }
+            return "update_servicenow"
+        
+        with tracer.start_as_current_span("execute_jaeger_agent") as span:
+            span.set_attribute("issue_summary", plan_output.issue_summary[:100] if plan_output.issue_summary else "")
+            execution_result = await run_crew_with_retry_async(
+                lambda: run_jaeger_only_async(
+                    plan_output=plan_output,
+                    incident_description=self.state.incident_description,
+                    app=app,
+                    customer_identifiers=customer_ids,
+                    problem_category=problem_cat,
+                    max_iterations=5,
+                    incident_id=self.state.incident_id,
+                    discovered_services=self.state.discovered_services
+                )
+            )
+            self.state.execution_result = execution_result.model_dump() if hasattr(execution_result, 'model_dump') else execution_result
+            print(f"Execute Agent completed for incident {self.state.incident_id}")
+            
+            # Handle escalation if confidence is low
+            if hasattr(execution_result, 'confidence') and execution_result.confidence < 0.3:
+                # Trigger escalation via ServiceNow
+                escalation_msg = execution_result.escalation_reason or "BOT unable to resolve - assigning to L2 Engineer"
+                (status, info), incident_status = await send_rejection_to_servicenow_async(
+                    self.state.payload, 
+                    escalation_msg
+                )
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "escalation", 
+                    "reason": escalation_msg,
+                    "confidence": execution_result.confidence,
+                    "status": status, 
+                    "response": info
+                })
+                print(f"Escalated incident {self.state.incident_id} due to low confidence: {execution_result.confidence}")
+        
+        with tracer.start_as_current_span("summary_agent") as span:
+            summary_output = await run_crew_with_retry_async(
+                lambda: run_summary_agent_async(
+                    incident_description=self.state.incident_description,
+                    execution_result=execution_result,
+                    historic_context=self.state.incident_context,
+                    user_qa_pairs=self.state.user_qa_pairs
+                )
+            )
+            self.state.summary_output = summary_output.model_dump() if hasattr(summary_output, 'model_dump') else summary_output
+            print(f"Summary Agent completed for incident {self.state.incident_id}")
+        
+        # Self-Critique Loop: DISABLED - causing false escalations
+        # if summary_output.resolved == "yes":
+        #     tool_calls = self.state.execution_result.get('tool_calls', []) if isinstance(self.state.execution_result, dict) else []
+        #     critique = await run_self_critique_async(
+        #         incident_description=self.state.incident_description,
+        #         diagnosis=summary_output.diagnosis,
+        #         solution=summary_output.solution,
+        #         tool_calls=tool_calls,
+        #         user_qa_pairs=self.state.user_qa_pairs
+        #     )
+        #     
+        #     # Log critique results
+        #     self.state.payload['__agent_data']['snow_logs'].append({
+        #         "type": "self_critique",
+        #         "is_valid": critique.is_valid,
+        #         "confidence": critique.confidence,
+        #         "issues_found": critique.issues_found
+        #     })
+        #     
+        #     # Use revised output if critique found issues
+        #     if critique.revised_diagnosis:
+        #         summary_output.diagnosis = critique.revised_diagnosis
+        #     if critique.revised_solution:
+        #         summary_output.solution = critique.revised_solution
+        #     
+        #     # Check if should escalate based on critique
+        #     if should_escalate(critique):
+        #         print(f"Self-critique triggered escalation for incident {self.state.incident_id}")
+        #         (status, info), incident_status = await send_rejection_to_servicenow_async(
+        #             self.state.payload,
+        #             f"Auto-escalated: Low confidence ({critique.confidence:.2f}). Issues: {', '.join(critique.issues_found[:2])}"
+        #         )
+        #         self.state.payload['__agent_data']['snow_logs'].append({
+        #             "type": "escalation", 
+        #             "reason": "self_critique_escalation",
+        #             "confidence": critique.confidence,
+        #             "status": status, 
+        #             "response": info
+        #         })
+        #         return "update_servicenow"
+        
+        self.state.agent_output = {
+            "resolved": summary_output.resolved,
+            "diagnosis": summary_output.diagnosis,
+            "solution": summary_output.solution,
+            "questions": summary_output.questions
+        }
+        
+        return "update_servicenow"
+
+    @listen(run_resolver_crew)
+    async def update_servicenow(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("update_servicenow") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("resolution_result", self.state.agent_output.get("resolved", "unknown"))
+
+            res = self.state.agent_output
+            incident_status = 'in_progress'
+
+            if res.get("resolved") == 'yes':
+                msg = f"Diagnosis:\n{res['diagnosis']}\n\nSolution:\n{res['solution']}"
+                (status, info), incident_status = await send_resolution_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "resolution", "resolution": msg, "status": status, "response": info
+                })
+                print(f"Resolution sent for incident {self.state.incident_id}")
+
+            elif res.get("questions"):
+                msg = "\n".join(res["questions"])
+                (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "question", "question": msg, "status": status, "response": info
+                })
+                print(f"Question sent for incident {self.state.incident_id}")
+
+            else:
+                msg = f"Diagnosis:\n{res.get('diagnosis')}\n\nSolution:\n{res['solution']}"
+                (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "question", "question": msg, "status": status, "response": info
+                })
+                print(f"Question sent for incident {self.state.incident_id}")
+
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"DB updated for incident {self.state.incident_id} status={incident_status}")
+
+    @listen('handle_rebuttal')
+    async def run_rebuttal_crew(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_rebuttal") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            msg = 'BOT is unable to resolve, assign to an Engineer'
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload, msg)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Rebuttal handled for incident {self.state.incident_id} status={incident_status}")
+
+    @listen('limit_exceeded')
+    async def handle_limit_exceeded(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_limit_exceeded") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Limit exceeded rejected incident {self.state.incident_id} status={incident_status}")
+            return
+
+    @listen('closure')
+    async def handle_incident_closure(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_closure") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            print("No action for bot to take")
+            return
+
+    @listen("reject_incident")
+    async def handle_rejection(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_rejection") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Rejected incident {self.state.incident_id} status={incident_status}")
+            return
