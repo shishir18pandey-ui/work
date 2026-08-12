@@ -1,56 +1,1103 @@
-shishir.pandey_tho@0325LTPB0124444 ~ % curl -v \
-  -H "Authorization: Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA=" \
-  --get "https://tracing.prod-opt.idfcfirstbank.com/api/traces" \
-  --data-urlencode "service=payments-api" \
-  --data-urlencode "start=1786438888248574" \
-  --data-urlencode "end=1786525288248574" \
-  --data-urlencode "limit=100" \
-  --data-urlencode 'tags={"customer_id":"6377087220"}'
-* Host tracing.prod-opt.idfcfirstbank.com:443 was resolved.
-* IPv6: (none)
-* IPv4: 191.1.1.12
-*   Trying 191.1.1.12:443...
-* Connected to tracing.prod-opt.idfcfirstbank.com (191.1.1.12) port 443
-* ALPN: curl offers h2,http/1.1
-* (304) (OUT), TLS handshake, Client hello (1):
-*  CAfile: /etc/ssl/cert.pem
-*  CApath: none
-* (304) (IN), TLS handshake, Server hello (2):
-* (304) (IN), TLS handshake, Unknown (8):
-* (304) (IN), TLS handshake, Certificate (11):
-* (304) (IN), TLS handshake, CERT verify (15):
-* (304) (IN), TLS handshake, Finished (20):
-* (304) (OUT), TLS handshake, Finished (20):
-* SSL connection using TLSv1.3 / AEAD-AES256-GCM-SHA384 / [blank] / UNDEF
-* ALPN: server accepted h2
-* Server certificate:
-*  subject: C=IN; ST=MH; L=MUM; O=IDFCFIRSTBANK; OU=IT; CN=*.prod-opt.idfcfirstbank.com
-*  start date: Jan  9 07:58:18 2026 GMT
-*  expire date: Jan  9 07:58:18 2028 GMT
-*  subjectAltName: host "tracing.prod-opt.idfcfirstbank.com" matched cert's "*.prod-opt.idfcfirstbank.com"
-*  issuer: DC=COM; DC=IDFCBANK; CN=IDFCBANKCA
-*  SSL certificate verify ok.
-* using HTTP/2
-* [HTTP/2] [1] OPENED stream for https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=payments-api&start=1786438888248574&end=1786525288248574&limit=100&tags=%7b%22customer_id%22%3a%226377087220%22%7d
-* [HTTP/2] [1] [:method: GET]
-* [HTTP/2] [1] [:scheme: https]
-* [HTTP/2] [1] [:authority: tracing.prod-opt.idfcfirstbank.com]
-* [HTTP/2] [1] [:path: /api/traces?service=payments-api&start=1786438888248574&end=1786525288248574&limit=100&tags=%7b%22customer_id%22%3a%226377087220%22%7d]
-* [HTTP/2] [1] [user-agent: curl/8.7.1]
-* [HTTP/2] [1] [accept: */*]
-* [HTTP/2] [1] [authorization: Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA=]
-> GET /api/traces?service=payments-api&start=1786438888248574&end=1786525288248574&limit=100&tags=%7b%22customer_id%22%3a%226377087220%22%7d HTTP/2
-> Host: tracing.prod-opt.idfcfirstbank.com
-> User-Agent: curl/8.7.1
-> Accept: */*
-> Authorization: Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA=
-> 
-* Request completely sent off
-< HTTP/2 200 
-< date: Wed, 12 Aug 2026 09:06:39 GMT
-< content-type: application/json
-< vary: Accept-Encoding
-< traceresponse: 
-< strict-transport-security: max-age=31536000; includeSubDomains
-< 
-{"data":[{"traceID":"daa67f4cfbebdb113fa96f43960f867f","spans":[{"traceID":"daa67f4cfbebdb113fa96f43960f867f","spanID":"248a13f839ac1ff7","operationName":"/api/payments/v2/fundtransfer","references":[{"refType":"CHILD_OF","traceID":"daa67f4cfbebdb113fa96f43960f867f","spanID":"868f3da6d167f1d9"}],"startTime":1786525027000335,"duration":1904640,"tags":[{"key":"otel.scope.name","type":"string","value":"go.opentelemetry.io/contrib/instrumentation/net/http/otelhttp"},{"key":"otel.scope.version","type":"string","value":"0.56.0"},{"key":"app_version","type":"string","value":"2.70.20300"},{"key":"client-public-ip","type":"string","value":"2409:40d6:513:fd75:502d:53ff:fea4:5030"},{"key":"customer_id","type":"string","value":"6377087220"},{"key":"device_info","type":"string","value":"android 16, vivo"},{"key":"http.client_ip","type":"string","value":"100.64.140.107"},{"key":"http.method","type":"string","value":"POST"},{"key":"http.request_content_length","type":"int64","value":844},{"key":"http.scheme","type":"string","value":"http"},{"key":"http.status_code","type":"int64","value":200},{"key":"http.target","type":"string","value":"/api/payments/v2/fundtransfer"},{"key":"http.url","type":"string","value":"/api/payments/v2/fundtransfer"},{"key":"net.host.name","type":"string","value":"app.my.idfcfirst.bank.in"},{"key":"net.protocol.version","type":"string","value":"1.1"},{"key":"net.sock.peer.addr","type":"string","value":"100.64.156.64"},{"key":"net.sock.peer.port","type":"int64","value":54906},{"key":"session_access_token_hash","type":"string","value":"c434e92b050fc3fb5d2ff24e9a50361e0bae6df611a14db62fc31b4f8350d6da"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"user_agent.original","type":"string","value":"okhttp/5.0.0-alpha.3"},{"key":"span.kind","type":"string","value":"server"}],"logs":[{"timestamp":1786525027009867,"fields":[{"key":"event","type":"string","value":"/api/payments/v2/fundtransfer url is in whitelisted list, enabling risk checks"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027010047,"fields":[{"key":"event","type":"string","value":"/api/payments/v2/fundtransfer url is in whitelisted list, enabling risk checks"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027055607,"fields":[{"key":"event","type":"string","value":"Access token is present. Accessing redis cache for the payments permissions"},{"key":"Class","type":"string","value":"PermissionGenerator"},{"key":"Method","type":"string","value":"GeneratePermission"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027057268,"fields":[{"key":"event","type":"string","value":"Action with no condition found evaluation true (effect considered as Allow)"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027057316,"fields":[{"key":"event","type":"string","value":"Binding request body"},{"key":"Class","type":"string","value":"RiskControlHandler"},{"key":"Method","type":"string","value":"NotifyRetailTxn"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027022129,"fields":[{"key":"event","type":"string","value":"Calculated risk summary successfully"},{"key":"Method","type":"string","value":"GetRiskSummary"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027074685,"fields":[{"key":"event","type":"string","value":"Calling Upi api fund transfer"},{"key":"Class","type":"string","value":"UpiClient"},{"key":"Method","type":"string","value":"UPIFundTransfer"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525028904949,"fields":[{"key":"event","type":"string","value":"Capturing metric for incoming request for : /api/payments/v2/fundtransfer"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027009781,"fields":[{"key":"event","type":"string","value":"ChannelRestrictionMiddleware.Authorise: Get decrypted IdToken from context"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027009813,"fields":[{"key":"event","type":"string","value":"ChannelRestrictionMiddleware.Authorise: Get login channel for request and allowed URLs for channel"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027009826,"fields":[{"key":"event","type":"string","value":"ChannelRestrictionMiddleware.Authorise: No restrictions listed for login channel MOBILE"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027009793,"fields":[{"key":"event","type":"string","value":"ChannelRestrictionMiddleware.getIdToken: IdToken found in header"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027058125,"fields":[{"key":"event","type":"string","value":"Checking if payee exists"},{"key":"Class","type":"string","value":"fundTransferService"},{"key":"Method","type":"string","value":"checkPayeeAndTransferMode"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"operation","type":"string","value":"FundTransferUPI"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027074642,"fields":[{"key":"event","type":"string","value":"Customer registration details not found, not updating payee transfer mode"},{"key":"Class","type":"string","value":"fundTransferService"},{"key":"Method","type":"string","value":"checkPayeeAndTransferMode"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"operation","type":"string","value":"FundTransferUPI"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027057247,"fields":[{"key":"event","type":"string","value":"Evaluate Actioncontext channel for :MOBILE"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027010020,"fields":[{"key":"event","type":"string","value":"Fetch business data"},{"key":"Class","type":"string","value":"riskControlMiddlewareV2"},{"key":"Method","type":"string","value":"CalculateRiskSuspectAndAlert"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027073518,"fields":[{"key":"event","type":"string","value":"Fetch customer registration data for mobileNumber=******8276 , UCIC=******7220 , coolingPeriodInHours=24 "},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"class","type":"string","value":"CustomerRegistrationRepository"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"method","type":"string","value":"GetCustomerRegistration"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027057588,"fields":[{"key":"event","type":"string","value":"Found Last IPAddress (*****105.134) from Header "},{"key":"Method","type":"string","value":"ResolvePublicIPAddress"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"file","type":"string","value":"ip_address.go"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027057260,"fields":[{"key":"event","type":"string","value":"Found action in permission object FUND_TRANSFER"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027057410,"fields":[{"key":"event","type":"string","value":"Fund Transfer Initiated"},{"key":"Class","type":"string","value":"fundtransfer_controller"},{"key":"Method","type":"string","value":"FundTransfer"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"operation","type":"string","value":"FundTransfer"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027058105,"fields":[{"key":"event","type":"string","value":"FundTransfer Service Initiated"},{"key":"Class","type":"string","value":"fundTransferService"},{"key":"Method","type":"string","value":"FundTransferUPI"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"operation","type":"string","value":"FundTransferUPI"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525028890563,"fields":[{"key":"event","type":"string","value":"FundTransfer is successfully completed for UCIC : ******7220 From Account Number : *******3871 To Account Number : *NA*"},{"key":"Class","type":"string","value":"fundtransfer_controller"},{"key":"Method","type":"string","value":"FundTransfer"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"operation","type":"string","value":"FundTransfer"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027055574,"fields":[{"key":"event","type":"string","value":"GetUserPermissions  is called"},{"key":"Class","type":"string","value":"UserPermissionService"},{"key":"Method","type":"string","value":"GetUserPermissions"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027058033,"fields":[{"key":"event","type":"string","value":"IPAddress (*****.105.134) from Header matched regex "},{"key":"Method","type":"string","value":"ResolvePublicIPAddress"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"file","type":"string","value":"ip_address.go"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027073466,"fields":[{"key":"event","type":"string","value":"Identified device info is 'android 16, vivo'"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027009878,"fields":[{"key":"event","type":"string","value":"Inside business data function"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027010032,"fields":[{"key":"event","type":"string","value":"Inside business data function"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027073386,"fields":[{"key":"event","type":"string","value":"Is Payee found: false"},{"key":"Class","type":"string","value":"fundTransferService"},{"key":"Method","type":"string","value":"checkPayeeAndTransferMode"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"operation","type":"string","value":"FundTransferUPI"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027056866,"fields":[{"key":"event","type":"string","value":"Marshalled permission object from cache"},{"key":"Class","type":"string","value":"PermissionGenerator"},{"key":"Method","type":"string","value":"GeneratePermission"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027074624,"fields":[{"key":"event","type":"string","value":"No rows found in customer registration table for mobile number: ******8276 and UCIC: ******7220"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"class","type":"string","value":"CustomerRegistrationRepository"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"method","type":"string","value":"GetCustomerRegistration"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525028890609,"fields":[{"key":"event","type":"string","value":"Notifying event to risk control service"},{"key":"Class","type":"string","value":"RiskControlHandler"},{"key":"Method","type":"string","value":"NotifyRetailTxn"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525028890636,"fields":[{"key":"event","type":"string","value":"Notifying risk monitor"},{"key":"Class","type":"string","value":"riskControlService"},{"key":"Method","type":"string","value":"NotifyRetailTxn"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027056555,"fields":[{"key":"event","type":"string","value":"Permission object found in the redis cache"},{"key":"Class","type":"string","value":"PermissionGenerator"},{"key":"Method","type":"string","value":"GeneratePermission"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027058049,"fields":[{"key":"event","type":"string","value":"PublicIP resolved : ******.5.105.134"},{"key":"Method","type":"string","value":"ResolvePublicIPAddress"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"file","type":"string","value":"ip_address.go"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027074672,"fields":[{"key":"event","type":"string","value":"Railroad is UPI so calling UPI service for fund transfer"},{"key":"Class","type":"string","value":"fundTransferService"},{"key":"Method","type":"string","value":"FundTransferUPI"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"operation","type":"string","value":"FundTransferUPI"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525028904886,"fields":[{"key":"event","type":"string","value":"Received 200 status code from risk control client."},{"key":"Class","type":"string","value":"riskControlClient"},{"key":"Method","type":"string","value":"NotifyRetailTxn"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027057358,"fields":[{"key":"event","type":"string","value":"Request body binding successful"},{"key":"Class","type":"string","value":"RiskControlHandler"},{"key":"Method","type":"string","value":"NotifyRetailTxn"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027010098,"fields":[{"key":"event","type":"string","value":"Risk control parameters"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"shouldCalculateRiskScore","type":"string","value":"true"},{"key":"shouldCalculateSuspectScore","type":"string","value":"false"},{"key":"shouldCheckForAlert","type":"string","value":"false"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027022097,"fields":[{"key":"event","type":"string","value":"Risk score for request: 0"},{"key":"Method","type":"string","value":"GetRiskSummary"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027009837,"fields":[{"key":"event","type":"string","value":"Session Tracing id : dSEDW0tiLy7EBEuED2wku"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027055584,"fields":[{"key":"event","type":"string","value":"Session validated"},{"key":"Class","type":"string","value":"UserPermissionService"},{"key":"Method","type":"string","value":"GetUserPermissions"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027055558,"fields":[{"key":"event","type":"string","value":"Start : Get permissions"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"entityUcic","type":"string","value":"*NA*"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"method","type":"string","value":"payments-api/common/middleware.PermissionMiddlewareAdapter.GetPermissions"},{"key":"profileType","type":"string","value":"RIB"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"},{"key":"ucic","type":"string","value":"******7220"}]},{"timestamp":1786525027010000,"fields":[{"key":"event","type":"string","value":"Successfully fetched toggle value from ToggleState. FeatureName : PAYMENTS_ENABLE_SCAN_QR_REVAMP_WITH_RECENT_PAYEES. IsEnabled : false"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525028890535,"fields":[{"key":"event","type":"string","value":"Successfully got response from fund transfer endpoint"},{"key":"Class","type":"string","value":"UpiClient"},{"key":"Method","type":"string","value":"UPIFundTransfer"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525028904919,"fields":[{"key":"event","type":"string","value":"Successfully notified event to risk control service"},{"key":"Class","type":"string","value":"RiskControlHandler"},{"key":"Method","type":"string","value":"NotifyRetailTxn"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525028904905,"fields":[{"key":"event","type":"string","value":"Successfully notified risk monitor service"},{"key":"Class","type":"string","value":"riskControlService"},{"key":"Method","type":"string","value":"NotifyRetailTxn"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027022122,"fields":[{"key":"event","type":"string","value":"Suspect alert found for request: false"},{"key":"Method","type":"string","value":"GetRiskSummary"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027022114,"fields":[{"key":"event","type":"string","value":"Suspect score for request: 0"},{"key":"Method","type":"string","value":"GetRiskSummary"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027009850,"fields":[{"key":"event","type":"string","value":"calling notify in risk-control-api"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027009983,"fields":[{"key":"event","type":"string","value":"calling risk score in risk-control-api"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027058139,"fields":[{"key":"event","type":"string","value":"check payee exists for beneficiary type: vpa"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027058162,"fields":[{"key":"event","type":"string","value":"check vpa payee exists, vpa: p***********d@p*y"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027058242,"fields":[{"key":"event","type":"string","value":"client public ip is empty/missing from context"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"warning"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027073455,"fields":[{"key":"event","type":"string","value":"config Toggle name: ps_5078_limit_validations_for_new_sim_bound_user is enabled: false"},{"key":"Class","type":"string","value":"ConfigToggle"},{"key":"Method","type":"string","value":"IsEnable"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027073357,"fields":[{"key":"event","type":"string","value":"error while checking vpa payee existence: StatusCode : 404, ResponseBody : {\"errorCode\":\"ERR_BEN_PAYEE_NOT_EXISTS\",\"errorMessage\":\"payee not exists\"}"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"error"},{"key":"message","type":"string","value":"value"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027074655,"fields":[{"key":"event","type":"string","value":"final payee transfer mode is 5"},{"key":"Class","type":"string","value":"fundTransferService"},{"key":"Method","type":"string","value":"checkPayeeAndTransferMode"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"operation","type":"string","value":"FundTransferUPI"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525028892155,"fields":[{"key":"event","type":"string","value":"http.connect.10.56.68.4:3000.done"},{"key":"http.conn.done.addr","type":"string","value":"10.56.68.4:3000"},{"key":"http.conn.done.network","type":"string","value":"tcp"}]},{"timestamp":1786525028891913,"fields":[{"key":"event","type":"string","value":"http.connect.10.56.68.4:3000.start"},{"key":"http.conn.start.network","type":"string","value":"tcp"},{"key":"http.remote","type":"string","value":"10.56.68.4:3000"}]},{"timestamp":1786525028891905,"fields":[{"key":"event","type":"string","value":"http.dns.done"},{"key":"http.dns.addrs","type":"string","value":"10.56.68.4"}]},{"timestamp":1786525028890889,"fields":[{"key":"event","type":"string","value":"http.dns.start"},{"key":"net.host.name","type":"string","value":"risk-control-service-svc"}]},{"timestamp":1786525027010408,"fields":[{"key":"event","type":"string","value":"http.getconn.done"},{"key":"http.conn.idletime","type":"string","value":"2.380908854s"},{"key":"http.conn.reused","type":"bool","value":true},{"key":"http.conn.wasidle","type":"bool","value":true},{"key":"http.local","type":"string","value":"100.64.156.64:33288"},{"key":"http.remote","type":"string","value":"10.56.68.4:3000"}]},{"timestamp":1786525027022273,"fields":[{"key":"event","type":"string","value":"http.getconn.done"},{"key":"http.conn.idletime","type":"string","value":"63.54669ms"},{"key":"http.conn.reused","type":"bool","value":true},{"key":"http.conn.wasidle","type":"bool","value":true},{"key":"http.local","type":"string","value":"100.64.156.64:34358"},{"key":"http.remote","type":"string","value":"10.56.92.190:8080"}]},{"timestamp":1786525027024357,"fields":[{"key":"event","type":"string","value":"http.getconn.done"},{"key":"http.conn.idletime","type":"string","value":"2.375302181s"},{"key":"http.conn.reused","type":"bool","value":true},{"key":"http.conn.wasidle","type":"bool","value":true},{"key":"http.local","type":"string","value":"100.64.156.64:48390"},{"key":"http.remote","type":"string","value":"10.56.73.168:8080"}]},{"timestamp":1786525027058336,"fields":[{"key":"event","type":"string","value":"http.getconn.done"},{"key":"http.conn.idletime","type":"string","value":"243.278814ms"},{"key":"http.conn.reused","type":"bool","value":true},{"key":"http.conn.wasidle","type":"bool","value":true},{"key":"http.local","type":"string","value":"100.64.156.64:49672"},{"key":"http.remote","type":"string","value":"10.56.83.35:8080"}]},{"timestamp":1786525027074895,"fields":[{"key":"event","type":"string","value":"http.getconn.done"},{"key":"http.conn.idletime","type":"string","value":"4.742493ms"},{"key":"http.conn.reused","type":"bool","value":true},{"key":"http.conn.wasidle","type":"bool","value":true},{"key":"http.local","type":"string","value":"100.64.156.64:46196"},{"key":"http.remote","type":"string","value":"10.56.95.226:8080"}]},{"timestamp":1786525028892174,"fields":[{"key":"event","type":"string","value":"http.getconn.done"},{"key":"http.conn.reused","type":"bool","value":false},{"key":"http.conn.wasidle","type":"bool","value":false},{"key":"http.local","type":"string","value":"100.64.156.64:51802"},{"key":"http.remote","type":"string","value":"10.56.68.4:3000"}]},{"timestamp":1786525027010395,"fields":[{"key":"event","type":"string","value":"http.getconn.start"},{"key":"net.host.name","type":"string","value":"risk-control-service-svc:3000"}]},{"timestamp":1786525027022264,"fields":[{"key":"event","type":"string","value":"http.getconn.start"},{"key":"net.host.name","type":"string","value":"user-profile-api-svc:8080"}]},{"timestamp":1786525027024347,"fields":[{"key":"event","type":"string","value":"http.getconn.start"},{"key":"net.host.name","type":"string","value":"multifactor-authentication-api-svc:8080"}]},{"timestamp":1786525027058326,"fields":[{"key":"event","type":"string","value":"http.getconn.start"},{"key":"net.host.name","type":"string","value":"beneficiary-api-svc:8080"}]},{"timestamp":1786525027074888,"fields":[{"key":"event","type":"string","value":"http.getconn.start"},{"key":"net.host.name","type":"string","value":"upi-api-svc:8080"}]},{"timestamp":1786525028890856,"fields":[{"key":"event","type":"string","value":"http.getconn.start"},{"key":"net.host.name","type":"string","value":"risk-control-service-svc:3000"}]},{"timestamp":1786525027022044,"fields":[{"key":"event","type":"string","value":"http.receive.done"}]},{"timestamp":1786525027023797,"fields":[{"key":"event","type":"string","value":"http.receive.done"}]},{"timestamp":1786525027055395,"fields":[{"key":"event","type":"string","value":"http.receive.done"}]},{"timestamp":1786525027073303,"fields":[{"key":"event","type":"string","value":"http.receive.done"}]},{"timestamp":1786525028890445,"fields":[{"key":"event","type":"string","value":"http.receive.done"}]},{"timestamp":1786525027022000,"fields":[{"key":"event","type":"string","value":"http.receive.start"}]},{"timestamp":1786525027023745,"fields":[{"key":"event","type":"string","value":"http.receive.start"}]},{"timestamp":1786525027055381,"fields":[{"key":"event","type":"string","value":"http.receive.start"}]},{"timestamp":1786525027073250,"fields":[{"key":"event","type":"string","value":"http.receive.start"}]},{"timestamp":1786525028890400,"fields":[{"key":"event","type":"string","value":"http.receive.start"}]},{"timestamp":1786525028904768,"fields":[{"key":"event","type":"string","value":"http.receive.start"}]},{"timestamp":1786525027010525,"fields":[{"key":"event","type":"string","value":"http.send.done"}]},{"timestamp":1786525027022293,"fields":[{"key":"event","type":"string","value":"http.send.done"}]},{"timestamp":1786525027024410,"fields":[{"key":"event","type":"string","value":"http.send.done"}]},{"timestamp":1786525027058403,"fields":[{"key":"event","type":"string","value":"http.send.done"}]},{"timestamp":1786525027074968,"fields":[{"key":"event","type":"string","value":"http.send.done"}]},{"timestamp":1786525028892246,"fields":[{"key":"event","type":"string","value":"http.send.done"}]},{"timestamp":1786525027010463,"fields":[{"key":"event","type":"string","value":"http.send.start"}]},{"timestamp":1786525027022292,"fields":[{"key":"event","type":"string","value":"http.send.start"}]},{"timestamp":1786525027024373,"fields":[{"key":"event","type":"string","value":"http.send.start"}]},{"timestamp":1786525027058360,"fields":[{"key":"event","type":"string","value":"http.send.start"}]},{"timestamp":1786525027074923,"fields":[{"key":"event","type":"string","value":"http.send.start"}]},{"timestamp":1786525028892204,"fields":[{"key":"event","type":"string","value":"http.send.start"}]},{"timestamp":1786525027010321,"fields":[{"key":"event","type":"string","value":"log"},{"key":"isEndingSpan","type":"string","value":"false"}]},{"timestamp":1786525027022219,"fields":[{"key":"event","type":"string","value":"log"},{"key":"isEndingSpan","type":"string","value":"false"}]},{"timestamp":1786525027024270,"fields":[{"key":"event","type":"string","value":"log"},{"key":"isEndingSpan","type":"string","value":"false"}]},{"timestamp":1786525027058265,"fields":[{"key":"event","type":"string","value":"log"},{"key":"isEndingSpan","type":"string","value":"false"}]},{"timestamp":1786525027074826,"fields":[{"key":"event","type":"string","value":"log"},{"key":"isEndingSpan","type":"string","value":"false"}]},{"timestamp":1786525028890803,"fields":[{"key":"event","type":"string","value":"log"},{"key":"isEndingSpan","type":"string","value":"false"}]},{"timestamp":1786525027073401,"fields":[{"key":"event","type":"string","value":"payee transfer mode is default assigned to 5"},{"key":"Class","type":"string","value":"fundTransferService"},{"key":"Method","type":"string","value":"checkPayeeAndTransferMode"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"operation","type":"string","value":"FundTransferUPI"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027055519,"fields":[{"key":"event","type":"string","value":"permission.authorize check start"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"class","type":"string","value":"permissionMiddleware"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"method","type":"string","value":"Authorize"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027057281,"fields":[{"key":"event","type":"string","value":"permission.authorize: user have access permission to perform action FUND_TRANSFER"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"class","type":"string","value":"permissionMiddleware"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"method","type":"string","value":"Authorize"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027057046,"fields":[{"key":"event","type":"string","value":"permissionObject retrieved successfully"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"class","type":"string","value":"permissionMiddleware"},{"key":"level","type":"string","value":"info"},{"key":"message","type":"string","value":"value"},{"key":"method","type":"string","value":"Authorize"},{"key":"session_tracing_id","type":"string","value":"dSEDW0tiLy7EBEuED2wku"},{"key":"traceID","type":"string","value":"daa67f4cfbebdb113fa96f43960f867f"}]},{"timestamp":1786525027073375,"fields":[{"key":"event","type":"string","value":"requested payee: p***********d@p*y not found"},{"key":"browser_id","type":"string","value":"no-browser-id"},{"key":"level","type":"string","value
+026-08-12 16:51:34,288 - opentelemetry.attributes - WARNING - Invalid type NoneType for attribute 'sop_value' value. Expected one of ['bool', 'str', 'bytes', 'int', 'float'] or a sequence of those types
+Enhanced classifier | incident=099430408 | app=optimus | category=transaction_failure
+Initialized and classified incident 099430408 with intent: additional_info
+╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
+│                                                                              │
+│  Method: initialize_and_classify                                             │
+│  Status: Completed                                                           │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Fresh incident 099430408, gather context
+╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
+│                                                                              │
+│  Method: start_process                                                       │
+│  Status: Running                                                             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
+│                                                                              │
+│  Method: start_process                                                       │
+│  Status: Completed                                                           │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
+│                                                                              │
+│  Method: semantic_search                                                     │
+│  Status: Running                                                             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭───────────────────────── 🚀 Crew Execution Started ──────────────────────────╮
+│                                                                              │
+│  Crew Execution Started                                                      │
+│  Name: crew                                                                  │
+│  ID: 3ddf64b5-0270-402e-a7ea-2023f4fc36ec                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
+│                                                                              │
+│  Task Started                                                                │
+│  Name: Find similar incidents                                                │
+│  ID: 60cf87ba-b0a1-4eda-8722-bae47a148ae0                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+16:51:50 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 16:51:50,342 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Historic Incident Analyst                                            │
+│                                                                              │
+│  Task: Search for the top 5 most similar historic incidents to the           │
+│  following current incident:                                                 │
+│                                                                              │
+│                                                                              │
+│  Incident Summary:                                                           │
+│  - Application: Mobile/Net Banking                                           │
+│  - Problem Category: transaction_failure                                     │
+│                                                                              │
+│  Customer Identifiers:                                                       │
+│  - ucic: 1064182965                                                          │
+│  - customer_id: 1064182965                                                   │
+│                                                                              │
+│  LLM Analysis:                                                               │
+│  - User Goal: Report and get assistance with a money transfer issue where    │
+│  the customer cannot complete money transfers                                │
+│  - Issue Description: Customer is unable to do transfer of money - the       │
+│  money transfer functionality is not working                                 │
+│  - Problem Summary: The user is reporting a technical issue where a          │
+│  customer is unable to perform money transfers. The system appears to have   │
+│  a problem with its money transfer functionality. The short description      │
+│  contains what appears to be a test string (<script>alert('XSS')</script>)   │
+│  which may have been accidentally included, but the core issue is that the   │
+│  customer cannot complete money transfers. This is a technical support       │
+│  request seeking assistance to resolve the money transfer functionality      │
+│  problem.                                                                    │
+│                                                                              │
+│  Original Description:                                                       │
+│  Short Description: <script>alert('XSS')</script> Customer is unable to do   │
+│  transfer of money                                                           │
+│  Description: Customer is unable to do transfer of money                     │
+│                                                                              │
+│  Please investigate this issue starting with Similarity Search for similar   │
+│  historic incidents,                                                         │
+│  then check Jaeger traces to understand the current error context.           │
+│                                                                              │
+│                                                                              │
+│  Use the search_historic_incidents tool to find similar cases. Then analyze  │
+│  the results and provide a summary of:                                       │
+│  1. The most relevant similar incidents found                                │
+│  2. How those incidents were resolved                                        │
+│  3. Key troubleshooting steps from the conversation context                  │
+│  4. Any patterns or common solutions that could apply to the current         │
+│  incident                                                                    │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 16:51:58,114 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+╭─────────────────────── 🔧 Tool Execution Started (#1) ───────────────────────╮
+│                                                                              │
+│  Tool: search_historic_incidents                                             │
+│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
+│  customer unable to transfer money money transfer functionality not          │
+│  working", "top_k": 5}                                                       │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 16:55:04,265 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 16:56:16,271 - utils.llm - INFO - OPENAI_API_KEY refreshed
+╭───────────────────────────── 🔧 Tool Error (#1) ─────────────────────────────╮
+│                                                                              │
+│  Tool Failed                                                                 │
+│  Tool: search_historic_incidents                                             │
+│  Iteration: 1                                                                │
+│  Attempt: 1                                                                  │
+│  Error:                                                                      │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+2026-08-12 16:58:10,451 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+
+╭─────────────────────── 🔧 Tool Execution Started (#2) ───────────────────────╮
+│                                                                              │
+│  Tool: search_historic_incidents                                             │
+│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
+│  customer unable to transfer money money transfer functionality not          │
+│  working", "top_k": 5}                                                       │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:01:16,645 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+╭───────────────────────────── 🔧 Tool Error (#2) ─────────────────────────────╮
+│                                                                              │
+│  Tool Failed                                                                 │
+│  Tool: search_historic_incidents                                             │
+│  Iteration: 2                                                                │
+│  Attempt: 2                                                                  │
+│  Error:                                                                      │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭─────────────────────── 🔧 Tool Execution Started (#3) ───────────────────────╮
+│                                                                              │
+│  Tool: search_historic_incidents                                             │
+│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
+│  customer unable to transfer money money transfer functionality not          │
+│  working", "top_k": 5}                                                       │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:04:22,851 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:06:16,347 - utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-12 17:07:29,045 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+╭───────────────────────────── 🔧 Tool Error (#3) ─────────────────────────────╮
+│                                                                              │
+│  Tool Failed                                                                 │
+│  Tool: search_historic_incidents                                             │
+│  Iteration: 3                                                                │
+│  Attempt: 3                                                                  │
+│  Error:                                                                      │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│                                                                              │
+│  I encountered an error while trying to use the tool. This was the error: .  │
+│   Tool search_historic_incidents accepts these inputs: Tool Name:            │
+│  search_historic_incidents                                                   │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "incident_description": {                                               │
+│        "title": "Incident Description",                                      │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "top_k": {                                                              │
+│        "default": 5,                                                         │
+│        "title": "Top K",                                                     │
+│        "type": "integer"                                                     │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "incident_description",                                                 │
+│      "top_k"                                                                 │
+│    ],                                                                        │
+│    "title": "SearchHistoricIncidentsToolSchema",                             │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Search for similar incidents from the historic incident   │
+│  database. This tool finds past incidents that are similar to the current    │
+│  issue and provides their resolution details and conversation context. Use   │
+│  this to understand how similar issues were resolved in the past..           │
+│  Moving on then. Decide if you need a tool or can provide the final answer.  │
+│  Use one at a time.                                                          │
+│  To use a tool, use:                                                         │
+│  Thought: [reasoning]                                                        │
+│  Action: [name from search_historic_incidents]                               │
+│  Action Input: [JSON object]                                                 │
+│                                                                              │
+│  To provide the final answer, use:                                           │
+│  Thought: [reasoning]                                                        │
+│  Final Answer: [complete response]                                           │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+17:10:35 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:10:35,240 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭─────────────────────── 🔧 Tool Execution Started (#4) ───────────────────────╮
+│                                                                              │
+│  Tool: search_historic_incidents                                             │
+│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
+│  customer unable to transfer money money transfer functionality not          │
+│  working", "top_k": 5}                                                       │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:10:43,972 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:13:50,174 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:16:16,390 - utils.llm - INFO - OPENAI_API_KEY refreshed
+╭───────────────────────────── 🔧 Tool Error (#4) ─────────────────────────────╮
+│                                                                              │
+│  Tool Failed                                                                 │
+│  Tool: search_historic_incidents                                             │
+│  Iteration: 4                                                                │
+│  Attempt: 1                                                                  │
+│  Error:                                                                      │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭─────────────────────── 🔧 Tool Execution Started (#5) ───────────────────────╮
+│                                                                              │
+│  Tool: search_historic_incidents                                             │
+│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
+│  customer unable to transfer money money transfer functionality not          │
+│  working", "top_k": 5}                                                       │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:16:56,352 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:20:02,542 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+╭───────────────────────────── 🔧 Tool Error (#5) ─────────────────────────────╮
+│                                                                              │
+│  Tool Failed                                                                 │
+│  Tool: search_historic_incidents                                             │
+│  Iteration: 5                                                                │
+│  Attempt: 2                                                                  │
+│  Error:                                                                      │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭─────────────────────── 🔧 Tool Execution Started (#6) ───────────────────────╮
+│                                                                              │
+│  Tool: search_historic_incidents                                             │
+│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
+│  customer unable to transfer money money transfer functionality not          │
+│  working", "top_k": 5}                                                       │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:23:08,705 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:26:14,824 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:26:16,437 - utils.llm - INFO - OPENAI_API_KEY refreshed
+╭───────────────────────────── 🔧 Tool Error (#6) ─────────────────────────────╮
+│                                                                              │
+│  Tool Failed                                                                 │
+│  Tool: search_historic_incidents                                             │
+│  Iteration: 6                                                                │
+│  Attempt: 3                                                                  │
+│  Error:                                                                      │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│                                                                              │
+│  I encountered an error while trying to use the tool. This was the error: .  │
+│   Tool search_historic_incidents accepts these inputs: Tool Name:            │
+│  search_historic_incidents                                                   │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "incident_description": {                                               │
+│        "title": "Incident Description",                                      │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "top_k": {                                                              │
+│        "default": 5,                                                         │
+│        "title": "Top K",                                                     │
+│        "type": "integer"                                                     │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "incident_description",                                                 │
+│      "top_k"                                                                 │
+│    ],                                                                        │
+│    "title": "SearchHistoricIncidentsToolSchema",                             │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Search for similar incidents from the historic incident   │
+│  database. This tool finds past incidents that are similar to the current    │
+│  issue and provides their resolution details and conversation context. Use   │
+│  this to understand how similar issues were resolved in the past..           │
+│  Moving on then. Decide if you need a tool or can provide the final answer.  │
+│  Use one at a time.                                                          │
+│  To use a tool, use:                                                         │
+│  Thought: [reasoning]                                                        │
+│  Action: [name from search_historic_incidents]                               │
+│  Action Input: [JSON object]                                                 │
+│                                                                              │
+│  To provide the final answer, use:                                           │
+│  Thought: [reasoning]                                                        │
+│  Final Answer: [complete response]                                           │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+17:29:21 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:29:21,029 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+17:29:22 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-12 17:29:22,285 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Historic Incident Analyst                                            │
+│                                                                              │
+│  Final Answer:                                                               │
+│                                                                              │
+│                                                                              │
+│  Thought: I need to use the search_historic_incidents tool to find similar   │
+│  historic incidents. Let me try with a properly formatted request.           │
+│                                                                              │
+│  Action: search_historic_incidents                                           │
+│                                                                              │
+│  Action Input: {"incident_description": "Mobile Net Banking                  │
+│  transaction_failure customer unable to transfer money", "top_k": 5}         │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
+│                                                                              │
+│  Task Completed                                                              │
+│  Name: Find similar incidents                                                │
+│  Agent: Historic Incident Analyst                                            │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── Crew Completion ───────────────────────────────╮
+│                                                                              │
+│  Crew Execution Completed                                                    │
+│  Name: crew                                                                  │
+│  ID: 3ddf64b5-0270-402e-a7ea-2023f4fc36ec                                    │
+│  Final Output:                                                               │
+│                                                                              │
+│  Thought: I need to use the search_historic_incidents tool to find similar   │
+│  historic incidents. Let me try with a properly formatted request.           │
+│                                                                              │
+│  Action: search_historic_incidents                                           │
+│                                                                              │
+│  Action Input: {"incident_description": "Mobile Net Banking                  │
+│  transaction_failure customer unable to transfer money", "top_k": 5}         │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:29:22,298 - new_flow.flow - INFO - Resolver | incident=099430408 app=optimus
+╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
+│                                                                              │
+│  Method: semantic_search                                                     │
+│  Status: Completed                                                           │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
+│                                                                              │
+│  Method: run_resolver_crew                                                   │
+│  Status: Running                                                             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:29:22,390 - new_flow.flow - INFO - agents.plan_agent import PlanOutput=optimus
+17:29:22 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:29:22,404 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+17:29:30 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-12 17:29:30,992 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+17:29:30 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:29:30,993 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+17:29:37 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-12 17:29:37,074 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+17:29:37 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:29:37,077 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+17:29:42 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-12 17:29:42,974 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2026-08-12 17:29:42,974 - crewai.utilities.reasoning_handler - WARNING - Agent planning reached maximum attempts (3) without being ready. Proceeding with current plan.
+17:29:42 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:29:42,978 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Triage Analyst                                                       │
+│                                                                              │
+│  Task: Analyze the following investigation results and create a plan:        │
+│                                                                              │
+│  === INCIDENT ANALYSIS (from Intent Classifier) ===                          │
+│                                                                              │
+│  Incident Summary:                                                           │
+│  - Application: Mobile/Net Banking                                           │
+│  - Problem Category: transaction_failure                                     │
+│                                                                              │
+│  Customer Identifiers:                                                       │
+│  - ucic: 1064182965                                                          │
+│  - customer_id: 1064182965                                                   │
+│                                                                              │
+│  LLM Analysis:                                                               │
+│  - User Goal: Report and get assistance with a money transfer issue where    │
+│  the customer cannot complete money transfers                                │
+│  - Issue Description: Customer is unable to do transfer of money - the       │
+│  money transfer functionality is not working                                 │
+│  - Problem Summary: The user is reporting a technical issue where a          │
+│  customer is unable to perform money transfers. The system appears to have   │
+│  a problem with its money transfer functionality. The short description      │
+│  contains what appears to be a test string (<script>alert('XSS')</script>)   │
+│  which may have been accidentally included, but the core issue is that the   │
+│  customer cannot complete money transfers. This is a technical support       │
+│  request seeking assistance to resolve the money transfer functionality      │
+│  problem.                                                                    │
+│                                                                              │
+│  Original Description:                                                       │
+│  Short Description: <script>alert('XSS')</script> Customer is unable to do   │
+│  transfer of money                                                           │
+│  Description: Customer is unable to do transfer of money                     │
+│                                                                              │
+│  Please investigate this issue starting with Similarity Search for similar   │
+│  historic incidents,                                                         │
+│  then check Jaeger traces to understand the current error context.           │
+│                                                                              │
+│                                                                              │
+│  === SIMILARITY SEARCH RESULTS ===                                           │
+│                                                                              │
+│                                                                              │
+│  Thought: I need to use the search_historic_incidents tool to find similar   │
+│  historic incidents. Let me try with a properly formatted request.           │
+│                                                                              │
+│  Action: search_historic_incidents                                           │
+│                                                                              │
+│  Action Input: {"incident_description": "Mobile Net Banking                  │
+│  transaction_failure customer unable to transfer money", "top_k": 5}         │
+│                                                                              │
+│  === CONTEXT ===                                                             │
+│  Application: optimus                                                        │
+│  Problem Category: transaction_failure                                       │
+│  Customer Identifiers:                                                       │
+│    - ucic: 1064182965                                                        │
+│    - customer_id: 1064182965                                                 │
+│                                                                              │
+│  === AVAILABLE JAEGER SERVICES ===                                           │
+│  Discovered 216 services from Jaeger:                                        │
+│                                                                              │
+│    - APPLY-FM-API                                                            │
+│    - APPLY-HL-API                                                            │
+│    - APPLY-LOAN-API                                                          │
+│    - APPLY-LOAN-API-MESSAGE-HANDLER                                          │
+│    - APPROVAL-API                                                            │
+│    - AUDITLOG-EVENT-CONSUMER                                                 │
+│    - AUTH-ADMIN-API                                                          │
+│    - AUTH-SERVICE                                                            │
+│    - AUTHZ-ADMIN-API                                                         │
+│    - AVC-API                                                                 │
+│    - BAS-API                                                                 │
+│    - BAS-API-MESSAGE-HANDLER                                                 │
+│    - BXP-LOGIN-PROVIDER                                                      │
+│    - CA-BO-MobileApp                                                         │
+│    - CARDLESS-CASH-WITHDRAWAL-API-MESSAGE-HANDLER                            │
+│    - CAS-API                                                                 │
+│    - CAS-API-MESSAGE-HANDLER                                                 │
+│    - CBS-DORMANCY                                                            │
+│    - CEL-UI                                                                  │
+│    - CHEQUE-CONSENT-SERVICE                                                  │
+│    - CREATE-ACCOUNT-API                                                      │
+│    - CREDIT-CARD-ACQUISITION-OFFERS-MESSAGE-HANDLER                          │
+│    - CREDIT-CARD-API                                                         │
+│    - CREDIT-CARD-API-MESSAGE-HANDLER                                         │
+│    - CRON-JOBS                                                               │
+│    - CUSTOMER-ACQUISITION-SERVICE-MESSAGE-HANDLER                            │
+│    - CUSTOMER-FEEDBACK-SERVICE                                               │
+│    - CUSTOMER-LOGIN-PROVIDER                                                 │
+│    - CX-API                                                                  │
+│    - DEAF-API                                                                │
+│    - DEBITCARD-API                                                           │
+│    - DEMAT-API                                                               │
+│    - DEPOSITS-API-MESSAGE-HANDLER                                            │
+│    - DEPOSITS-API-TEMPORAL-WORKER                                            │
+│    - DEVICE-FINGERPRINT-SERVICE                                              │
+│    - DEVICE-MANAGEMENT-SERVICE                                               │
+│    - DEVICE-MANAGEMENT-SERVICE-CS-MESSAGE-HANDLER                            │
+│    - DSB-API                                                                 │
+│    - E-CHEQUE-API                                                            │
+│    - ECOM-MERCHANT-LOGIN-PROVIDER                                            │
+│    - ECOM-UI-WEB                                                             │
+│    - EMANDATE                                                                │
+│    - EMPLOYEE-LOGIN-PROVIDER                                                 │
+│    - ENTERPRISE-AUTHORIZATION-SERVICE                                        │
+│    - ESIGN-API                                                               │
+│    - EXTERNAL-LOGIN-PROVIDER                                                 │
+│    - FAQ-API                                                                 │
+│    - FEATURE-TOGGLE-API                                                      │
+│    - FEATURE-TOGGLE-API-MESSAGE-HANDLER                                      │
+│    - FRAUD-MONITORING-SERVICE                                                │
+│    - FX-API                                                                  │
+│    - FX-API-MESSAGE-HANDLER                                                  │
+│    - GRADE-API                                                               │
+│    - GRADE_API_APPLAUNCH_MESSAGE_HANDLER                                     │
+│    - GRADE_API_MESSAGE_HANDLER                                               │
+│    - GST-API                                                                 │
+│    - HYDRA-MANAGER-API                                                       │
+│    - INSURANCE-API                                                           │
+│    - IPO-API                                                                 │
+│    - KORE-AI-EVENT-CONSUMER                                                  │
+│    - KRATOS-CSR                                                              │
+│    - KRATOS-QUANTUMCASH                                                      │
+│    - KRATOS-TRADEX                                                           │
+│    - KYC-SERVICE-MESSAGE-HANDLER                                             │
+│    - LAI-API-MESSAGE-HANDLER                                                 │
+│    - LAS-API                                                                 │
+│    - LIABILITY-PLATFORM-MESSAGE-HANDLER                                      │
+│    - LOANS-API                                                               │
+│    - LOANS-API-MESSAGE-HANDLER                                               │
+│    - LOGIN-AUDITLOG-EVENT-CONSUMER                                           │
+│    - MANDATE-HUB-API                                                         │
+│    - MDH-MESSAGE-HANDLER                                                     │
+│    - MDS-MDH-MESSAGE-HANDLER                                                 │
+│    - MERCHANT-ONBOARDING-API                                                 │
+│    - METADATA-SERVICE                                                        │
+│    - MF-COMPLIANCE-API                                                       │
+│    - MF-COMPLIANCE-API-MESSAGE-HANDLER                                       │
+│    - MIGRATION-API                                                           │
+│    - MOCK-MESSAGE-EXCHANGE-SERVICE                                           │
+│    - Mobile-app                                                              │
+│    - NR-API                                                                  │
+│    - NTB-FD-STABLE-MONEY-MESSAGE-HANDLER                                     │
+│    - OAUTH-SERVER                                                            │
+│    - OFFERS-DATAMART-API                                                     │
+│    - OFFERS-DATAMART-API-MESSAGE-HANDLER                                     │
+│    - ON-API                                                                  │
+│    - OPS-USER-API                                                            │
+│    - OPTIMUS-AUTH-INTEGRATION-API                                            │
+│    - OPTIMUS-EVENT-CONSUMER                                                  │
+│    - OPTIMUS-PRIME-API                                                       │
+│    - OVERDRAFT-API                                                           │
+│    - PAYMENT-GATEWAY-SERVICE                                                 │
+│    - PDF-API                                                                 │
+│    - RAS-API                                                                 │
+│    - RAS-API-MDH-MESSAGE-HANDLER                                             │
+│    - RAS-API-MESSAGE-HANDLER                                                 │
+│    - RAS-API-TEMPORAL-WORKER                                                 │
+│    - RE-KYC-API                                                              │
+│    - REDIS-EXPIRED-EVENT-CONSUMER                                            │
+│    - REWARDS-INTEGRATION-API                                                 │
+│    - RFX-INWARD-API                                                          │
+│    - RISK-CONTROL-API                                                        │
+│    - RISK-CONTROL-BIOCATCH-DATA-CONSUMER                                     │
+│    - RISK-CONTROL-CUSTOMER-DATA-CONSUMER                                     │
+│    - RISK-CONTROL-CUSTOMER-FAILURE-LOGIN-DATA-CONSUMER                       │
+│    - RISK-CONTROL-FINGERPRINT-DATA-CONSUMER                                  │
+│    - RISK-CONTROL-FRAUD-RISK-INDICATOR-DATA-CONSUMER                         │
+│    - RISK-CONTROL-IP-PROFILE-TRUST-VALIDATION-DATA-CONSUMER                  │
+│    - RISK-CONTROL-RASP-THREAT-DETECTION-ALERT-DATA-CONSUMER                  │
+│    - RISK-CONTROL-REQUEST-DATA-CONSUMER                                      │
+│    - RISK-CONTROL-SERVICE                                                    │
+│    - RISK-CONTROL-SUSPECT-DATA-CONSUMER                                      │
+│    - RISK-CONTROL-SUSPECT-DATA-DEGRADATION-CONSUMER                          │
+│    - SALARY-OD-API                                                           │
+│    - SECUREPASS-AUTHENTICATOR                                                │
+│    - SERVICE-REQUEST-API                                                     │
+│    - SESSION-MANAGEMENT-SERVICE                                              │
+│    - SESSION-TRANSFER-SERVICE                                                │
+│    - SGB-API                                                                 │
+│    - SSO-API                                                                 │
+│    - TOKEN-MANAGEMENT-SERVICE                                                │
+│    - TRACING-API                                                             │
+│    - UI-FM-MICROSITE                                                         │
+│    - UI-WEB                                                                  │
+│    - UIDAI-INTEGRATION-API                                                   │
+│    - USER-PROFILE-API-MESSAGE-HANDLER                                        │
+│    - USER-PROFILE-SVC                                                        │
+│    - USER-SESSION-ACTIVITY-EVENT-CONSUMER                                    │
+│    - WALLET-INTEGRATION-API                                                  │
+│    - WEALTH-API                                                              │
+│    - WEALTH-API-MESSAGE-HANDLER                                              │
+│    - WEALTH-API-VALUEFY-MESSAGE-HANDLER                                      │
+│    - account-aggregator-api                                                  │
+│    - account-aggregator-api-bureau-accounts-handler                          │
+│    - account-aggregator-api-external-message-handler                         │
+│    - account-aggregator-api-message-handler                                  │
+│    - account-aggregator-api-tsp-consent-handler                              │
+│    - account-aggregator-api-tsp-data-ready-handler                           │
+│    - ai-chat-optimus-adapter                                                 │
+│    - ai-chat-service                                                         │
+│    - ai-voice-optimus-adapter                                                │
+│    - apply-pl-api                                                            │
+│    - approval-workflow-engine                                                │
+│    - assisted-service                                                        │
+│    - beneficiary-api                                                         │
+│    - billpay-api                                                             │
+│    - billpay-api-message-handler                                             │
+│    - bulk-payments-api                                                       │
+│    - bulk-payments-api-message-handler                                       │
+│    - cardless-cash-withdrawal                                                │
+│    - cel-arap                                                                │
+│    - cel-auth                                                                │
+│    - cel-core                                                                │
+│    - cel-cron-executor                                                       │
+│    - cel-erp-invoice-ingestion                                               │
+│    - cel-investment                                                          │
+│    - cel-orch                                                                │
+│    - cel-schedule                                                            │
+│    - cel-smart-collection                                                    │
+│    - cel-tax-payment                                                         │
+│    - channel-service                                                         │
+│    - corporate-portal-api                                                    │
+│    - crypto-service                                                          │
+│    - customer-acquisition-service                                            │
+│    - customer-communication-gateway                                          │
+│    - customer-details-service                                                │
+│    - deposits-api                                                            │
+│    - deposits-api-cdms-message-handler                                       │
+│    - deposits-api-giftwrapper-cbs-message-handler                            │
+│    - ecom-api                                                                │
+│    - email-verification-api                                                  │
+│    - event-tracker-service                                                   │
+│    - fastag-service                                                          │
+│    - fastag-service-message-handler                                          │
+│    - fi-curing-api                                                           │
+│    - fx_temporal_worker_name                                                 │
+│    - gestalt                                                                 │
+│    - grafana                                                                 │
+│    - idp-api                                                                 │
+│    - idp-api-message-handler                                                 │
+│    - jaeger                                                                  │
+│    - kyc-service                                                             │
+│    - lic-agent-portal-api                                                    │
+│    - login-event-consumer                                                    │
+│    - mapper-api                                                              │
+│    - mdh-data-service                                                        │
+│    - message-exchange-service                                                │
+│    - msme-tally-integrator-api                                               │
+│    - msme-tally-processor-api                                                │
+│    - multifactor-authentication-api                                          │
+│    - nginx                                                                   │
+│    - onboarding                                                              │
+│    - optimus-notification-service                                            │
+│    - optimus-notification-service-message-handler                            │
+│    - optimus-offers-service                                                  │
+│    - payments-api                                                            │
+│    - payments-api-message-handler                                            │
+│    - pfm-api                                                                 │
+│    - pfm-api-message-handler                                                 │
+│    - pfm-api-realtime-txn-message-handler                                    │
+│    - platform-service                                                        │
+│    - platform-service-message-handler                                        │
+│    - risk-monitor-api                                                        │
+│    - socket-tracing-service                                                  │
+│    - tfx-deal                                                                │
+│    - tfx-remittance-api                                                      │
+│    - tfx-sso-integration-service                                             │
+│    - totp-service                                                            │
+│    - track-my-application-api                                                │
+│    - traefik-infra                                                           │
+│    - transaction-insights-api                                                │
+│    - universal-search-api                                                    │
+│    - upcoming-api                                                            │
+│    - upi-api                                                                 │
+│    - upi-api-message-handler                                                 │
+│    - user-profile-api-cdms-message-handler                                   │
+│                                                                              │
+│  Note: These are ALL services that have sent traces in the last 1 hour.      │
+│  Use any service name directly with fetch_jaeger_traces tool.                │
+│                                                                              │
+│  You have access to a Jaeger tracing tool. If you need more information      │
+│  about service calls, latency issues, or distributed traces, use the tool    │
+│  to fetch data.                                                              │
+│                                                                              │
+│  IMPORTANT: When you use the Jaeger tool, include the key findings in your   │
+│  response below.                                                             │
+│                                                                              │
+│  Provide your analysis in this format:                                       │
+│  ISSUE_UNDERSTOOD: yes/no                                                    │
+│  ISSUE_SUMMARY: [brief description of what the issue is - include any        │
+│  Jaeger trace findings here]                                                 │
+│  JAEGER_FINDINGS: [you MUST use the Jaeger tool to fetch traces - summarize  │
+│  the key trace data including service names, errors, latency issues, etc.    │
+│  NEVER write 'NOT_USED' - always fetch and analyze traces]                   │
+│  SERVICE: [pick the relevant service name from AVAILABLE JAEGER SERVICE      │
+│  above]                                                                      │
+│  NEXT_STEPS: [what Execute Agent should do next]                             │
+│  NEEDS_MORE_INFO: yes/no                                                     │
+│  QUESTION_FOR_USER: [if needs more info, what to ask]                        │
+│                                                                              │
+│                                                                              │
+│  Planning:                                                                   │
+│                                                                              │
+│                                                                              │
+│  Looking at my previous plan more carefully - the gap is that I'm            │
+│  describing multiple sequential tool invocations when I should be making     │
+│  the most direct call to diagnose the issue. For a transaction_failure on    │
+│  money transfers, the most targeted approach is a single invocation.         │
+│                                                                              │
+│  ## Execution Plan                                                           │
+│                                                                              │
+│  **ISSUE_UNDERSTOOD:** yes                                                   │
+│                                                                              │
+│  **ISSUE_SUMMARY:** Customer (UCIC: 1064182965) using Mobile/Net Banking     │
+│  unable to complete money transfers. Category: transaction_failure.          │
+│                                                                              │
+│  **JAEGER_FINDINGS:** NOT_USED                                               │
+│                                                                              │
+│  **SERVICE:** payments-api, upi-api                                          │
+│                                                                              │
+│  **NEXT_STEPS:**                                                             │
+│  1. Invoke fetch_jaeger_traces with service=payments-api,                    │
+│  operation=transfer, error=true, limit=30 to capture transfer failures       │
+│  directly                                                                    │
+│                                                                              │
+│  **NEEDS_MORE_INFO:** no                                                     │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  **READINESS ASSESSMENT:**                                                   │
+│                                                                              │
+│  Single invocation targeting the exact failure scenario (transfer operation  │
+│  with errors) from the primary service. This is the most direct path to      │
+│  root cause.                                                                 │
+│                                                                              │
+│  **READY**                                                                   │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Triage Analyst                                                       │
+│                                                                              │
+│  Final Answer:                                                               │
+│                                                                              │
+│                                                                              │
+│  I'll analyze this incident by first fetching Jaeger traces to understand    │
+│  the current error context for the money transfer failure.                   │
+│                                                                              │
+│  Let me fetch traces from the relevant payment services:                     │
+│  <tool_code>                                                                 │
+│  fetch_jaeger_traces                                                         │
+│  <param name="service">payments-api</param>                                  │
+│  <param name="operation">transfer</param>                                    │
+│  <param name="limit">30</param>                                              │
+│  <param name="error">true</param>                                            │
+│  </tool_code>                                                                │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:29:47,079 - new_flow.utils.llm_cache - INFO - LLM cache miss - created new instance for /app/models/MiniMax-M2.5
+2026-08-12 17:29:47,079 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-08-12 17:29:47,079 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: optimus-api, Tag: customer_id=1064182965
+2026-08-12 17:29:47,079 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-12 17:29:47,079 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=optimus-api, tag=customer_id=1064182965
+2026-08-12 17:29:47,079 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786469387079368, 'end': 1786555787079368, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 17:29:52,599 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
+2026-08-12 17:29:52,599 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
+2026-08-12 17:29:52,599 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=optimus-api, tag=customer_id=1064182965
+2026-08-12 17:29:52,599 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786382992599537, 'end': 1786469392599537, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 17:30:03,969 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
+2026-08-12 17:30:03,969 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
+2026-08-12 17:30:03,969 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=optimus-api, tag=customer_id=1064182965
+2026-08-12 17:30:03,969 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786296603969789, 'end': 1786383003969789, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 17:30:04,075 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
+2026-08-12 17:30:04,075 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
+2026-08-12 17:30:04,076 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=optimus-api, tag=customer_id=1064182965
+2026-08-12 17:30:04,076 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786210204075992, 'end': 1786296604075992, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 17:30:04,107 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 3, continuing...
+2026-08-12 17:30:04,107 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=4
+2026-08-12 17:30:04,108 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 96-120h ago for service=optimus-api, tag=customer_id=1064182965
+2026-08-12 17:30:04,108 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786123804107993, 'end': 1786210204107993, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 17:30:07,098 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 4, continuing...
+2026-08-12 17:30:07,098 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=5
+2026-08-12 17:30:07,098 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 120-144h ago for service=optimus-api, tag=customer_id=1064182965
+2026-08-12 17:30:07,099 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786037407098967, 'end': 1786123807098967, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 17:30:07,137 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 5, continuing...
+2026-08-12 17:30:07,137 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=6
+2026-08-12 17:30:07,137 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 144-168h ago for service=optimus-api, tag=customer_id=1064182965
+2026-08-12 17:30:07,137 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1785951007137750, 'end': 1786037407137750, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 17:30:07,170 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 6, continuing...
+2026-08-12 17:30:07,170 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] All 7 time ranges exhausted for iteration 1
+17:30:07 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:30:07,180 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:30:12,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Starting new iteration with service=payments-api, tag=customer_id
+2026-08-12 17:30:12,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 2 START ===
+2026-08-12 17:30:12,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: payments-api, Tag: customer_id=1064182965
+2026-08-12 17:30:12,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-12 17:30:12,483 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=payments-api, tag=customer_id=1064182965
+2026-08-12 17:30:12,483 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=payments-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'payments-api', 'start': 1786469412483382, 'end': 1786555812483382, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 17:30:19,280 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 0
+17:30:19 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:30:19,291 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+17:30:23 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:30:23,033 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+Plan Agent completed for incident 099430408
+Execute Agent completed for incident 099430408
+Summary Agent completed for incident 099430408
+interaction_counter: 1
+Request - url:https://api.aws-uat.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident json:{'callerId': 'shyam.kc@idfcfirstbank.com', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Fund Transfer', 'tier3': 'Unable to initiate NEFT Transaction', 'impact': 'Low', 'urgency': 'Medium', 'shortDescription': "<script>alert('XSS')</script> Customer is unable to do transfer of money", 'description': 'Customer is unable to do transfer of money', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006212999', 'sourceIncidentId': '', 'assignmentGroup': '', 'incidentId': '099430408', 'state': 'On Hold', 'additionalComments': "Diagnosis:\nThe issue is not with your account or mobile app. Our investigation shows that the UPI payment system (the backend service that processes money transfers) experienced a temporary technical issue. When you attempted to transfer ₹11.00 to CLOUD HARBOR at 8:22 PM on August 12, 2026, the bank's payment system received a timeout error from the upstream UPI service. This is a system-wide issue that affected your transaction, not a problem with your account or banking credentials.\n\nSolution:\nPlease try the fund transfer again. The technical issue with the UPI payment service has likely been resolved. If you continue to experience problems after trying again, please contact us or visit your nearest branch. Your account is fully functional and secure - this was a temporary system issue that has been identified for resolution.", 'cause': '', 'onHoldReason': 'User Action Required'} headers:{'Content-Type': 'application/json', 'correlationId': '232e5db5-2b6d-47d7-9f41-c9ec0d3c3ae2', 'source': 'IncidentBot', 'transactionId': '71c6605c-4b5b-4469-81f4-83737c219b5f', 'Authorization': 'Basic MThiNDhmNzctNzMyMy00MWJiLWJmNmUtYzZmODNlODdhOTgyOkI3TGJ1NVhkcX5JT1paaW1SLThNVDE3eWtF'}
+Successfully updated incident 099430408 in ServiceNow
+Response: {'message': 'Incident has been created successfully.', 'incidentNumber': 'INC000006217352', 'incidentId': '46b9c4273b2ec7142101d834c3e45a23', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Fund Transfer', 'tier3': 'Unable to Initiate NEFT transaction', 'impact': 'Low', 'urgency': 'Medium', 'priority': 'Low', 'shortDescription': "<script>alert('XSS')</script> Customer is unable to do transfer of money", 'description': 'Customer is unable to do transfer of money', 'contactType': 'Self Service', 'state': 'On Hold', 'onHoldReason': 'User Action Required', 'vendorGroup': '', 'causedByPatch': None, 'resolutionCode': None, 'solutionType': None, 'outageType': None, 'resolutionNotes': '', 'additionalComments': "12-Aug-2026 23:00:28 - Incident BOT (Additional comments)\nDiagnosis:\nThe issue is not with your account or mobile app. Our investigation shows that the UPI payment system (the backend service that processes money transfers) experienced a temporary technical issue. When you attempted to transfer ₹11.00 to CLOUD HARBOR at 8:22 PM on August 12, 2026, the bank's payment system received a timeout error from the upstream UPI service. This is a system-wide issue that affected your transaction, not a problem with your account or banking credentials.\n\nSolution:\nPlease try the fund transfer again. The technical issue with the UPI payment service has likely been resolved. If you continue to experience problems after trying again, please contact us or visit your nearest branch. Your account is fully functional and secure - this was a temporary system issue that has been identified for resolution.\n\n", 'assignmentGroup': 'Optimus BTO Support', 'sourceIncidentNum': 'INC000006212999', 'sourceIncidentId': '232e5db5-2b6d-47d7-9f41-c9ec0d3c3ae2', 'businessImpact': None, 'cause': None, 'businessCorrectiveAction': None, 'techCorrectiveAction': None, 'dataSource': None, 'descriptionOfOutage': None, 'emailID': None, 'entityUCIC': None, 'hashValues': None, 'ipDetails': None, 'ldwNotifyInformation': None, 'loanAccountNumber': None, 'loginId': None, 'mobileNumber': None, 'businessPreventiveAction': None, 'techPreventiveAction': None, 'resoultionTeam': None, 'rootCause': None, 'systemName': None, 'urlOrDomain': None, 'userDetail': None, 'individualUCIC': None, 'sourceIncCreateddttime': '12-Aug-2026 23:00:28', 'userLocation': '', 'incidentURL': 'https://idfcfirstbanktest2.service-now.com/isupport?sys_id=46b9c4273b2ec7142101d834c3e45a23&view=sp&id=ticket&table=incident'}
+Resolution sent for incident 099430408
+DB updated for incident 099430408 status=on_hold
+╭───────────────────────────── ✅ Flow Completion ─────────────────────────────╮
+│                                                                              │
+│  Flow Execution Completed                                                    │
+│  Name: IncidentManagementFlow                                                │
+│  ID: 70a28f9a-00b4-4efd-9d7e-af8c16b650cb                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+
+╭────────────────────────── Tracing Preference Saved ──────────────────────────╮
+│                                                                              │
+│  Info: Tracing has been disabled.                                            │
+│                                                                              │
+│  Your preference has been saved. Future Crew/Flow executions will not        │
+│  collect traces.                                                             │
+│                                                                              │
+│  To enable tracing later, do any one of these:                               │
+│  • Set tracing=True in your Crew/Flow code                                   │
+│  • Set CREWAI_TRACING_ENABLED=true in your project's .env file               │
+│  • Run: crewai traces enable                                                 │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:30:29,510 - __main__ - INFO - ✓ Flow completed | incident=099430408
+shishir.pandey_tho@0325LTPB0124444 ~ % 
+
+
+
+
+
+
+
+thisis my plan_agent.py
+import os
+from typing import Dict, Optional
+from pydantic import BaseModel, Field
+
+os.environ["OTEL_SDK_DISABLED"] = "true"
+
+from crewai import Agent, Task, Crew, LLM
+from new_flow.utils.llm import llm_config
+from new_flow.tools.query_tools import JaegerTraceTool
+from new_flow.tools.app_config import get_app_config
+
+
+class PlanOutput(BaseModel):
+    issue_identified: bool = Field(description="True if enough info to proceed")
+    issue_summary: str = Field(description="What's the issue from similarity + jaeger")
+    jaeger_results: Dict = Field(
+        default_factory=dict,
+        description="From jaeger traces"
+    )
+    next_steps: str = Field(description="Guidance for Execute Agent")
+    needs_more_info: bool = Field(description="True if need user input")
+    question_for_user: Optional[str] = Field(
+        default=None,
+        description="What to ask user"
+    )
+    suggested_service: Optional[str] = Field(
+        default=None,
+        description="Jaeger service to query"
+    )
+    customer_identifiers: Dict[str, str] = Field(
+        default_factory=dict,
+        description="All customer identifiers extracted from the incident"
+    )
+
+
+async def run_plan_agent_async(
+    enriched_prompt: str,
+    app: str,
+    customer_identifiers: Dict[str, str],
+    problem_category: str,
+    incident_context: str = "",
+    discovered_services: str = "",
+) -> PlanOutput:
+
+    llm = LLM(
+        model="openai/" + os.environ.get('OPENAI_MODEL_NAME'),
+        temperature=0.0,
+        base_url=llm_config.url,
+        api_key=llm_config.token
+    )
+    
+    try:
+        app_config = get_app_config(app)
+        default_service = app_config.default_jaeger_service
+    except ValueError:
+        default_service = None
+    
+    # Initialize Jaeger tool - LLM will decide when and how to use it
+    jaeger_tool = JaegerTraceTool()
+    
+    similarity_result = incident_context if incident_context else "No similar incidents found."
+    
+    # Build customer identifiers string for LLM
+    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
+    
+    analysis_agent = Agent(
+        role="Triage Analyst",
+        goal="Analyze investigation results and create a plan for resolution",
+        backstory=(
+            "You are a senior incident analyst. Your job is to analyze "
+            "Similarity Search results and Jaeger traces to understand "
+            "what the issue is and guide the next steps.\n\n"
+            "You have access to tools to fetch additional data when needed.\n\n"
+            "You must determine:\n"
+            "1. Is the issue clear from the data?\n"
+            "2. If yes, what's the next step (ELK or DB)?\n"
+            "3. If no, use tools to gather more info"
+        ),
+        tools=[],
+        verbose=True,
+        allow_delegation=False,
+        llm=llm,
+        temperature=0,
+        max_iter=3,
+        reasoning=True,
+        max_reasoning_attempts=3
+    )
+    
+    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
+    
+    # Add discovered services to context if available
+    services_section = ""
+    if discovered_services:
+        services_section = f"\n=== AVAILABLE JAEGER SERVICES ===\n{discovered_services}\n"
+    
+    analysis_task = Task(
+        description=(
+            f"Analyze the following investigation results and create a plan:\n\n"
+            f"=== INCIDENT ANALYSIS (from Intent Classifier) ===\n{enriched_prompt}\n\n"
+            f"=== SIMILARITY SEARCH RESULTS ===\n{similarity_result}\n\n"
+            f"=== CONTEXT ===\n"
+            f"Application: {app}\n"
+            f"Problem Category: {problem_category}\n"
+            f"Customer Identifiers:\n{identifiers_text}\n"
+            f"{services_section}\n"
+            f"You have access to a Jaeger tracing tool. If you need more information about "
+            f"service calls, latency issues, or distributed traces, use the tool to fetch data.\n\n"
+            f"IMPORTANT: When you use the Jaeger tool, include the key findings in your response below.\n\n"
+            f"Provide your analysis in this format:\n"
+            f"ISSUE_UNDERSTOOD: yes/no\n"
+            f"ISSUE_SUMMARY: [brief description of what the issue is - include any Jaeger trace findings here]\n"
+            f"JAEGER_FINDINGS: [you MUST use the Jaeger tool to fetch traces - summarize the key trace data including service names, errors, latency issues, etc. NEVER write 'NOT_USED' - always fetch and analyze traces]\n"
+            f"SERVICE: [pick the relevant service name from AVAILABLE JAEGER SERVICE above]\n"
+            f"NEXT_STEPS: [what Execute Agent should do next]\n"
+            f"NEEDS_MORE_INFO: yes/no\n"
+            f"QUESTION_FOR_USER: [if needs more info, what to ask]\n"
+        ),
+        agent=analysis_agent,
+        expected_output=(
+            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, JAEGER_FINDINGS, "
+            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields."
+        )
+    )
+    
+    crew = Crew(
+        agents=[analysis_agent],
+        tasks=[analysis_task],
+        verbose=False
+    )
+    
+    result = await crew.akickoff()
+    result_text = str(result)
+    
+    return _parse_plan_output(
+        result_text,
+        {},
+        customer_identifiers,
+        default_service
+    )
+
+
+def _parse_plan_output(
+    llm_response: str,
+    jaeger_results: Dict,
+    customer_identifiers: Dict[str, str],
+    default_service: str
+) -> PlanOutput:
+    
+    issue_understood = "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower() if "ISSUE_UNDERSTOOD:" in llm_response else "no"
+    
+    issue_summary = ""
+    if "ISSUE_SUMMARY:" in llm_response:
+        summary_part = llm_response.split("ISSUE_SUMMARY:")[-1]
+        next_section = summary_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in summary_part else summary_part
+        issue_summary = next_section.strip()
+    
+    # Parse JAEGER_FINDINGS from LLM response
+    jaeger_findings = ""
+    if "JAEGER_FINDINGS:" in llm_response:
+        findings_part = llm_response.split("JAEGER_FINDINGS:")[-1]
+        # Find the next field
+        next_field_match = findings_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in findings_part else findings_part
+        jaeger_findings = next_field_match.strip()
+    llm_service=""
+    if "SERVICE:" in llm_response:
+        service_part=llm_response.split("SERVICE:")[-1]
+        next_part=service_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in service_part else service_part
+        llm_service=next_part.strip().split("\n")[0].strip() 
+    # Build jaeger_results from LLM findings
+    # CRITICAL: Jaeger MUST be used - if NOT_USED, force re-investigation
+    if jaeger_findings and jaeger_findings.upper() != "NOT_USED":
+        parsed_jaeger = {
+            "raw": jaeger_findings,
+            "has_errors": "error" in jaeger_findings.lower() or "failed" in jaeger_findings.lower() or "exception" in jaeger_findings.lower(),
+            "trace_count": 0,
+            "used": True
+        }
+        # Try to extract trace count
+        import re
+        match = re.search(r"(\d+)\s*traces?", jaeger_findings, re.IGNORECASE)
+        if match:
+            parsed_jaeger["trace_count"] = int(match.group(1))
+        jaeger_results = parsed_jaeger
+    else:
+        # CRITICAL: Jaeger was NOT used - this is a failure!
+        # Force the issue to be marked as not understood so Execute Agent will use Jaeger
+        issue_understood = "no"
+        issue_summary = "Jaeger traces not fetched - investigation incomplete. Execute Agent must fetch Jaeger traces."
+        jaeger_results = {"used": False, "raw": "", "trace_count": 0, "has_errors": False, "error": "Jaeger not used by Plan Agent"}
+    
+    next_steps = ""
+    if "NEXT_STEPS:" in llm_response:
+        steps_part = llm_response.split("NEXT_STEPS:")[-1]
+        next_section = steps_part.split("NEEDS_MORE_INFO:")[0] if "NEEDS_MORE_INFO:" in steps_part else steps_part
+        next_steps = next_section.strip()
+    
+    needs_more_info = "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower() if "NEEDS_MORE_INFO:" in llm_response else False
+    
+    question = None
+    if "QUESTION_FOR_USER:" in llm_response:
+        question_part = llm_response.split("QUESTION_FOR_USER:")[-1]
+        question = question_part.strip()
+    
+    return PlanOutput(
+        issue_identified=issue_understood == "yes",
+        issue_summary=issue_summary or "Unable to determine issue from initial investigation",
+        jaeger_results=jaeger_results,
+        next_steps=next_steps or "Use ELK or DB queries based on findings",
+        needs_more_info=needs_more_info,
+        question_for_user=question,
+        suggested_service=llm_service or default_service,
+        customer_identifiers=customer_identifiers
+    )
+
+
+
