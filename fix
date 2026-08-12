@@ -1,211 +1,567 @@
-import os
-import logging
-from typing import Dict, Optional
-from pydantic import BaseModel, Field
-
-os.environ["OTEL_SDK_DISABLED"] = "true"
-
-from crewai import Agent, Task, Crew, LLM
-from new_flow.utils.llm import llm_config
-from new_flow.tools.app_config import get_app_config
-
-logger = logging.getLogger(__name__)
-
-
-class PlanOutput(BaseModel):
-    issue_identified: bool = Field(description="True if enough info to proceed")
-    issue_summary: str = Field(description="What's the issue from similarity + jaeger")
-    jaeger_results: Dict = Field(
-        default_factory=dict,
-        description="From jaeger traces"
-    )
-    next_steps: str = Field(description="Guidance for Execute Agent")
-    needs_more_info: bool = Field(description="True if need user input")
-    question_for_user: Optional[str] = Field(
-        default=None,
-        description="What to ask user"
-    )
-    suggested_service: Optional[str] = Field(
-        default=None,
-        description="Jaeger service to query"
-    )
-    customer_identifiers: Dict[str, str] = Field(
-        default_factory=dict,
-        description="All customer identifiers extracted from the incident"
-    )
+───────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
+│                                                                              │
+│  Method: semantic_search                                                     │
+│  Status: Completed                                                           │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
+│                                                                              │
+│  Method: run_resolver_crew                                                   │
+│  Status: Running                                                             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
 
-async def run_plan_agent_async(
-    enriched_prompt: str,
-    app: str,
-    customer_identifiers: Dict[str, str],
-    problem_category: str,
-    incident_context: str = "",
-    discovered_services: str = "",
-) -> PlanOutput:
 
-    llm = LLM(
-        model="openai/" + os.environ.get('OPENAI_MODEL_NAME'),
-        temperature=0.0,
-        base_url=llm_config.url,
-        api_key=llm_config.token
-    )
+2026-08-12 09:00:27,405 - new_flow.flow - INFO - agents.plan_agent import PlanOutput=optimus
+09:00:27 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 09:00:27,414 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+09:00:42 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-12 09:00:42,891 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+09:00:42 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 09:00:42,892 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+09:00:51 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-12 09:00:51,596 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+09:00:51 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 09:00:51,597 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+09:01:09 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-12 09:01:09,402 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2026-08-12 09:01:09,403 - crewai.utilities.reasoning_handler - WARNING - Agent planning reached maximum attempts (3) without being ready. Proceeding with current plan.
+09:01:09 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 09:01:09,408 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 09:01:09,411 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 6, continuing...
+2026-08-12 09:01:09,411 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] All 7 time ranges exhausted for iteration 2
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Triage Analyst                                                       │
+│                                                                              │
+│  Task: Analyze the following investigation results and create a plan:        │
+│                                                                              │
+│  === INCIDENT ANALYSIS (from Intent Classifier) ===                          │
+│                                                                              │
+│  Incident Summary:                                                           │
+│  - Application: Mobile/Net Banking                                           │
+│  - Problem Category: transaction_failure                                     │
+│                                                                              │
+│  Customer Identifiers:                                                       │
+│  - ucic: 6377087220                                                          │
+│  - customer_id: 6377087220                                                   │
+│                                                                              │
+│  LLM Analysis:                                                               │
+│  - User Goal: To successfully complete a money transfer                      │
+│  - Issue Description: Customer is unable to do transfer of money             │
+│  - Problem Summary: The customer is reporting a technical issue where they   │
+│  cannot complete a money transfer. The transfer functionality appears to be  │
+│  non-functional or blocked, preventing the customer from moving money from   │
+│  their account. This is a technical support issue requiring investigation    │
+│  into the transfer mechanism, possible account restrictions, system errors,  │
+│  or other factors preventing the transfer from being processed.              │
+│                                                                              │
+│  Original Description:                                                       │
+│  Short Description: <script>alert('XSS')</script> Customer is unable to do   │
+│  transfer of money                                                           │
+│  Description: Customer is unable to do transfer of money                     │
+│                                                                              │
+│  Please investigate this issue starting with Similarity Search for similar   │
+│  historic incidents,                                                         │
+│  then check Jaeger traces to understand the current error context.           │
+│                                                                              │
+│                                                                              │
+│  === SIMILARITY SEARCH RESULTS ===                                           │
+│  ## SIMILAR HISTORIC INCIDENTS SEARCH RESULTS                                │
+│                                                                              │
+│  ### Incident Summary:                                                       │
+│  - **Application:** Mobile/Net Banking                                       │
+│  - **Problem Category:** transaction_failure                                 │
+│  - **Current Issue:** Customer unable to complete money transfer             │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### TOP 5 SIMILAR HISTORIC INCIDENTS:                                       │
+│                                                                              │
+│  #### 1. INC000003299935 (Similarity: 80.45%)                                │
+│  **Short Description:** Customer is unable to make the transfer fund from    │
+│  Mobile app and net banking. Getting Error Receipt bank is block and         │
+│  Transaction Fail.                                                           │
+│                                                                              │
+│  **Description:** Customer is unable to make the transfer fund from Mobile   │
+│  app and net banking. Getting Error Receipt bank is block and Transaction    │
+│  Fail.                                                                       │
+│                                                                              │
+│  **Resolution Notes:**                                                       │
+│  - As per logs, transaction failure due to "ResDesc": "REMITTING ACCOUNT     │
+│  BLOCKED/FROZEN"                                                             │
+│  - Root cause: Account was blocked/frozen                                    │
+│                                                                              │
+│  **Resolution Code:** Solved (Permanently)                                   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  #### 2. INC000008136511 (Similarity: 79.00%)                                │
+│  **Short Description:** Customer is not able to transfer any fund from his   │
+│  account.                                                                    │
+│                                                                              │
+│  **Description:** Customer is not able to transfer any fund from his         │
+│  account through mobile banking or net banking.                              │
+│                                                                              │
+│  **Resolution Notes:**                                                       │
+│  - Issue: unable to transfer funds through mobile banking app & getting      │
+│  technical error                                                             │
+│  - Corrective action: The Mode of Operation of given Account is              │
+│  "JOINTLY_BY_ALL" and currently transaction and statement permissions are    │
+│  not allowed through Net/Mobile banking.                                     │
+│                                                                              │
+│  **Resolution Code:** Solved (Permanently)                                   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  #### 3. INC000006013108 (Similarity: 78.78%)                                │
+│  **Short Description:** Customer not able to transfer funds from net         │
+│  banking and mobile banking.                                                 │
+│                                                                              │
+│  **Description:** Customer not able to transfer funds from net banking and   │
+│  mobile banking.                                                             │
+│                                                                              │
+│  **Resolution Notes:**                                                       │
+│  - Issue: Customer not able to transfer funds from net banking and mobile    │
+│  banking                                                                     │
+│  - Corrective Action: As per record customer successfully login through      │
+│  mobile app and customer successfully done NEFT transaction. Kindly ask      │
+│  customer re-try and confirm.                                                │
+│                                                                              │
+│  **Resolution Code:** Solved (Permanently)                                   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  #### 4. INC000006203606 (Similarity: 78.72%)                                │
+│  **Short Description:** Customer is not able to fund transfer through        │
+│  mobile banking & net banking.                                               │
+│                                                                              │
+│  **Description:** Customer is not able to fund transfer through mobile       │
+│  banking & net banking.                                                      │
+│                                                                              │
+│  **Resolution Notes:**                                                       │
+│  - As per analysis, customer was trying to do a UPI payments on a specific   │
+│  VPA                                                                         │
+│  - Not getting any expected hit for fund transfer                            │
+│  - Asked customer to retry and check                                         │
+│                                                                              │
+│  **Resolution Code:** Solved (Permanently)                                   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  #### 5. INC000004698420 (Similarity: 78.61%)                                │
+│  **Short Description:** Customer may not able to login Netbanking or mobile  │
+│  app not working - Fund transfers not enabled. Kindly check and fix the      │
+│  error asap.                                                                 │
+│                                                                              │
+│  **Description:** Customer may not able to login Netbanking or mobile app    │
+│  not working - Fund transfers not enabled. Kindly check and fix the error    │
+│  asap.                                                                       │
+│                                                                              │
+│  **Resolution Notes:**                                                       │
+│  - Fund transfer widget is not present in the account                        │
+│  - Therefore, customer is not able perform any transaction                   │
+│  - Required assistance from LiabilityOpsSupportDsk                           │
+│                                                                              │
+│  **Resolution Code:** Solved (Permanently)                                   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## KEY TROUBLESHOOTING STEPS FROM HISTORIC CONTEXT:                         │
+│                                                                              │
+│  1. **Check Account Status:** Verify if the account is blocked/frozen (as    │
+│  in INC000003299935)                                                         │
+│                                                                              │
+│  2. **Check Mode of Operation:** Verify the account's Mode of Operation -    │
+│  if it's "JOINTLY_BY_ALL", check if transaction and statement permissions    │
+│  are enabled for Net/Mobile banking (as in INC000008136511)                  │
+│                                                                              │
+│  3. **Check Fund Transfer Widget:** Verify if the fund transfer widget is    │
+│  present/enabled in the customer's account (as in INC000004698420)           │
+│                                                                              │
+│  4. **Ask Customer to Retry:** In some cases, the issue may be transient -   │
+│  ask customer to retry the transaction (as in INC000006013108 and            │
+│  INC000006203606)                                                            │
+│                                                                              │
+│  5. **Check UPI/VPA Details:** If the customer is doing UPI payments,        │
+│  verify the VPA details and check if there are any expected hits for fund    │
+│  transfer                                                                    │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## COMMON RESOLUTION PATTERNS:                                              │
+│                                                                              │
+│  1. **Account-related issues:** Blocked/frozen accounts, missing             │
+│  permissions, mode of operation restrictions                                 │
+│  2. **Configuration issues:** Missing fund transfer widget in account        │
+│  3. **Transient issues:** Customer asked to retry - may work on subsequent   │
+│  attempts                                                                    │
+│  4. **UPI-specific issues:** VPA validation or connectivity issues           │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## RECOMMENDED ACTIONS FOR CURRENT INCIDENT:                                │
+│                                                                              │
+│  Based on the similar incidents found, the following steps should be         │
+│  investigated:                                                               │
+│  1. Check if the customer's account (ucic: 6377087220) is blocked or frozen  │
+│  2. Verify the Mode of Operation for the account and check transaction       │
+│  permissions                                                                 │
+│  3. Verify if fund transfer widget is enabled for the customer's account     │
+│  4. Check system logs for specific error messages (similar to "REMITTING     │
+│  ACCOUNT BLOCKED/FROZEN")                                                    │
+│  5. Ask customer to retry if no obvious issues found                         │
+│                                                                              │
+│  === CONTEXT ===                                                             │
+│  Application: optimus                                                        │
+│  Problem Category: transaction_failure                                       │
+│  Customer Identifiers:                                                       │
+│    - ucic: 6377087220                                                        │
+│    - customer_id: 6377087220                                                 │
+│                                                                              │
+│  === AVAILABLE JAEGER SERVICES ===                                           │
+│  Discovered 216 services from Jaeger:                                        │
+│                                                                              │
+│    - APPLY-FM-API                                                            │
+│    - APPLY-HL-API                                                            │
+│    - APPLY-LOAN-API                                                          │
+│    - APPLY-LOAN-API-MESSAGE-HANDLER                                          │
+│    - APPROVAL-API                                                            │
+│    - AUDITLOG-EVENT-CONSUMER                                                 │
+│    - AUTH-ADMIN-API                                                          │
+│    - AUTH-SERVICE                                                            │
+│    - AUTHZ-ADMIN-API                                                         │
+│    - AVC-API                                                                 │
+│    - BAS-API                                                                 │
+│    - BAS-API-MESSAGE-HANDLER                                                 │
+│    - BXP-LOGIN-PROVIDER                                                      │
+│    - CA-BO-MobileApp                                                         │
+│    - CARDLESS-CASH-WITHDRAWAL-API-MESSAGE-HANDLER                            │
+│    - CAS-API                                                                 │
+│    - CAS-API-MESSAGE-HANDLER                                                 │
+│    - CBS-DORMANCY                                                            │
+│    - CEL-UI                                                                  │
+│    - CHEQUE-CONSENT-SERVICE                                                  │
+│    - CREATE-ACCOUNT-API                                                      │
+│    - CREDIT-CARD-ACQUISITION-OFFERS-MESSAGE-HANDLER                          │
+│    - CREDIT-CARD-API                                                         │
+│    - CREDIT-CARD-API-MESSAGE-HANDLER                                         │
+│    - CRON-JOBS                                                               │
+│    - CUSTOMER-ACQUISITION-SERVICE-MESSAGE-HANDLER                            │
+│    - CUSTOMER-FEEDBACK-SERVICE                                               │
+│    - CUSTOMER-LOGIN-PROVIDER                                                 │
+│    - CX-API                                                                  │
+│    - DEAF-API                                                                │
+│    - DEBITCARD-API                                                           │
+│    - DEMAT-API                                                               │
+│    - DEPOSITS-API-MESSAGE-HANDLER                                            │
+│    - DEPOSITS-API-TEMPORAL-WORKER                                            │
+│    - DEVICE-FINGERPRINT-SERVICE                                              │
+│    - DEVICE-MANAGEMENT-SERVICE                                               │
+│    - DEVICE-MANAGEMENT-SERVICE-CS-MESSAGE-HANDLER                            │
+│    - DSB-API                                                                 │
+│    - E-CHEQUE-API                                                            │
+│    - ECOM-MERCHANT-LOGIN-PROVIDER                                            │
+│    - ECOM-UI-WEB                                                             │
+│    - EMANDATE                                                                │
+│    - EMPLOYEE-LOGIN-PROVIDER                                                 │
+│    - ENTERPRISE-AUTHORIZATION-SERVICE                                        │
+│    - ESIGN-API                                                               │
+│    - EXTERNAL-LOGIN-PROVIDER                                                 │
+│    - FAQ-API                                                                 │
+│    - FEATURE-TOGGLE-API                                                      │
+│    - FEATURE-TOGGLE-API-MESSAGE-HANDLER                                      │
+│    - FRAUD-MONITORING-SERVICE                                                │
+│    - FX-API                                                                  │
+│    - FX-API-MESSAGE-HANDLER                                                  │
+│    - GRADE-API                                                               │
+│    - GRADE_API_APPLAUNCH_MESSAGE_HANDLER                                     │
+│    - GRADE_API_MESSAGE_HANDLER                                               │
+│    - GST-API                                                                 │
+│    - HYDRA-MANAGER-API                                                       │
+│    - INSURANCE-API                                                           │
+│    - IPO-API                                                                 │
+│    - KORE-AI-EVENT-CONSUMER                                                  │
+│    - KRATOS-CSR                                                              │
+│    - KRATOS-QUANTUMCASH                                                      │
+│    - KRATOS-TRADEX                                                           │
+│    - KYC-SERVICE-MESSAGE-HANDLER                                             │
+│    - LAI-API-MESSAGE-HANDLER                                                 │
+│    - LAS-API                                                                 │
+│    - LIABILITY-PLATFORM-MESSAGE-HANDLER                                      │
+│    - LOANS-API                                                               │
+│    - LOANS-API-MESSAGE-HANDLER                                               │
+│    - LOGIN-AUDITLOG-EVENT-CONSUMER                                           │
+│    - MANDATE-HUB-API                                                         │
+│    - MDH-MESSAGE-HANDLER                                                     │
+│    - MDS-MDH-MESSAGE-HANDLER                                                 │
+│    - MERCHANT-ONBOARDING-API                                                 │
+│    - METADATA-SERVICE                                                        │
+│    - MF-COMPLIANCE-API                                                       │
+│    - MF-COMPLIANCE-API-MESSAGE-HANDLER                                       │
+│    - MIGRATION-API                                                           │
+│    - MOCK-MESSAGE-EXCHANGE-SERVICE                                           │
+│    - Mobile-app                                                              │
+│    - NR-API                                                                  │
+│    - NTB-FD-STABLE-MONEY-MESSAGE-HANDLER                                     │
+│    - OAUTH-SERVER                                                            │
+│    - OFFERS-DATAMART-API                                                     │
+│    - OFFERS-DATAMART-API-MESSAGE-HANDLER                                     │
+│    - ON-API                                                                  │
+│    - OPS-USER-API                                                            │
+│    - OPTIMUS-AUTH-INTEGRATION-API                                            │
+│    - OPTIMUS-EVENT-CONSUMER                                                  │
+│    - OPTIMUS-PRIME-API                                                       │
+│    - OVERDRAFT-API                                                           │
+│    - PAYMENT-GATEWAY-SERVICE                                                 │
+│    - PDF-API                                                                 │
+│    - RAS-API                                                                 │
+│    - RAS-API-MDH-MESSAGE-HANDLER                                             │
+│    - RAS-API-MESSAGE-HANDLER                                                 │
+│    - RAS-API-TEMPORAL-WORKER                                                 │
+│    - RE-KYC-API                                                              │
+│    - REDIS-EXPIRED-EVENT-CONSUMER                                            │
+│    - REWARDS-INTEGRATION-API                                                 │
+│    - RFX-INWARD-API                                                          │
+│    - RISK-CONTROL-API                                                        │
+│    - RISK-CONTROL-BIOCATCH-DATA-CONSUMER                                     │
+│    - RISK-CONTROL-CUSTOMER-DATA-CONSUMER                                     │
+│    - RISK-CONTROL-CUSTOMER-FAILURE-LOGIN-DATA-CONSUMER                       │
+│    - RISK-CONTROL-FINGERPRINT-DATA-CONSUMER                                  │
+│    - RISK-CONTROL-FRAUD-RISK-INDICATOR-DATA-CONSUMER                         │
+│    - RISK-CONTROL-IP-PROFILE-TRUST-VALIDATION-DATA-CONSUMER                  │
+│    - RISK-CONTROL-RASP-THREAT-DETECTION-ALERT-DATA-CONSUMER                  │
+│    - RISK-CONTROL-REQUEST-DATA-CONSUMER                                      │
+│    - RISK-CONTROL-SERVICE                                                    │
+│    - RISK-CONTROL-SUSPECT-DATA-CONSUMER                                      │
+│    - RISK-CONTROL-SUSPECT-DATA-DEGRADATION-CONSUMER                          │
+│    - SALARY-OD-API                                                           │
+│    - SECUREPASS-AUTHENTICATOR                                                │
+│    - SERVICE-REQUEST-API                                                     │
+│    - SESSION-MANAGEMENT-SERVICE                                              │
+│    - SESSION-TRANSFER-SERVICE                                                │
+│    - SGB-API                                                                 │
+│    - SSO-API                                                                 │
+│    - TOKEN-MANAGEMENT-SERVICE                                                │
+│    - TRACING-API                                                             │
+│    - UI-FM-MICROSITE                                                         │
+│    - UI-WEB                                                                  │
+│    - UIDAI-INTEGRATION-API                                                   │
+│    - USER-PROFILE-API-MESSAGE-HANDLER                                        │
+│    - USER-PROFILE-SVC                                                        │
+│    - USER-SESSION-ACTIVITY-EVENT-CONSUMER                                    │
+│    - WALLET-INTEGRATION-API                                                  │
+│    - WEALTH-API                                                              │
+│    - WEALTH-API-MESSAGE-HANDLER                                              │
+│    - WEALTH-API-VALUEFY-MESSAGE-HANDLER                                      │
+│    - account-aggregator-api                                                  │
+│    - account-aggregator-api-bureau-accounts-handler                          │
+│    - account-aggregator-api-external-message-handler                         │
+│    - account-aggregator-api-message-handler                                  │
+│    - account-aggregator-api-tsp-consent-handler                              │
+│    - account-aggregator-api-tsp-data-ready-handler                           │
+│    - ai-chat-optimus-adapter                                                 │
+│    - ai-chat-service                                                         │
+│    - ai-voice-optimus-adapter                                                │
+│    - apply-pl-api                                                            │
+│    - approval-workflow-engine                                                │
+│    - assisted-service                                                        │
+│    - beneficiary-api                                                         │
+│    - billpay-api                                                             │
+│    - billpay-api-message-handler                                             │
+│    - bulk-payments-api                                                       │
+│    - bulk-payments-api-message-handler                                       │
+│    - cardless-cash-withdrawal                                                │
+│    - cel-arap                                                                │
+│    - cel-auth                                                                │
+│    - cel-core                                                                │
+│    - cel-cron-executor                                                       │
+│    - cel-erp-invoice-ingestion                                               │
+│    - cel-investment                                                          │
+│    - cel-orch                                                                │
+│    - cel-schedule                                                            │
+│    - cel-smart-collection                                                    │
+│    - cel-tax-payment                                                         │
+│    - channel-service                                                         │
+│    - corporate-portal-api                                                    │
+│    - crypto-service                                                          │
+│    - customer-acquisition-service                                            │
+│    - customer-communication-gateway                                          │
+│    - customer-details-service                                                │
+│    - deposits-api                                                            │
+│    - deposits-api-cdms-message-handler                                       │
+│    - deposits-api-giftwrapper-cbs-message-handler                            │
+│    - ecom-api                                                                │
+│    - email-verification-api                                                  │
+│    - event-tracker-service                                                   │
+│    - fastag-service                                                          │
+│    - fastag-service-message-handler                                          │
+│    - fi-curing-api                                                           │
+│    - fx_temporal_worker_name                                                 │
+│    - gestalt                                                                 │
+│    - grafana                                                                 │
+│    - idp-api                                                                 │
+│    - idp-api-message-handler                                                 │
+│    - jaeger                                                                  │
+│    - kyc-service                                                             │
+│    - lic-agent-portal-api                                                    │
+│    - login-event-consumer                                                    │
+│    - mapper-api                                                              │
+│    - mdh-data-service                                                        │
+│    - message-exchange-service                                                │
+│    - msme-tally-integrator-api                                               │
+│    - msme-tally-processor-api                                                │
+│    - multifactor-authentication-api                                          │
+│    - nginx                                                                   │
+│    - onboarding                                                              │
+│    - optimus-notification-service                                            │
+│    - optimus-notification-service-message-handler                            │
+│    - optimus-offers-service                                                  │
+│    - payments-api                                                            │
+│    - payments-api-message-handler                                            │
+│    - pfm-api                                                                 │
+│    - pfm-api-message-handler                                                 │
+│    - pfm-api-realtime-txn-message-handler                                    │
+│    - platform-service                                                        │
+│    - platform-service-message-handler                                        │
+│    - risk-monitor-api                                                        │
+│    - socket-tracing-service                                                  │
+│    - tfx-deal                                                                │
+│    - tfx-remittance-api                                                      │
+│    - tfx-sso-integration-service                                             │
+│    - totp-service                                                            │
+│    - track-my-application-api                                                │
+│    - traefik-infra                                                           │
+│    - transaction-insights-api                                                │
+│    - universal-search-api                                                    │
+│    - upcoming-api                                                            │
+│    - upi-api                                                                 │
+│    - upi-api-message-handler                                                 │
+│    - user-profile-api-cdms-message-handler                                   │
+│                                                                              │
+│  Note: These are ALL services that have sent traces in the last 1 hour.      │
+│  Use any service name directly with fetch_jaeger_traces tool.                │
+│                                                                              │
+│  Do NOT call any tools. Do not attempt a tool call of any kind. Based only   │
+│  on the text above, output your analysis in this exact format:               │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes/no                                                    │
+│  ISSUE_SUMMARY: [brief description of what the issue likely is, based on     │
+│  similarity search]                                                          │
+│  SERVICE: [pick the single most relevant service name, copied EXACTLY as     │
+│  written from the AVAILABLE JAEGER SERVICES list above. If the list is       │
+│  empty or none apply, write NONE]                                            │
+│  NEXT_STEPS: [what Execute Agent should investigate]                         │
+│  NEEDS_MORE_INFO: yes/no                                                     │
+│  QUESTION_FOR_USER: [if needs more info, what to ask]                        │
+│                                                                              │
+│                                                                              │
+│  Planning:                                                                   │
+│                                                                              │
+│                                                                              │
+│  REFINED_PLAN:                                                               │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes                                                       │
+│  ISSUE_SUMMARY: Customer unable to complete money transfer via Mobile/Net    │
+│  Banking. Historic pattern (78-80% similarity) points to: (1) Account        │
+│  blocked/frozen, (2) Mode of Operation restrictions, or (3) Missing fund     │
+│  transfer widget.                                                            │
+│  SERVICE: payments-api                                                       │
+│                                                                              │
+│  NEXT_STEPS:                                                                 │
+│  1. Query Jaeger traces for payments-api with customer_id 6377087220 to      │
+│  identify failure point in real-time                                         │
+│  2. If traces unclear, check account status in CBS for customer_id           │
+│  6377087220 - verify if blocked/frozen                                       │
+│  3. Verify Mode of Operation (e.g., JOINTLY_BY_ALL restrictions)             │
+│  4. Check if fund transfer widget is present/enabled in account profile      │
+│                                                                              │
+│  NEEDS_MORE_INFO: no                                                         │
+│                                                                              │
+│  RATIONALE: Leading with Jaeger traces (step 1) provides immediate           │
+│  visibility into the transfer attempt failure. Account-level checks (steps   │
+│  2-4) remain available if traces don't reveal the issue.                     │
+│                                                                              │
+│  READY                                                                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-    try:
-        app_config = get_app_config(app)
-        default_service = app_config.default_jaeger_service or None
-    except ValueError:
-        default_service = None
+09:01:09 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 09:01:09,436 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 09:01:27,898 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Starting new iteration with service=bulk-payments-api, tag=customer_id
+2026-08-12 09:01:27,898 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 3 START ===
+2026-08-12 09:01:27,898 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: bulk-payments-api, Tag: customer_id=1064182965
+2026-08-12 09:01:27,898 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-12 09:01:27,899 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=bulk-payments-api, tag=customer_id=1064182965
+2026-08-12 09:01:27,899 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=bulk-payments-api customer_id=1064182965 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'bulk-payments-api', 'start': 1786438887898995, 'end': 1786525287898995, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Triage Analyst                                                       │
+│                                                                              │
+│  Final Answer:                                                               │
+│                                                                              │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes                                                       │
+│  ISSUE_SUMMARY: Customer unable to complete money transfer via Mobile/Net    │
+│  Banking. Historic pattern (78-80% similarity) points to: (1) Account        │
+│  blocked/frozen, (2) Mode of Operation restrictions (e.g., JOINTLY_BY_ALL    │
+│  without transaction permissions), or (3) Missing fund transfer widget in    │
+│  account.                                                                    │
+│  SERVICE: payments-api                                                       │
+│  NEXT_STEPS:                                                                 │
+│  1. Query Jaeger traces for payments-api with customer_id 6377087220 to      │
+│  identify failure point in real-time                                         │
+│  2. If traces unclear, check account status in CBS for customer_id           │
+│  6377087220 - verify if blocked/frozen                                       │
+│  3. Verify Mode of Operation for the account (e.g., JOINTLY_BY_ALL           │
+│  restrictions)                                                               │
+│  4. Check if fund transfer widget is present/enabled in account profile      │
+│  NEEDS_MORE_INFO: no                                                         │
+│  QUESTION_FOR_USER:                                                          │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-    similarity_result = incident_context if incident_context else "No similar incidents found."
-
-    identifiers_text = (
-        "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items())
-        if customer_identifiers else "  None provided"
-    )
-
-    analysis_agent = Agent(
-        role="Triage Analyst",
-        goal="Analyze investigation results and create a plan for resolution",
-        backstory=(
-            "You are a senior incident analyst. Your job is to analyze "
-            "Similarity Search results and the list of available services "
-            "to understand what the issue likely is and recommend which "
-            "service should be investigated next.\n\n"
-            "You must determine:\n"
-            "1. Is the issue clear enough from the similarity search context?\n"
-            "2. Which service (from the AVAILABLE JAEGER SERVICES list) is "
-            "most likely responsible, based on historic incidents and problem category?\n"
-            "3. If identifiers or context are missing, what should be asked?"
-        ),
-        tools=[],
-        verbose=True,
-        allow_delegation=False,
-        llm=llm,
-        temperature=0,
-        max_iter=3,
-        reasoning=True,
-        max_reasoning_attempts=3
-    )
-
-    services_section = ""
-    if discovered_services:
-        services_section = f"\n=== AVAILABLE JAEGER SERVICES ===\n{discovered_services}\n"
-
-    analysis_task = Task(
-        description=(
-            f"Analyze the following investigation results and create a plan:\n\n"
-            f"=== INCIDENT ANALYSIS (from Intent Classifier) ===\n{enriched_prompt}\n\n"
-            f"=== SIMILARITY SEARCH RESULTS ===\n{similarity_result}\n\n"
-            f"=== CONTEXT ===\n"
-            f"Application: {app}\n"
-            f"Problem Category: {problem_category}\n"
-            f"Customer Identifiers:\n{identifiers_text}\n"
-            f"{services_section}\n"
-            f"Do NOT call any tools. Do not attempt a tool call of any kind. "
-            f"Based only on the text above, output your analysis in this exact format:\n\n"
-            f"ISSUE_UNDERSTOOD: yes/no\n"
-            f"ISSUE_SUMMARY: [brief description of what the issue likely is, based on similarity search]\n"
-            f"SERVICE: [pick the single most relevant service name, copied EXACTLY as written "
-            f"from the AVAILABLE JAEGER SERVICES list above. If the list is empty or none apply, write NONE]\n"
-            f"NEXT_STEPS: [what Execute Agent should investigate]\n"
-            f"NEEDS_MORE_INFO: yes/no\n"
-            f"QUESTION_FOR_USER: [if needs more info, what to ask]\n"
-        ),
-        agent=analysis_agent,
-        expected_output=(
-            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, SERVICE, "
-            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields. No tool calls."
-        )
-    )
-
-    crew = Crew(
-        agents=[analysis_agent],
-        tasks=[analysis_task],
-        verbose=False
-    )
-
-    result = await crew.akickoff()
-    result_text = str(result)
-
-    return _parse_plan_output(
-        result_text,
-        customer_identifiers,
-        default_service,
-        discovered_services
-    )
-
-
-def _parse_plan_output(
-    llm_response: str,
-    customer_identifiers: Dict[str, str],
-    default_service: Optional[str],
-    discovered_services: str = ""
-) -> PlanOutput:
-
-    issue_understood = (
-        "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower()
-        if "ISSUE_UNDERSTOOD:" in llm_response else "no"
-    )
-
-    issue_summary = ""
-    if "ISSUE_SUMMARY:" in llm_response:
-        summary_part = llm_response.split("ISSUE_SUMMARY:")[-1]
-        next_section = summary_part.split("SERVICE:")[0] if "SERVICE:" in summary_part else summary_part
-        issue_summary = next_section.strip()
-
-    llm_service = ""
-    if "SERVICE:" in llm_response:
-        service_part = llm_response.split("SERVICE:")[-1]
-        next_part = service_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in service_part else service_part
-        llm_service = next_part.strip().split("\n")[0].strip()
-
-    # ── Validate the chosen service against the actual discovered list ──
-    # Prevents hallucinated / near-miss / wrong-cased service names from
-    # silently slipping through to the executor.
-    valid_services = set()
-    for line in discovered_services.splitlines():
-        line = line.strip()
-        if line.startswith("- "):
-            valid_services.add(line[2:].strip())
-
-    chosen_service = ""
-    if llm_service and llm_service.upper() != "NONE":
-        if llm_service in valid_services:
-            chosen_service = llm_service
-        else:
-            lower_map = {s.lower(): s for s in valid_services}
-            if llm_service.lower() in lower_map:
-                chosen_service = lower_map[llm_service.lower()]
-            else:
-                logger.warning(
-                    f"[PlanAgent] LLM chose service '{llm_service}' not found in "
-                    f"discovered list ({len(valid_services)} known) — "
-                    f"falling back to default '{default_service}'"
-                )
-
-    next_steps = ""
-    if "NEXT_STEPS:" in llm_response:
-        steps_part = llm_response.split("NEXT_STEPS:")[-1]
-        next_section = steps_part.split("NEEDS_MORE_INFO:")[0] if "NEEDS_MORE_INFO:" in steps_part else steps_part
-        next_steps = next_section.strip()
-
-    needs_more_info = (
-        "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower()
-        if "NEEDS_MORE_INFO:" in llm_response else False
-    )
-
-    question = None
-    if "QUESTION_FOR_USER:" in llm_response:
-        question = llm_response.split("QUESTION_FOR_USER:")[-1].strip()
-
-    return PlanOutput(
-        issue_identified=issue_understood == "yes",
-        issue_summary=issue_summary or "Unable to determine issue from initial investigation",
-        jaeger_results={},
-        next_steps=next_steps or "Investigate via Jaeger traces based on findings",
-        needs_more_info=needs_more_info,
-        question_for_user=question,
-        suggested_service=chosen_service or default_service,
-        customer_identifiers=customer_identifiers
-    )
+2026-08-12 09:01:28,248 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-08-12 09:01:28,248 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: payments-api, Tag: customer_id=6377087220
+2026-08-12 09:01:28,248 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-12 09:01:28,248 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=payments-api, tag=customer_id=6377087220
+2026-08-12 09:01:28,248 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=payments-api customer_id=6377087220 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'payments-api', 'start': 1786438888248574, 'end': 1786525288248574, 'limit': 100, 'tags': '{"customer_id": "6377087220"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 09:02:12,903 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
+2026-08-12 09:02:12,903 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
+2026-08-12 09:02:12,903 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=bulk-payments-api, tag=customer_id=1064182965
+2026-08-12 09:02:12,903 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=bulk-payments-api customer_id=1064182965 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'bulk-payments-api', 'start': 1786352532903741, 'end': 1786438932903741, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 09:02:13,253 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
+2026-08-12 09:02:13,253 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
+2026-08-12 09:02:13,253 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=payments-api, tag=customer_id=6377087220
+2026-08-12 09:02:13,253 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=payments-api customer_id=6377087220 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'payments-api', 'start': 1786352533253445, 'end': 1786438933253445, 'limit': 100, 'tags': '{"customer_id": "6377087220"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 09:02:57,908 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
+2026-08-12 09:02:57,908 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
+2026-08-12 09:02:57,908 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=bulk-payments-api, tag=customer_id=1064182965
+2026-08-12 09:02:57,908 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=bulk-payments-api customer_id=1064182965 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'bulk-payments-api', 'start': 1786266177908788, 'end': 1786352577908788, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 09:02:58,257 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
+2026-08-12 09:02:58,257 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
+2026-08-12 09:02:58,257 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=payments-api, tag=customer_id=6377087220
+2026-08-12 09:02:58,257 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=payments-api customer_id=6377087220 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'payments-api', 'start': 1786266178257250, 'end': 1786352578257250, 'limit': 100, 'tags': '{"customer_id": "6377087220"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 09:03:42,914 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
+2026-08-12 09:03:42,914 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
+2026-08-12 09:03:42,914 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=bulk-payments-api, tag=customer_id=1064182965
+2026-08-12 09:03:42,914 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=bulk-payments-api customer_id=1064182965 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'bulk-payments-api', 'start': 1786179822914141, 'end': 1786266222914141, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-12 09:03:43,261 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
+2026-08-12 09:03:43,261 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
+2026-08-12 09:03:43,261 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=payments-api, tag=customer_id=6377087220
+2026-08-12 09:03:43,261 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=payments-api customer_id=6377087220 range=24h endpoint=https://tracing.prod-opt.idfcfirstbank.com/api params={'service': 'payments-api', 'start': 1786179823261474, 'end': 1786266223261474, 'limit': 100, 'tags': '{"customer_id": "6377087220"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+shishir.pandey_tho@0325LTPB0124444 ~ % 
