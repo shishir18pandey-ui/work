@@ -181,3 +181,119 @@ async def run_incident_context_crew_async(incident_description: str, application
             ))
 
         return output
+
+
+
+
+import time
+import asyncio
+import httpx
+from typing import Any, Dict, Optional, Union, Tuple
+
+
+class HttpResponseDTO:
+    def __init__(
+        self,
+        status_code: int,
+        json: Optional[Any] = None,
+        text: Optional[str] = None,
+        headers: Optional[Dict[str, str]] = None,
+    ):
+        self.status_code = status_code
+        self.json = json
+        self.text = text
+        self.headers = headers or {}
+
+
+async def http_client_post_async(
+        url: str,
+        headers: dict = {},
+        data: Optional[Any] = None,
+        form_data: Optional[Any] = None,
+        json: Optional[Any] = None,
+        timeout: float = 60.0,
+        retries: int = 3,
+        verify: Any | str = False
+) -> HttpResponseDTO:
+    if form_data is not None and data is None:
+        import urllib.parse
+        _form_data = urllib.parse.urlencode(form_data)
+        headers['Content-Type'] = 'application/x-www-form-urlencoded'
+        body = _form_data
+    elif json is not None:
+        import json as json_module
+        body = json_module.dumps(json)
+        headers['Content-Type'] = 'application/json'
+    elif data is not None:
+        body = data
+    else:
+        body = None
+
+    response = await _http_request_async(
+        'POST', url, headers=headers, data=body,
+        timeout=timeout, retries=retries, verify=verify
+    )
+    return HttpResponseDTO(
+        status_code=response.status_code,
+        json=response.json(),
+        text=response.text,
+        headers=response.headers or {}
+    )
+
+
+async def http_client_get_async(
+        url: str,
+        headers: dict = {},
+        timeout: float = 60.0,
+        retries: int = 3,
+        verify: Any | str = False
+) -> HttpResponseDTO:
+    """Async version of http_client_get"""
+    response = await _http_request_async(
+        'GET', url, headers=headers,
+        timeout=timeout, retries=retries, verify=verify
+    )
+    return HttpResponseDTO(
+        status_code=response.status_code,
+        json=response.json(),
+        text=response.text,
+        headers=response.headers or {}
+    )
+
+
+async def _http_request_async(
+    method: str,
+    url: str,
+    *,
+    headers: Optional[Dict[str, str]] = None,
+    auth: Optional[Union[Tuple[str, str], httpx.Auth]] = None,
+    params: Optional[Dict[str, Any]] = None,
+    json_data: Optional[Any] = None,
+    data: Optional[Any] = None,
+    timeout: float = 60.0,
+    retries: int = 3,
+    verify: Any | str = False
+) -> httpx.Response:
+    """Async version of _http_request"""
+    auth_obj = httpx.BasicAuth(*auth) if auth and isinstance(auth, tuple) else auth
+
+    async with httpx.AsyncClient(timeout=timeout, auth=auth_obj, verify=verify) as client:
+        for attempt in range(1, retries + 1):
+            try:
+                response = await client.request(
+                    method=method,
+                    url=url,
+                    headers=headers,
+                    params=params,
+                    json=json_data,
+                    data=data,
+                )
+
+                response.raise_for_status()
+                return response
+
+            except httpx.RequestError as exc:
+                if attempt == retries:
+                    raise exc
+                delay = 2 ** attempt
+                await asyncio.sleep(delay)
