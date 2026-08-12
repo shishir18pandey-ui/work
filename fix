@@ -1,4 +1,5 @@
 import os
+import logging
 from typing import Dict, Optional
 from pydantic import BaseModel, Field
 
@@ -6,8 +7,9 @@ os.environ["OTEL_SDK_DISABLED"] = "true"
 
 from crewai import Agent, Task, Crew, LLM
 from new_flow.utils.llm import llm_config
-from new_flow.tools.query_tools import JaegerTraceTool
 from new_flow.tools.app_config import get_app_config
+
+logger = logging.getLogger(__name__)
 
 
 class PlanOutput(BaseModel):
@@ -48,35 +50,35 @@ async def run_plan_agent_async(
         base_url=llm_config.url,
         api_key=llm_config.token
     )
-    
+
     try:
         app_config = get_app_config(app)
-        default_service = app_config.default_jaeger_service
+        default_service = app_config.default_jaeger_service or None
     except ValueError:
         default_service = None
-    
-    # Initialize Jaeger tool - LLM will decide when and how to use it
-    jaeger_tool = JaegerTraceTool()
-    
+
     similarity_result = incident_context if incident_context else "No similar incidents found."
-    
-    # Build customer identifiers string for LLM
-    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
-    
+
+    identifiers_text = (
+        "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items())
+        if customer_identifiers else "  None provided"
+    )
+
     analysis_agent = Agent(
         role="Triage Analyst",
         goal="Analyze investigation results and create a plan for resolution",
         backstory=(
             "You are a senior incident analyst. Your job is to analyze "
-            "Similarity Search results and Jaeger traces to understand "
-            "what the issue is and guide the next steps.\n\n"
-            "You have access to tools to fetch additional data when needed.\n\n"
+            "Similarity Search results and the list of available services "
+            "to understand what the issue likely is and recommend which "
+            "service should be investigated next.\n\n"
             "You must determine:\n"
-            "1. Is the issue clear from the data?\n"
-            "2. If yes, what's the next step (ELK or DB)?\n"
-            "3. If no, use tools to gather more info"
+            "1. Is the issue clear enough from the similarity search context?\n"
+            "2. Which service (from the AVAILABLE JAEGER SERVICES list) is "
+            "most likely responsible, based on historic incidents and problem category?\n"
+            "3. If identifiers or context are missing, what should be asked?"
         ),
-        tools=[j],
+        tools=[],
         verbose=True,
         allow_delegation=False,
         llm=llm,
@@ -85,14 +87,11 @@ async def run_plan_agent_async(
         reasoning=True,
         max_reasoning_attempts=3
     )
-    
-    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
-    
-    # Add discovered services to context if available
+
     services_section = ""
     if discovered_services:
         services_section = f"\n=== AVAILABLE JAEGER SERVICES ===\n{discovered_services}\n"
-    
+
     analysis_task = Task(
         description=(
             f"Analyze the following investigation results and create a plan:\n\n"
@@ -103,423 +102,110 @@ async def run_plan_agent_async(
             f"Problem Category: {problem_category}\n"
             f"Customer Identifiers:\n{identifiers_text}\n"
             f"{services_section}\n"
-            f"You have access to a Jaeger tracing tool. If you need more information about "
-            f"service calls, latency issues, or distributed traces, use the tool to fetch data.\n\n"
-            f"IMPORTANT: When you use the Jaeger tool, include the key findings in your response below.\n\n"
-            f"Provide your analysis in this format:\n"
+            f"Do NOT call any tools. Do not attempt a tool call of any kind. "
+            f"Based only on the text above, output your analysis in this exact format:\n\n"
             f"ISSUE_UNDERSTOOD: yes/no\n"
-            f"ISSUE_SUMMARY: [brief description of what the issue is - include any Jaeger trace findings here]\n"
-            f"JAEGER_FINDINGS: [you MUST use the Jaeger tool to fetch traces - summarize the key trace data including service names, errors, latency issues, etc. NEVER write 'NOT_USED' - always fetch and analyze traces]\n"
-            f"SERVICE: [pick the relevant service name from AVAILABLE JAEGER SERVICE above]\n"
-            f"NEXT_STEPS: [what Execute Agent should do next]\n"
+            f"ISSUE_SUMMARY: [brief description of what the issue likely is, based on similarity search]\n"
+            f"SERVICE: [pick the single most relevant service name, copied EXACTLY as written "
+            f"from the AVAILABLE JAEGER SERVICES list above. If the list is empty or none apply, write NONE]\n"
+            f"NEXT_STEPS: [what Execute Agent should investigate]\n"
             f"NEEDS_MORE_INFO: yes/no\n"
             f"QUESTION_FOR_USER: [if needs more info, what to ask]\n"
         ),
         agent=analysis_agent,
         expected_output=(
-            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, JAEGER_FINDINGS, "
-            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields."
+            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, SERVICE, "
+            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields. No tool calls."
         )
     )
-    
+
     crew = Crew(
         agents=[analysis_agent],
         tasks=[analysis_task],
         verbose=False
     )
-    
+
     result = await crew.akickoff()
     result_text = str(result)
-    
+
     return _parse_plan_output(
         result_text,
-        {},
         customer_identifiers,
-        default_service
+        default_service,
+        discovered_services
     )
 
 
 def _parse_plan_output(
     llm_response: str,
-    jaeger_results: Dict,
     customer_identifiers: Dict[str, str],
-    default_service: str
+    default_service: Optional[str],
+    discovered_services: str = ""
 ) -> PlanOutput:
-    
-    issue_understood = "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower() if "ISSUE_UNDERSTOOD:" in llm_response else "no"
-    
+
+    issue_understood = (
+        "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower()
+        if "ISSUE_UNDERSTOOD:" in llm_response else "no"
+    )
+
     issue_summary = ""
     if "ISSUE_SUMMARY:" in llm_response:
         summary_part = llm_response.split("ISSUE_SUMMARY:")[-1]
-        next_section = summary_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in summary_part else summary_part
+        next_section = summary_part.split("SERVICE:")[0] if "SERVICE:" in summary_part else summary_part
         issue_summary = next_section.strip()
-    
-    # Parse JAEGER_FINDINGS from LLM response
-    jaeger_findings = ""
-    if "JAEGER_FINDINGS:" in llm_response:
-        findings_part = llm_response.split("JAEGER_FINDINGS:")[-1]
-        # Find the next field
-        next_field_match = findings_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in findings_part else findings_part
-        jaeger_findings = next_field_match.strip()
-    llm_service=""
+
+    llm_service = ""
     if "SERVICE:" in llm_response:
-        service_part=llm_response.split("SERVICE:")[-1]
-        next_part=service_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in service_part else service_part
-        llm_service=next_part.strip().split("\n")[0].strip() 
-    # Build jaeger_results from LLM findings
-    # CRITICAL: Jaeger MUST be used - if NOT_USED, force re-investigation
-    if jaeger_findings and jaeger_findings.upper() != "NOT_USED":
-        parsed_jaeger = {
-            "raw": jaeger_findings,
-            "has_errors": "error" in jaeger_findings.lower() or "failed" in jaeger_findings.lower() or "exception" in jaeger_findings.lower(),
-            "trace_count": 0,
-            "used": True
-        }
-        # Try to extract trace count
-        import re
-        match = re.search(r"(\d+)\s*traces?", jaeger_findings, re.IGNORECASE)
-        if match:
-            parsed_jaeger["trace_count"] = int(match.group(1))
-        jaeger_results = parsed_jaeger
-    else:
-        # CRITICAL: Jaeger was NOT used - this is a failure!
-        # Force the issue to be marked as not understood so Execute Agent will use Jaeger
-        issue_understood = "no"
-        issue_summary = "Jaeger traces not fetched - investigation incomplete. Execute Agent must fetch Jaeger traces."
-        jaeger_results = {"used": False, "raw": "", "trace_count": 0, "has_errors": False, "error": "Jaeger not used by Plan Agent"}
-    
+        service_part = llm_response.split("SERVICE:")[-1]
+        next_part = service_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in service_part else service_part
+        llm_service = next_part.strip().split("\n")[0].strip()
+
+    # ── Validate the chosen service against the actual discovered list ──
+    # Prevents hallucinated / near-miss / wrong-cased service names from
+    # silently slipping through to the executor.
+    valid_services = set()
+    for line in discovered_services.splitlines():
+        line = line.strip()
+        if line.startswith("- "):
+            valid_services.add(line[2:].strip())
+
+    chosen_service = ""
+    if llm_service and llm_service.upper() != "NONE":
+        if llm_service in valid_services:
+            chosen_service = llm_service
+        else:
+            lower_map = {s.lower(): s for s in valid_services}
+            if llm_service.lower() in lower_map:
+                chosen_service = lower_map[llm_service.lower()]
+            else:
+                logger.warning(
+                    f"[PlanAgent] LLM chose service '{llm_service}' not found in "
+                    f"discovered list ({len(valid_services)} known) — "
+                    f"falling back to default '{default_service}'"
+                )
+
     next_steps = ""
     if "NEXT_STEPS:" in llm_response:
         steps_part = llm_response.split("NEXT_STEPS:")[-1]
         next_section = steps_part.split("NEEDS_MORE_INFO:")[0] if "NEEDS_MORE_INFO:" in steps_part else steps_part
         next_steps = next_section.strip()
-    
-    needs_more_info = "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower() if "NEEDS_MORE_INFO:" in llm_response else False
-    
+
+    needs_more_info = (
+        "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower()
+        if "NEEDS_MORE_INFO:" in llm_response else False
+    )
+
     question = None
     if "QUESTION_FOR_USER:" in llm_response:
-        question_part = llm_response.split("QUESTION_FOR_USER:")[-1]
-        question = question_part.strip()
-    
+        question = llm_response.split("QUESTION_FOR_USER:")[-1].strip()
+
     return PlanOutput(
         issue_identified=issue_understood == "yes",
         issue_summary=issue_summary or "Unable to determine issue from initial investigation",
-        jaeger_results=jaeger_results,
-        next_steps=next_steps or "Use ELK or DB queries based on findings",
+        jaeger_results={},
+        next_steps=next_steps or "Investigate via Jaeger traces based on findings",
         needs_more_info=needs_more_info,
         question_for_user=question,
-        suggested_service=llm_service or default_service,
+        suggested_service=chosen_service or default_service,
         customer_identifiers=customer_identifiers
     )
-
-this is my plan agent 
-
-this si app config 
-{
-    "cbs": {
-        "name": "Core Banking System",
-        "db_instance": "main",
-        "services": [
-            "cbs-backend",
-            "cbs-api",
-            "cbs-core"
-        ],
-        "tables": [
-            "GLDM",
-            "INFZ",
-            "NPAR",
-            "ACD3",
-            "STTM",
-            "DPD",
-            "ACCOUNT"
-        ],
-        "elk_endpoint": "",
-        "elk_index": "elk-cbs-prod*",
-        "jaeger_endpoint": "https://tracing.uat-cbs.idfcfirstbank.com/api",
-        "jaeger_prod_endpoint": "https://tracing.prod-cbs.idfcfirstbank.com/api",
-        "default_jaeger_service": "cbs-backend",
-        "problem_categories": [
-            "account_freeze",
-            "transaction_failure",
-            "balance_issue",
-            "payment_failure",
-            "loan_issue",
-            "kyc_issue"
-        ]
-    },
-    "optimus": {
-        "name": "Mobile/Net Banking",
-        "db_instance": "idp",
-        "services": [
-            "optimus-api",
-            "optimus-login",
-            "optimus-web",
-            "optimus-mobile"
-        ],
-        "tables": [
-            "users",
-            "devices",
-            "sessions",
-            "oauth_tokens",
-            "mfa_records"
-        ],
-        "elk_endpoint": "",
-        "elk_index": "elk-optimus-prod*",
-        "jaeger_endpoint": "https://tracing.uat-opt.idfcfirstbank.com/api",
-        "jaeger_prod_endpoint": "https://tracing.prod-opt.idfcfirstbank.com/api",
-        "default_jaeger_service": "optimus-api",
-        "problem_categories": [
-            "login_failure",
-            "session_timeout",
-            "transaction_failure",
-            "app_crash",
-            "password_reset_failure",
-            "mfa_issue"
-        ]
-    },
-    "idp": {
-        "name": "Identity Provider",
-        "db_instance": "idp",
-        "services": [
-            "idp-auth",
-            "idp-oauth",
-            "idp-mfa"
-        ],
-        "tables": [
-            "users",
-            "oauth_tokens",
-            "mfa_records",
-            "devices",
-            "sessions"
-        ],
-        "elk_index": "elk-idp-prod*",
-        "jaeger_endpoint": "https://tracing.uat-idp.idfcfirstbank.com/api",
-        "jaeger_prod_endpoint": "https://tracing.prod-idp.idfcfirstbank.com/api",
-        "default_jaeger_service": "idp-auth",
-        "problem_categories": [
-            "authentication_failure",
-            "oauth_error",
-            "mfa_failure",
-            "token_expired",
-            "device_registration_failure"
-        ]
-    },
-    "phi-upi": {
-        "name": "PHI-UPI",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "ntbsa": {
-        "name": "New To Bank",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "https://aws-tracing.ntbsa.idfcfirstbank.com/api",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "finnone": {
-        "name": "FinnOne",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "etoll": {
-        "name": "FinnOne",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://aws-obs-kibana.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "https://tracing.prod-etollissuer.idfcfirstbank.com/api",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "finesse": {
-        "name": "Contact Center (Finesse, IVR)",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200;https://kibanat3-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "prime": {
-        "name": "Credit Card - PRIME",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "brnet": {
-        "name": "BRNET",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "cdp": {
-        "name": "Customer Data Platform",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://aws-obs-kibana.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "https://tracing.cdp.idfcfirstbank.com/api",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "api": {
-        "name": "API Integrations",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dcawsmonitelasticcoord0.logging.devops.idfcbank.com:9200;https://dcawsmonitelasticcoord1.logging.devops.idfcbank.com:9200;https://dcawsmonitelasticcoord2.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "bxp": {
-        "name": "CMS BXP",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://DCELASDBSPRR07-prod.logging.devops.idfcbank.com:9200/elk-cms-applog-prod*;https://DCELASDBSPRR07-prod.logging.devops.idfcbank.com:9200/elk-cash-management-services-cms-prod*;https://DCELASDBSPRR07-prod.logging.devops.idfcbank.com:9200/elk-cms-bxp-prod*",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "wms": {
-        "name": "Wealth Management System(WMS)",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "",
-        "elk_index": "",
-        "jaeger_endpoint": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "imps": {
-        "name": "IMPS",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "newgen": {
-        "name": "Newgen (IBPS, OmniDocs, Zapin)",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "commhub": {
-        "name": "Communication Hub",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://aws-obs-kibana.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "https://tracing.commhub.idfcbank.com/api",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "fmconv": {
-        "name": "FM Converge",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "phi-neft": {
-        "name": "",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "ogl": {
-        "name": "Oracle GL (OGL)",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://kibanat3-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    },
-    "figateway": {
-        "name": "FI Gateway",
-        "db_instance": "",
-        "services": [],
-        "tables": [],
-        "elk_endpoint": "https://dckibaappprr01-prod.logging.devops.idfcbank.com:9200",
-        "elk_index": "",
-        "jaeger_endpoint": "ttps://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
-        "jaeger_prod_endpoint": "",
-        "default_jaeger_service": "",
-        "problem_categories": []
-    }
-}
-
-
