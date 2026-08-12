@@ -1,6 +1,293 @@
-026-08-12 16:51:34,288 - opentelemetry.attributes - WARNING - Invalid type NoneType for attribute 'sop_value' value. Expected one of ['bool', 'str', 'bytes', 'int', 'float'] or a sequence of those types
-Enhanced classifier | incident=099430408 | app=optimus | category=transaction_failure
-Initialized and classified incident 099430408 with intent: additional_info
+08-12 17:44:46,549 - __main__ - INFO -   USE_NEW_FLOW    : True (module: new_flow.flow)
+2026-08-12 17:44:46,549 - __main__ - INFO - Starting incident-manager worker...
+2026-08-12 17:44:46,550 - __main__ - INFO - LLM config initialized
+2026-08-12 17:44:46,573 - __main__ - INFO - Timeout checker thread started
+2026-08-12 17:44:46,573 - __main__ - INFO - ✓ Worker started
+2026-08-12 17:44:46,573 - __main__ - INFO -   Topic    : GEN-AI-DE-INCIDENT-EVENTS
+2026-08-12 17:44:46,573 - __main__ - INFO -   Group    : gen-ai-de-incident-managers
+2026-08-12 17:44:46,573 - __main__ - INFO -   Broker   : b-1.dcawscentraluatkafka0.fil3x5.c4.kafka.ap-south-1.amazonaws.com:9096,b-2.dcawscentraluatkafka0.fil3x5.c4.kafka.ap-south-1.amazonaws.com:9096,b-3.dcawscentraluatkafka0.fil3x5.c4.kafka.ap-south-1.amazonaws.com:9096
+2026-08-12 17:44:46,618 - utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-12 17:45:57,834 - __main__ - INFO - → Message received | incident=0430498 event=new_incident partition=0 offset=452
+2026-08-12 17:45:57,835 - __main__ - INFO - ✓ Offset committed | incident=0430498
+2026-08-12 17:45:57,851 - __main__ - INFO - → Processing | incident=0430498 event=new_incident module=new_flow.flow
+2026-08-12 17:45:57,967 - __main__ - INFO -   DB status | incident=0430498 status=in_progress
+2026-08-12 17:45:59,669 - crewai.cli.config - INFO - Using config path: /root/.config/crewai/settings.json
+2026-08-12 17:46:00,117 - new_flow.tools.service_metadata - INFO - Loaded service metadata for apps: ['optimus', 'cbs', 'idp']
+2026-08-12 17:46:02,249 - __main__ - INFO -   Flow type | incident=0430498 type=new_incident
+ot-collector.tracing.svc.cluster.local tetsing1
+╭───────────────────────────── 🌊 Flow Execution ──────────────────────────────╮
+│                                                                              │
+│  Starting Flow Execution                                                     │
+│  Name: IncidentManagementFlow                                                │
+│  ID: a3a8cfd1-a490-4083-ae0f-36f93e4b1ca1                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 🌊 Flow Started ───────────────────────────────╮
+│                                                                              │
+│  Flow Started                                                                │
+│  Name: IncidentManagementFlow                                                │
+│  ID: a3a8cfd1-a490-4083-ae0f-36f93e4b1ca1                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Flow started with ID: a3a8cfd1-a490-4083-ae0f-36f93e4b1ca1
+2026-08-12 17:46:18,285 - crewai.flow.flow - INFO - Flow started with ID: a3a8cfd1-a490-4083-ae0f-36f93e4b1ca1
+╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
+│                                                                              │
+│  Method: initialize_and_classify                                             │
+│  Status: Running                                                             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Generated incident description for UCIC 1064182965
+╭───────────────────────── 🚀 Crew Execution Started ──────────────────────────╮
+│                                                                              │
+│  Crew Execution Started                                                      │
+│  Name: crew                                                                  │
+│  ID: cb24f7d6-f867-4c50-85b7-b6ba999e6862                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
+│                                                                              │
+│  Task Started                                                                │
+│  Name: Analyze the user input and categorize it with detailed analysis.      │
+│                                                                              │
+│  Interaction History:                                                        │
+│  ```                                                                         │
+│  ['NA']                                                                      │
+│  ```                                                                         │
+│                                                                              │
+│  User Input:                                                                 │
+│  ```                                                                         │
+│  Short Description: <script>alert('XSS')</script> Customer is unable to do   │
+│  transfer of money                                                           │
+│  Description: Customer is unable to do transfer of money                     │
+│  ```                                                                         │
+│                                                                              │
+│  Latest Interaction:                                                         │
+│  ```                                                                         │
+│  NA                                                                          │
+│  ```                                                                         │
+│                                                                              │
+│  Depending on history you can figure out latest question if it exists.       │
+│  Catagorise intent on basis of `Latest Interaction` if it is NA, then        │
+│  classify on baisis of `User Input`                                          │
+│                                                                              │
+│  **Categories**:                                                             │
+│                                                                              │
+│          - **closure**: Greeting, thanks, or ending the chat.                │
+│                                                                              │
+│          - **rebuttal**: User is disagreeing, correcting the system, or      │
+│  insisting that information they previously provided is correct (e.g., 'I    │
+│  already told you', 'That's wrong', 'This is correct.').                     │
+│                                                                              │
+│          - **additional_info**: Providing IDs, account numbers or            │
+│  subsequent question/information asked.                                      │
+│                                                                              │
+│  **Rule**: If the User Input contradicts the Latest Interaction or           │
+│  expresses frustration with the system's request, it MUST be 'rebuttal'.     │
+│                                                                              │
+│  **Analysis Required**:                                                      │
+│  Based on the user input and history, provide:                               │
+│  1. `user_goal`: What the user is trying to achieve or accomplish            │
+│  2. `issue_description`: The specific problem or issue they're facing        │
+│  3. `problem_summary`: A detailed write-up explaining the issue in context   │
+│                                                                              │
+│  Output your response as JSON with the following structure:                  │
+│  ```json                                                                     │
+│  {                                                                           │
+│    "intent": "<category>",                                                   │
+│    "user_goal": "<what user wants to accomplish>",                           │
+│    "issue_description": "<specific problem>",                                │
+│    "problem_summary": "<detailed write-up>"                                  │
+│  }                                                                           │
+│  ```                                                                         │
+│  ID: b9ac362c-3d08-4e4c-b605-343f1696ce86                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+17:46:34 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-12 17:46:34,427 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Intent Classifier                                                    │
+│                                                                              │
+│  Task: Analyze the user input and categorize it with detailed analysis.      │
+│                                                                              │
+│  Interaction History:                                                        │
+│  ```                                                                         │
+│  ['NA']                                                                      │
+│  ```                                                                         │
+│                                                                              │
+│  User Input:                                                                 │
+│  ```                                                                         │
+│  Short Description: <script>alert('XSS')</script> Customer is unable to do   │
+│  transfer of money                                                           │
+│  Description: Customer is unable to do transfer of money                     │
+│  ```                                                                         │
+│                                                                              │
+│  Latest Interaction:                                                         │
+│  ```                                                                         │
+│  NA                                                                          │
+│  ```                                                                         │
+│                                                                              │
+│  Depending on history you can figure out latest question if it exists.       │
+│  Catagorise intent on basis of `Latest Interaction` if it is NA, then        │
+│  classify on baisis of `User Input`                                          │
+│                                                                              │
+│  **Categories**:                                                             │
+│                                                                              │
+│          - **closure**: Greeting, thanks, or ending the chat.                │
+│                                                                              │
+│          - **rebuttal**: User is disagreeing, correcting the system, or      │
+│  insisting that information they previously provided is correct (e.g., 'I    │
+│  already told you', 'That's wrong', 'This is correct.').                     │
+│                                                                              │
+│          - **additional_info**: Providing IDs, account numbers or            │
+│  subsequent question/information asked.                                      │
+│                                                                              │
+│  **Rule**: If the User Input contradicts the Latest Interaction or           │
+│  expresses frustration with the system's request, it MUST be 'rebuttal'.     │
+│                                                                              │
+│  **Analysis Required**:                                                      │
+│  Based on the user input and history, provide:                               │
+│  1. `user_goal`: What the user is trying to achieve or accomplish            │
+│  2. `issue_description`: The specific problem or issue they're facing        │
+│  3. `problem_summary`: A detailed write-up explaining the issue in context   │
+│                                                                              │
+│  Output your response as JSON with the following structure:                  │
+│  ```json                                                                     │
+│  {                                                                           │
+│    "intent": "<category>",                                                   │
+│    "user_goal": "<what user wants to accomplish>",                           │
+│    "issue_description": "<specific problem>",                                │
+│    "problem_summary": "<detailed write-up>"                                  │
+│  }                                                                           │
+│  ```                                                                         │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Intent Classifier                                                    │
+│                                                                              │
+│  Final Answer:                                                               │
+│                                                                              │
+│                                                                              │
+│  ```json                                                                     │
+│  {                                                                           │
+│    "intent": "additional_info",                                              │
+│    "user_goal": "To report an issue where the customer is unable to          │
+│  transfer money",                                                            │
+│    "issue_description": "Customer is unable to do transfer of money",        │
+│    "problem_summary": "The user is reporting a technical issue where a       │
+│  customer is unable to perform money transfers. This appears to be a         │
+│  service disruption or technical problem preventing the transfer             │
+│  functionality from working properly. The user is providing information      │
+│  about this issue, likely seeking technical support or resolution for the    │
+│  money transfer problem."                                                    │
+│  }                                                                           │
+│  ```                                                                         │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
+│                                                                              │
+│  Task Completed                                                              │
+│  Name: Analyze the user input and categorize it with detailed analysis.      │
+│                                                                              │
+│  Interaction History:                                                        │
+│  ```                                                                         │
+│  ['NA']                                                                      │
+│  ```                                                                         │
+│                                                                              │
+│  User Input:                                                                 │
+│  ```                                                                         │
+│  Short Description: <script>alert('XSS')</script> Customer is unable to do   │
+│  transfer of money                                                           │
+│  Description: Customer is unable to do transfer of money                     │
+│  ```                                                                         │
+│                                                                              │
+│  Latest Interaction:                                                         │
+│  ```                                                                         │
+│  NA                                                                          │
+│  ```                                                                         │
+│                                                                              │
+│  Depending on history you can figure out latest question if it exists.       │
+│  Catagorise intent on basis of `Latest Interaction` if it is NA, then        │
+│  classify on baisis of `User Input`                                          │
+│                                                                              │
+│  **Categories**:                                                             │
+│                                                                              │
+│          - **closure**: Greeting, thanks, or ending the chat.                │
+│                                                                              │
+│          - **rebuttal**: User is disagreeing, correcting the system, or      │
+│  insisting that information they previously provided is correct (e.g., 'I    │
+│  already told you', 'That's wrong', 'This is correct.').                     │
+│                                                                              │
+│          - **additional_info**: Providing IDs, account numbers or            │
+│  subsequent question/information asked.                                      │
+│                                                                              │
+│  **Rule**: If the User Input contradicts the Latest Interaction or           │
+│  expresses frustration with the system's request, it MUST be 'rebuttal'.     │
+│                                                                              │
+│  **Analysis Required**:                                                      │
+│  Based on the user input and history, provide:                               │
+│  1. `user_goal`: What the user is trying to achieve or accomplish            │
+│  2. `issue_description`: The specific problem or issue they're facing        │
+│  3. `problem_summary`: A detailed write-up explaining the issue in context   │
+│                                                                              │
+│  Output your response as JSON with the following structure:                  │
+│  ```json                                                                     │
+│  {                                                                           │
+│    "intent": "<category>",                                                   │
+│    "user_goal": "<what user wants to accomplish>",                           │
+│    "issue_description": "<specific problem>",                                │
+│    "problem_summary": "<detailed write-up>"                                  │
+│  }                                                                           │
+│  ```                                                                         │
+│  Agent: Intent Classifier                                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── Crew Completion ───────────────────────────────╮
+│                                                                              │
+│  Crew Execution Completed                                                    │
+│  Name: crew                                                                  │
+│  ID: cb24f7d6-f867-4c50-85b7-b6ba999e6862                                    │
+│  Final Output:                                                               │
+│                                                                              │
+│  ```json                                                                     │
+│  {                                                                           │
+│    "intent": "additional_info",                                              │
+│    "user_goal": "To report an issue where the customer is unable to          │
+│  transfer money",                                                            │
+│    "issue_description": "Customer is unable to do transfer of money",        │
+│    "problem_summary": "The user is reporting a technical issue where a       │
+│  customer is unable to perform money transfers. This appears to be a         │
+│  service disruption or technical problem preventing the transfer             │
+│  functionality from working properly. The user is providing information      │
+│  about this issue, likely seeking technical support or resolution for the    │
+│  money transfer problem."                                                    │
+│  }                                                                           │
+│  ```                                                                         │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-12 17:46:38,372 - opentelemetry.attributes - WARNING - Invalid type NoneType for attribute 'sop_value' value. Expected one of ['bool', 'str', 'bytes', 'int', 'float'] or a sequence of those types
+Enhanced classifier | incident=0430498 | app=optimus | category=transaction_failure
+Initialized and classified incident 0430498 with intent: additional_info
 ╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
 │                                                                              │
 │  Method: initialize_and_classify                                             │
@@ -9,7 +296,6 @@ Initialized and classified incident 099430408 with intent: additional_info
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-Fresh incident 099430408, gather context
 ╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
 │                                                                              │
 │  Method: start_process                                                       │
@@ -17,6 +303,8 @@ Fresh incident 099430408, gather context
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
+
+Fresh incident 0430498, gather context
 ╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
 │                                                                              │
 │  Method: start_process                                                       │
@@ -24,7 +312,6 @@ Fresh incident 099430408, gather context
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-
 
 ╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
 │                                                                              │
@@ -38,7 +325,7 @@ Fresh incident 099430408, gather context
 │                                                                              │
 │  Crew Execution Started                                                      │
 │  Name: crew                                                                  │
-│  ID: 3ddf64b5-0270-402e-a7ea-2023f4fc36ec                                    │
+│  ID: 361ec137-07f8-47ba-9a33-341cc6a0e141                                    │
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -47,14 +334,14 @@ Fresh incident 099430408, gather context
 │                                                                              │
 │  Task Started                                                                │
 │  Name: Find similar incidents                                                │
-│  ID: 60cf87ba-b0a1-4eda-8722-bae47a148ae0                                    │
+│  ID: 66d0bfc3-b89f-431e-9554-fe6fbbb78ef7                                    │
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-16:51:50 - LiteLLM:INFO: utils.py:3427 - 
+17:46:54 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 16:51:50,342 - LiteLLM - INFO - 
+2026-08-12 17:46:54,423 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
 ╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
 │                                                                              │
@@ -73,18 +360,15 @@ LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
 │  - customer_id: 1064182965                                                   │
 │                                                                              │
 │  LLM Analysis:                                                               │
-│  - User Goal: Report and get assistance with a money transfer issue where    │
-│  the customer cannot complete money transfers                                │
-│  - Issue Description: Customer is unable to do transfer of money - the       │
-│  money transfer functionality is not working                                 │
+│  - User Goal: To report an issue where the customer is unable to transfer    │
+│  money                                                                       │
+│  - Issue Description: Customer is unable to do transfer of money             │
 │  - Problem Summary: The user is reporting a technical issue where a          │
-│  customer is unable to perform money transfers. The system appears to have   │
-│  a problem with its money transfer functionality. The short description      │
-│  contains what appears to be a test string (<script>alert('XSS')</script>)   │
-│  which may have been accidentally included, but the core issue is that the   │
-│  customer cannot complete money transfers. This is a technical support       │
-│  request seeking assistance to resolve the money transfer functionality      │
-│  problem.                                                                    │
+│  customer is unable to perform money transfers. This appears to be a         │
+│  service disruption or technical problem preventing the transfer             │
+│  functionality from working properly. The user is providing information      │
+│  about this issue, likely seeking technical support or resolution for the    │
+│  money transfer problem.                                                     │
 │                                                                              │
 │  Original Description:                                                       │
 │  Short Description: <script>alert('XSS')</script> Customer is unable to do   │
@@ -106,19 +390,18 @@ LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-2026-08-12 16:51:58,114 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
 ╭─────────────────────── 🔧 Tool Execution Started (#1) ───────────────────────╮
 │                                                                              │
 │  Tool: search_historic_incidents                                             │
-│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
-│  customer unable to transfer money money transfer functionality not          │
-│  working", "top_k": 5}                                                       │
+│  Args: {"incident_description": "Mobile/Net Banking transaction failure -    │
+│  Customer unable to transfer money. Technical issue preventing money         │
+│  transfer functionality from working properly.", "top_k": 5}                 │
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-2026-08-12 16:55:04,265 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
-2026-08-12 16:56:16,271 - utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-12 17:46:57,900 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:50:04,107 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
 ╭───────────────────────────── 🔧 Tool Error (#1) ─────────────────────────────╮
 │                                                                              │
 │  Tool Failed                                                                 │
@@ -129,19 +412,20 @@ LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
-2026-08-12 16:58:10,451 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
 
 ╭─────────────────────── 🔧 Tool Execution Started (#2) ───────────────────────╮
 │                                                                              │
 │  Tool: search_historic_incidents                                             │
-│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
-│  customer unable to transfer money money transfer functionality not          │
-│  working", "top_k": 5}                                                       │
+│  Args: {"incident_description": "Mobile/Net Banking transaction failure -    │
+│  Customer unable to transfer money. Technical issue preventing money         │
+│  transfer functionality from working properly.", "top_k": 5}                 │
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-2026-08-12 17:01:16,645 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:53:10,301 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:54:46,669 - utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-12 17:56:16,494 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
 ╭───────────────────────────── 🔧 Tool Error (#2) ─────────────────────────────╮
 │                                                                              │
 │  Tool Failed                                                                 │
@@ -156,16 +440,16 @@ LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
 ╭─────────────────────── 🔧 Tool Execution Started (#3) ───────────────────────╮
 │                                                                              │
 │  Tool: search_historic_incidents                                             │
-│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
-│  customer unable to transfer money money transfer functionality not          │
-│  working", "top_k": 5}                                                       │
+│  Args: {"incident_description": "Mobile/Net Banking transaction failure -    │
+│  Customer unable to transfer money. Technical issue preventing money         │
+│  transfer functionality from working properly.", "top_k": 5}                 │
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-2026-08-12 17:04:22,851 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
-2026-08-12 17:06:16,347 - utils.llm - INFO - OPENAI_API_KEY refreshed
-2026-08-12 17:07:29,045 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 17:59:22,680 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 18:02:28,859 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+2026-08-12 18:04:46,741 - utils.llm - INFO - OPENAI_API_KEY refreshed
 ╭───────────────────────────── 🔧 Tool Error (#3) ─────────────────────────────╮
 │                                                                              │
 │  Tool Failed                                                                 │
@@ -220,672 +504,27 @@ LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-17:10:35 - LiteLLM:INFO: utils.py:3427 - 
+18:05:35 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:10:35,240 - LiteLLM - INFO - 
+2026-08-12 18:05:35,008 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
 ╭─────────────────────── 🔧 Tool Execution Started (#4) ───────────────────────╮
 │                                                                              │
 │  Tool: search_historic_incidents                                             │
-│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
-│  customer unable to transfer money money transfer functionality not          │
-│  working", "top_k": 5}                                                       │
+│  Args: {"incident_description": "Mobile/Net Banking transaction failure -    │
+│  Customer unable to transfer money. Technical issue preventing money         │
+│  transfer functionality from working properly.", "top_k": 5}                 │
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-2026-08-12 17:10:43,972 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
-2026-08-12 17:13:50,174 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
-2026-08-12 17:16:16,390 - utils.llm - INFO - OPENAI_API_KEY refreshed
-╭───────────────────────────── 🔧 Tool Error (#4) ─────────────────────────────╮
-│                                                                              │
-│  Tool Failed                                                                 │
-│  Tool: search_historic_incidents                                             │
-│  Iteration: 4                                                                │
-│  Attempt: 1                                                                  │
-│  Error:                                                                      │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-╭─────────────────────── 🔧 Tool Execution Started (#5) ───────────────────────╮
-│                                                                              │
-│  Tool: search_historic_incidents                                             │
-│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
-│  customer unable to transfer money money transfer functionality not          │
-│  working", "top_k": 5}                                                       │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-2026-08-12 17:16:56,352 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
-2026-08-12 17:20:02,542 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
-╭───────────────────────────── 🔧 Tool Error (#5) ─────────────────────────────╮
-│                                                                              │
-│  Tool Failed                                                                 │
-│  Tool: search_historic_incidents                                             │
-│  Iteration: 5                                                                │
-│  Attempt: 2                                                                  │
-│  Error:                                                                      │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-╭─────────────────────── 🔧 Tool Execution Started (#6) ───────────────────────╮
-│                                                                              │
-│  Tool: search_historic_incidents                                             │
-│  Args: {"incident_description": "Mobile Net Banking transaction_failure      │
-│  customer unable to transfer money money transfer functionality not          │
-│  working", "top_k": 5}                                                       │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-2026-08-12 17:23:08,705 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
-2026-08-12 17:26:14,824 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
-2026-08-12 17:26:16,437 - utils.llm - INFO - OPENAI_API_KEY refreshed
-╭───────────────────────────── 🔧 Tool Error (#6) ─────────────────────────────╮
-│                                                                              │
-│  Tool Failed                                                                 │
-│  Tool: search_historic_incidents                                             │
-│  Iteration: 6                                                                │
-│  Attempt: 3                                                                  │
-│  Error:                                                                      │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-╭──────────────────────────────── Tool Output ─────────────────────────────────╮
-│                                                                              │
-│                                                                              │
-│  I encountered an error while trying to use the tool. This was the error: .  │
-│   Tool search_historic_incidents accepts these inputs: Tool Name:            │
-│  search_historic_incidents                                                   │
-│  Tool Arguments: {                                                           │
-│    "properties": {                                                           │
-│      "incident_description": {                                               │
-│        "title": "Incident Description",                                      │
-│        "type": "string"                                                      │
-│      },                                                                      │
-│      "top_k": {                                                              │
-│        "default": 5,                                                         │
-│        "title": "Top K",                                                     │
-│        "type": "integer"                                                     │
-│      }                                                                       │
-│    },                                                                        │
-│    "required": [                                                             │
-│      "incident_description",                                                 │
-│      "top_k"                                                                 │
-│    ],                                                                        │
-│    "title": "SearchHistoricIncidentsToolSchema",                             │
-│    "type": "object",                                                         │
-│    "additionalProperties": false                                             │
-│  }                                                                           │
-│  Tool Description: Search for similar incidents from the historic incident   │
-│  database. This tool finds past incidents that are similar to the current    │
-│  issue and provides their resolution details and conversation context. Use   │
-│  this to understand how similar issues were resolved in the past..           │
-│  Moving on then. Decide if you need a tool or can provide the final answer.  │
-│  Use one at a time.                                                          │
-│  To use a tool, use:                                                         │
-│  Thought: [reasoning]                                                        │
-│  Action: [name from search_historic_incidents]                               │
-│  Action Input: [JSON object]                                                 │
-│                                                                              │
-│  To provide the final answer, use:                                           │
-│  Thought: [reasoning]                                                        │
-│  Final Answer: [complete response]                                           │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-17:29:21 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:29:21,029 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-17:29:22 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-12 17:29:22,285 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Historic Incident Analyst                                            │
-│                                                                              │
-│  Final Answer:                                                               │
-│                                                                              │
-│                                                                              │
-│  Thought: I need to use the search_historic_incidents tool to find similar   │
-│  historic incidents. Let me try with a properly formatted request.           │
-│                                                                              │
-│  Action: search_historic_incidents                                           │
-│                                                                              │
-│  Action Input: {"incident_description": "Mobile Net Banking                  │
-│  transaction_failure customer unable to transfer money", "top_k": 5}         │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Find similar incidents                                                │
-│  Agent: Historic Incident Analyst                                            │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-╭────────────────────────────── Crew Completion ───────────────────────────────╮
-│                                                                              │
-│  Crew Execution Completed                                                    │
-│  Name: crew                                                                  │
-│  ID: 3ddf64b5-0270-402e-a7ea-2023f4fc36ec                                    │
-│  Final Output:                                                               │
-│                                                                              │
-│  Thought: I need to use the search_historic_incidents tool to find similar   │
-│  historic incidents. Let me try with a properly formatted request.           │
-│                                                                              │
-│  Action: search_historic_incidents                                           │
-│                                                                              │
-│  Action Input: {"incident_description": "Mobile Net Banking                  │
-│  transaction_failure customer unable to transfer money", "top_k": 5}         │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-2026-08-12 17:29:22,298 - new_flow.flow - INFO - Resolver | incident=099430408 app=optimus
-╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
-│                                                                              │
-│  Method: semantic_search                                                     │
-│  Status: Completed                                                           │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
-│                                                                              │
-│  Method: run_resolver_crew                                                   │
-│  Status: Running                                                             │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-2026-08-12 17:29:22,390 - new_flow.flow - INFO - agents.plan_agent import PlanOutput=optimus
-17:29:22 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:29:22,404 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-17:29:30 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-12 17:29:30,992 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-17:29:30 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:29:30,993 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-17:29:37 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-12 17:29:37,074 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-17:29:37 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:29:37,077 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-17:29:42 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-12 17:29:42,974 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-2026-08-12 17:29:42,974 - crewai.utilities.reasoning_handler - WARNING - Agent planning reached maximum attempts (3) without being ready. Proceeding with current plan.
-17:29:42 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:29:42,978 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Triage Analyst                                                       │
-│                                                                              │
-│  Task: Analyze the following investigation results and create a plan:        │
-│                                                                              │
-│  === INCIDENT ANALYSIS (from Intent Classifier) ===                          │
-│                                                                              │
-│  Incident Summary:                                                           │
-│  - Application: Mobile/Net Banking                                           │
-│  - Problem Category: transaction_failure                                     │
-│                                                                              │
-│  Customer Identifiers:                                                       │
-│  - ucic: 1064182965                                                          │
-│  - customer_id: 1064182965                                                   │
-│                                                                              │
-│  LLM Analysis:                                                               │
-│  - User Goal: Report and get assistance with a money transfer issue where    │
-│  the customer cannot complete money transfers                                │
-│  - Issue Description: Customer is unable to do transfer of money - the       │
-│  money transfer functionality is not working                                 │
-│  - Problem Summary: The user is reporting a technical issue where a          │
-│  customer is unable to perform money transfers. The system appears to have   │
-│  a problem with its money transfer functionality. The short description      │
-│  contains what appears to be a test string (<script>alert('XSS')</script>)   │
-│  which may have been accidentally included, but the core issue is that the   │
-│  customer cannot complete money transfers. This is a technical support       │
-│  request seeking assistance to resolve the money transfer functionality      │
-│  problem.                                                                    │
-│                                                                              │
-│  Original Description:                                                       │
-│  Short Description: <script>alert('XSS')</script> Customer is unable to do   │
-│  transfer of money                                                           │
-│  Description: Customer is unable to do transfer of money                     │
-│                                                                              │
-│  Please investigate this issue starting with Similarity Search for similar   │
-│  historic incidents,                                                         │
-│  then check Jaeger traces to understand the current error context.           │
-│                                                                              │
-│                                                                              │
-│  === SIMILARITY SEARCH RESULTS ===                                           │
-│                                                                              │
-│                                                                              │
-│  Thought: I need to use the search_historic_incidents tool to find similar   │
-│  historic incidents. Let me try with a properly formatted request.           │
-│                                                                              │
-│  Action: search_historic_incidents                                           │
-│                                                                              │
-│  Action Input: {"incident_description": "Mobile Net Banking                  │
-│  transaction_failure customer unable to transfer money", "top_k": 5}         │
-│                                                                              │
-│  === CONTEXT ===                                                             │
-│  Application: optimus                                                        │
-│  Problem Category: transaction_failure                                       │
-│  Customer Identifiers:                                                       │
-│    - ucic: 1064182965                                                        │
-│    - customer_id: 1064182965                                                 │
-│                                                                              │
-│  === AVAILABLE JAEGER SERVICES ===                                           │
-│  Discovered 216 services from Jaeger:                                        │
-│                                                                              │
-│    - APPLY-FM-API                                                            │
-│    - APPLY-HL-API                                                            │
-│    - APPLY-LOAN-API                                                          │
-│    - APPLY-LOAN-API-MESSAGE-HANDLER                                          │
-│    - APPROVAL-API                                                            │
-│    - AUDITLOG-EVENT-CONSUMER                                                 │
-│    - AUTH-ADMIN-API                                                          │
-│    - AUTH-SERVICE                                                            │
-│    - AUTHZ-ADMIN-API                                                         │
-│    - AVC-API                                                                 │
-│    - BAS-API                                                                 │
-│    - BAS-API-MESSAGE-HANDLER                                                 │
-│    - BXP-LOGIN-PROVIDER                                                      │
-│    - CA-BO-MobileApp                                                         │
-│    - CARDLESS-CASH-WITHDRAWAL-API-MESSAGE-HANDLER                            │
-│    - CAS-API                                                                 │
-│    - CAS-API-MESSAGE-HANDLER                                                 │
-│    - CBS-DORMANCY                                                            │
-│    - CEL-UI                                                                  │
-│    - CHEQUE-CONSENT-SERVICE                                                  │
-│    - CREATE-ACCOUNT-API                                                      │
-│    - CREDIT-CARD-ACQUISITION-OFFERS-MESSAGE-HANDLER                          │
-│    - CREDIT-CARD-API                                                         │
-│    - CREDIT-CARD-API-MESSAGE-HANDLER                                         │
-│    - CRON-JOBS                                                               │
-│    - CUSTOMER-ACQUISITION-SERVICE-MESSAGE-HANDLER                            │
-│    - CUSTOMER-FEEDBACK-SERVICE                                               │
-│    - CUSTOMER-LOGIN-PROVIDER                                                 │
-│    - CX-API                                                                  │
-│    - DEAF-API                                                                │
-│    - DEBITCARD-API                                                           │
-│    - DEMAT-API                                                               │
-│    - DEPOSITS-API-MESSAGE-HANDLER                                            │
-│    - DEPOSITS-API-TEMPORAL-WORKER                                            │
-│    - DEVICE-FINGERPRINT-SERVICE                                              │
-│    - DEVICE-MANAGEMENT-SERVICE                                               │
-│    - DEVICE-MANAGEMENT-SERVICE-CS-MESSAGE-HANDLER                            │
-│    - DSB-API                                                                 │
-│    - E-CHEQUE-API                                                            │
-│    - ECOM-MERCHANT-LOGIN-PROVIDER                                            │
-│    - ECOM-UI-WEB                                                             │
-│    - EMANDATE                                                                │
-│    - EMPLOYEE-LOGIN-PROVIDER                                                 │
-│    - ENTERPRISE-AUTHORIZATION-SERVICE                                        │
-│    - ESIGN-API                                                               │
-│    - EXTERNAL-LOGIN-PROVIDER                                                 │
-│    - FAQ-API                                                                 │
-│    - FEATURE-TOGGLE-API                                                      │
-│    - FEATURE-TOGGLE-API-MESSAGE-HANDLER                                      │
-│    - FRAUD-MONITORING-SERVICE                                                │
-│    - FX-API                                                                  │
-│    - FX-API-MESSAGE-HANDLER                                                  │
-│    - GRADE-API                                                               │
-│    - GRADE_API_APPLAUNCH_MESSAGE_HANDLER                                     │
-│    - GRADE_API_MESSAGE_HANDLER                                               │
-│    - GST-API                                                                 │
-│    - HYDRA-MANAGER-API                                                       │
-│    - INSURANCE-API                                                           │
-│    - IPO-API                                                                 │
-│    - KORE-AI-EVENT-CONSUMER                                                  │
-│    - KRATOS-CSR                                                              │
-│    - KRATOS-QUANTUMCASH                                                      │
-│    - KRATOS-TRADEX                                                           │
-│    - KYC-SERVICE-MESSAGE-HANDLER                                             │
-│    - LAI-API-MESSAGE-HANDLER                                                 │
-│    - LAS-API                                                                 │
-│    - LIABILITY-PLATFORM-MESSAGE-HANDLER                                      │
-│    - LOANS-API                                                               │
-│    - LOANS-API-MESSAGE-HANDLER                                               │
-│    - LOGIN-AUDITLOG-EVENT-CONSUMER                                           │
-│    - MANDATE-HUB-API                                                         │
-│    - MDH-MESSAGE-HANDLER                                                     │
-│    - MDS-MDH-MESSAGE-HANDLER                                                 │
-│    - MERCHANT-ONBOARDING-API                                                 │
-│    - METADATA-SERVICE                                                        │
-│    - MF-COMPLIANCE-API                                                       │
-│    - MF-COMPLIANCE-API-MESSAGE-HANDLER                                       │
-│    - MIGRATION-API                                                           │
-│    - MOCK-MESSAGE-EXCHANGE-SERVICE                                           │
-│    - Mobile-app                                                              │
-│    - NR-API                                                                  │
-│    - NTB-FD-STABLE-MONEY-MESSAGE-HANDLER                                     │
-│    - OAUTH-SERVER                                                            │
-│    - OFFERS-DATAMART-API                                                     │
-│    - OFFERS-DATAMART-API-MESSAGE-HANDLER                                     │
-│    - ON-API                                                                  │
-│    - OPS-USER-API                                                            │
-│    - OPTIMUS-AUTH-INTEGRATION-API                                            │
-│    - OPTIMUS-EVENT-CONSUMER                                                  │
-│    - OPTIMUS-PRIME-API                                                       │
-│    - OVERDRAFT-API                                                           │
-│    - PAYMENT-GATEWAY-SERVICE                                                 │
-│    - PDF-API                                                                 │
-│    - RAS-API                                                                 │
-│    - RAS-API-MDH-MESSAGE-HANDLER                                             │
-│    - RAS-API-MESSAGE-HANDLER                                                 │
-│    - RAS-API-TEMPORAL-WORKER                                                 │
-│    - RE-KYC-API                                                              │
-│    - REDIS-EXPIRED-EVENT-CONSUMER                                            │
-│    - REWARDS-INTEGRATION-API                                                 │
-│    - RFX-INWARD-API                                                          │
-│    - RISK-CONTROL-API                                                        │
-│    - RISK-CONTROL-BIOCATCH-DATA-CONSUMER                                     │
-│    - RISK-CONTROL-CUSTOMER-DATA-CONSUMER                                     │
-│    - RISK-CONTROL-CUSTOMER-FAILURE-LOGIN-DATA-CONSUMER                       │
-│    - RISK-CONTROL-FINGERPRINT-DATA-CONSUMER                                  │
-│    - RISK-CONTROL-FRAUD-RISK-INDICATOR-DATA-CONSUMER                         │
-│    - RISK-CONTROL-IP-PROFILE-TRUST-VALIDATION-DATA-CONSUMER                  │
-│    - RISK-CONTROL-RASP-THREAT-DETECTION-ALERT-DATA-CONSUMER                  │
-│    - RISK-CONTROL-REQUEST-DATA-CONSUMER                                      │
-│    - RISK-CONTROL-SERVICE                                                    │
-│    - RISK-CONTROL-SUSPECT-DATA-CONSUMER                                      │
-│    - RISK-CONTROL-SUSPECT-DATA-DEGRADATION-CONSUMER                          │
-│    - SALARY-OD-API                                                           │
-│    - SECUREPASS-AUTHENTICATOR                                                │
-│    - SERVICE-REQUEST-API                                                     │
-│    - SESSION-MANAGEMENT-SERVICE                                              │
-│    - SESSION-TRANSFER-SERVICE                                                │
-│    - SGB-API                                                                 │
-│    - SSO-API                                                                 │
-│    - TOKEN-MANAGEMENT-SERVICE                                                │
-│    - TRACING-API                                                             │
-│    - UI-FM-MICROSITE                                                         │
-│    - UI-WEB                                                                  │
-│    - UIDAI-INTEGRATION-API                                                   │
-│    - USER-PROFILE-API-MESSAGE-HANDLER                                        │
-│    - USER-PROFILE-SVC                                                        │
-│    - USER-SESSION-ACTIVITY-EVENT-CONSUMER                                    │
-│    - WALLET-INTEGRATION-API                                                  │
-│    - WEALTH-API                                                              │
-│    - WEALTH-API-MESSAGE-HANDLER                                              │
-│    - WEALTH-API-VALUEFY-MESSAGE-HANDLER                                      │
-│    - account-aggregator-api                                                  │
-│    - account-aggregator-api-bureau-accounts-handler                          │
-│    - account-aggregator-api-external-message-handler                         │
-│    - account-aggregator-api-message-handler                                  │
-│    - account-aggregator-api-tsp-consent-handler                              │
-│    - account-aggregator-api-tsp-data-ready-handler                           │
-│    - ai-chat-optimus-adapter                                                 │
-│    - ai-chat-service                                                         │
-│    - ai-voice-optimus-adapter                                                │
-│    - apply-pl-api                                                            │
-│    - approval-workflow-engine                                                │
-│    - assisted-service                                                        │
-│    - beneficiary-api                                                         │
-│    - billpay-api                                                             │
-│    - billpay-api-message-handler                                             │
-│    - bulk-payments-api                                                       │
-│    - bulk-payments-api-message-handler                                       │
-│    - cardless-cash-withdrawal                                                │
-│    - cel-arap                                                                │
-│    - cel-auth                                                                │
-│    - cel-core                                                                │
-│    - cel-cron-executor                                                       │
-│    - cel-erp-invoice-ingestion                                               │
-│    - cel-investment                                                          │
-│    - cel-orch                                                                │
-│    - cel-schedule                                                            │
-│    - cel-smart-collection                                                    │
-│    - cel-tax-payment                                                         │
-│    - channel-service                                                         │
-│    - corporate-portal-api                                                    │
-│    - crypto-service                                                          │
-│    - customer-acquisition-service                                            │
-│    - customer-communication-gateway                                          │
-│    - customer-details-service                                                │
-│    - deposits-api                                                            │
-│    - deposits-api-cdms-message-handler                                       │
-│    - deposits-api-giftwrapper-cbs-message-handler                            │
-│    - ecom-api                                                                │
-│    - email-verification-api                                                  │
-│    - event-tracker-service                                                   │
-│    - fastag-service                                                          │
-│    - fastag-service-message-handler                                          │
-│    - fi-curing-api                                                           │
-│    - fx_temporal_worker_name                                                 │
-│    - gestalt                                                                 │
-│    - grafana                                                                 │
-│    - idp-api                                                                 │
-│    - idp-api-message-handler                                                 │
-│    - jaeger                                                                  │
-│    - kyc-service                                                             │
-│    - lic-agent-portal-api                                                    │
-│    - login-event-consumer                                                    │
-│    - mapper-api                                                              │
-│    - mdh-data-service                                                        │
-│    - message-exchange-service                                                │
-│    - msme-tally-integrator-api                                               │
-│    - msme-tally-processor-api                                                │
-│    - multifactor-authentication-api                                          │
-│    - nginx                                                                   │
-│    - onboarding                                                              │
-│    - optimus-notification-service                                            │
-│    - optimus-notification-service-message-handler                            │
-│    - optimus-offers-service                                                  │
-│    - payments-api                                                            │
-│    - payments-api-message-handler                                            │
-│    - pfm-api                                                                 │
-│    - pfm-api-message-handler                                                 │
-│    - pfm-api-realtime-txn-message-handler                                    │
-│    - platform-service                                                        │
-│    - platform-service-message-handler                                        │
-│    - risk-monitor-api                                                        │
-│    - socket-tracing-service                                                  │
-│    - tfx-deal                                                                │
-│    - tfx-remittance-api                                                      │
-│    - tfx-sso-integration-service                                             │
-│    - totp-service                                                            │
-│    - track-my-application-api                                                │
-│    - traefik-infra                                                           │
-│    - transaction-insights-api                                                │
-│    - universal-search-api                                                    │
-│    - upcoming-api                                                            │
-│    - upi-api                                                                 │
-│    - upi-api-message-handler                                                 │
-│    - user-profile-api-cdms-message-handler                                   │
-│                                                                              │
-│  Note: These are ALL services that have sent traces in the last 1 hour.      │
-│  Use any service name directly with fetch_jaeger_traces tool.                │
-│                                                                              │
-│  You have access to a Jaeger tracing tool. If you need more information      │
-│  about service calls, latency issues, or distributed traces, use the tool    │
-│  to fetch data.                                                              │
-│                                                                              │
-│  IMPORTANT: When you use the Jaeger tool, include the key findings in your   │
-│  response below.                                                             │
-│                                                                              │
-│  Provide your analysis in this format:                                       │
-│  ISSUE_UNDERSTOOD: yes/no                                                    │
-│  ISSUE_SUMMARY: [brief description of what the issue is - include any        │
-│  Jaeger trace findings here]                                                 │
-│  JAEGER_FINDINGS: [you MUST use the Jaeger tool to fetch traces - summarize  │
-│  the key trace data including service names, errors, latency issues, etc.    │
-│  NEVER write 'NOT_USED' - always fetch and analyze traces]                   │
-│  SERVICE: [pick the relevant service name from AVAILABLE JAEGER SERVICE      │
-│  above]                                                                      │
-│  NEXT_STEPS: [what Execute Agent should do next]                             │
-│  NEEDS_MORE_INFO: yes/no                                                     │
-│  QUESTION_FOR_USER: [if needs more info, what to ask]                        │
-│                                                                              │
-│                                                                              │
-│  Planning:                                                                   │
-│                                                                              │
-│                                                                              │
-│  Looking at my previous plan more carefully - the gap is that I'm            │
-│  describing multiple sequential tool invocations when I should be making     │
-│  the most direct call to diagnose the issue. For a transaction_failure on    │
-│  money transfers, the most targeted approach is a single invocation.         │
-│                                                                              │
-│  ## Execution Plan                                                           │
-│                                                                              │
-│  **ISSUE_UNDERSTOOD:** yes                                                   │
-│                                                                              │
-│  **ISSUE_SUMMARY:** Customer (UCIC: 1064182965) using Mobile/Net Banking     │
-│  unable to complete money transfers. Category: transaction_failure.          │
-│                                                                              │
-│  **JAEGER_FINDINGS:** NOT_USED                                               │
-│                                                                              │
-│  **SERVICE:** payments-api, upi-api                                          │
-│                                                                              │
-│  **NEXT_STEPS:**                                                             │
-│  1. Invoke fetch_jaeger_traces with service=payments-api,                    │
-│  operation=transfer, error=true, limit=30 to capture transfer failures       │
-│  directly                                                                    │
-│                                                                              │
-│  **NEEDS_MORE_INFO:** no                                                     │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  **READINESS ASSESSMENT:**                                                   │
-│                                                                              │
-│  Single invocation targeting the exact failure scenario (transfer operation  │
-│  with errors) from the primary service. This is the most direct path to      │
-│  root cause.                                                                 │
-│                                                                              │
-│  **READY**                                                                   │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Triage Analyst                                                       │
-│                                                                              │
-│  Final Answer:                                                               │
-│                                                                              │
-│                                                                              │
-│  I'll analyze this incident by first fetching Jaeger traces to understand    │
-│  the current error context for the money transfer failure.                   │
-│                                                                              │
-│  Let me fetch traces from the relevant payment services:                     │
-│  <tool_code>                                                                 │
-│  fetch_jaeger_traces                                                         │
-│  <param name="service">payments-api</param>                                  │
-│  <param name="operation">transfer</param>                                    │
-│  <param name="limit">30</param>                                              │
-│  <param name="error">true</param>                                            │
-│  </tool_code>                                                                │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-2026-08-12 17:29:47,079 - new_flow.utils.llm_cache - INFO - LLM cache miss - created new instance for /app/models/MiniMax-M2.5
-2026-08-12 17:29:47,079 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
-2026-08-12 17:29:47,079 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: optimus-api, Tag: customer_id=1064182965
-2026-08-12 17:29:47,079 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
-2026-08-12 17:29:47,079 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=optimus-api, tag=customer_id=1064182965
-2026-08-12 17:29:47,079 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786469387079368, 'end': 1786555787079368, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-12 17:29:52,599 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
-2026-08-12 17:29:52,599 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
-2026-08-12 17:29:52,599 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=optimus-api, tag=customer_id=1064182965
-2026-08-12 17:29:52,599 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786382992599537, 'end': 1786469392599537, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-12 17:30:03,969 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
-2026-08-12 17:30:03,969 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
-2026-08-12 17:30:03,969 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=optimus-api, tag=customer_id=1064182965
-2026-08-12 17:30:03,969 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786296603969789, 'end': 1786383003969789, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-12 17:30:04,075 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
-2026-08-12 17:30:04,075 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
-2026-08-12 17:30:04,076 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=optimus-api, tag=customer_id=1064182965
-2026-08-12 17:30:04,076 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786210204075992, 'end': 1786296604075992, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-12 17:30:04,107 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 3, continuing...
-2026-08-12 17:30:04,107 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=4
-2026-08-12 17:30:04,108 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 96-120h ago for service=optimus-api, tag=customer_id=1064182965
-2026-08-12 17:30:04,108 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786123804107993, 'end': 1786210204107993, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-12 17:30:07,098 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 4, continuing...
-2026-08-12 17:30:07,098 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=5
-2026-08-12 17:30:07,098 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 120-144h ago for service=optimus-api, tag=customer_id=1064182965
-2026-08-12 17:30:07,099 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1786037407098967, 'end': 1786123807098967, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-12 17:30:07,137 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 5, continuing...
-2026-08-12 17:30:07,137 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=6
-2026-08-12 17:30:07,137 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 144-168h ago for service=optimus-api, tag=customer_id=1064182965
-2026-08-12 17:30:07,137 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1785951007137750, 'end': 1786037407137750, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-12 17:30:07,170 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 6, continuing...
-2026-08-12 17:30:07,170 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] All 7 time ranges exhausted for iteration 1
-17:30:07 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:30:07,180 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:30:12,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Starting new iteration with service=payments-api, tag=customer_id
-2026-08-12 17:30:12,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 2 START ===
-2026-08-12 17:30:12,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: payments-api, Tag: customer_id=1064182965
-2026-08-12 17:30:12,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
-2026-08-12 17:30:12,483 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=payments-api, tag=customer_id=1064182965
-2026-08-12 17:30:12,483 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=payments-api customer_id=1064182965 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'payments-api', 'start': 1786469412483382, 'end': 1786555812483382, 'limit': 100, 'tags': '{"customer_id": "1064182965"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
-2026-08-12 17:30:19,280 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 0
-17:30:19 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:30:19,291 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-17:30:23 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-12 17:30:23,033 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-Plan Agent completed for incident 099430408
-Execute Agent completed for incident 099430408
-Summary Agent completed for incident 099430408
-interaction_counter: 1
-Request - url:https://api.aws-uat.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident json:{'callerId': 'shyam.kc@idfcfirstbank.com', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Fund Transfer', 'tier3': 'Unable to initiate NEFT Transaction', 'impact': 'Low', 'urgency': 'Medium', 'shortDescription': "<script>alert('XSS')</script> Customer is unable to do transfer of money", 'description': 'Customer is unable to do transfer of money', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006212999', 'sourceIncidentId': '', 'assignmentGroup': '', 'incidentId': '099430408', 'state': 'On Hold', 'additionalComments': "Diagnosis:\nThe issue is not with your account or mobile app. Our investigation shows that the UPI payment system (the backend service that processes money transfers) experienced a temporary technical issue. When you attempted to transfer ₹11.00 to CLOUD HARBOR at 8:22 PM on August 12, 2026, the bank's payment system received a timeout error from the upstream UPI service. This is a system-wide issue that affected your transaction, not a problem with your account or banking credentials.\n\nSolution:\nPlease try the fund transfer again. The technical issue with the UPI payment service has likely been resolved. If you continue to experience problems after trying again, please contact us or visit your nearest branch. Your account is fully functional and secure - this was a temporary system issue that has been identified for resolution.", 'cause': '', 'onHoldReason': 'User Action Required'} headers:{'Content-Type': 'application/json', 'correlationId': '232e5db5-2b6d-47d7-9f41-c9ec0d3c3ae2', 'source': 'IncidentBot', 'transactionId': '71c6605c-4b5b-4469-81f4-83737c219b5f', 'Authorization': 'Basic MThiNDhmNzctNzMyMy00MWJiLWJmNmUtYzZmODNlODdhOTgyOkI3TGJ1NVhkcX5JT1paaW1SLThNVDE3eWtF'}
-Successfully updated incident 099430408 in ServiceNow
-Response: {'message': 'Incident has been created successfully.', 'incidentNumber': 'INC000006217352', 'incidentId': '46b9c4273b2ec7142101d834c3e45a23', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Fund Transfer', 'tier3': 'Unable to Initiate NEFT transaction', 'impact': 'Low', 'urgency': 'Medium', 'priority': 'Low', 'shortDescription': "<script>alert('XSS')</script> Customer is unable to do transfer of money", 'description': 'Customer is unable to do transfer of money', 'contactType': 'Self Service', 'state': 'On Hold', 'onHoldReason': 'User Action Required', 'vendorGroup': '', 'causedByPatch': None, 'resolutionCode': None, 'solutionType': None, 'outageType': None, 'resolutionNotes': '', 'additionalComments': "12-Aug-2026 23:00:28 - Incident BOT (Additional comments)\nDiagnosis:\nThe issue is not with your account or mobile app. Our investigation shows that the UPI payment system (the backend service that processes money transfers) experienced a temporary technical issue. When you attempted to transfer ₹11.00 to CLOUD HARBOR at 8:22 PM on August 12, 2026, the bank's payment system received a timeout error from the upstream UPI service. This is a system-wide issue that affected your transaction, not a problem with your account or banking credentials.\n\nSolution:\nPlease try the fund transfer again. The technical issue with the UPI payment service has likely been resolved. If you continue to experience problems after trying again, please contact us or visit your nearest branch. Your account is fully functional and secure - this was a temporary system issue that has been identified for resolution.\n\n", 'assignmentGroup': 'Optimus BTO Support', 'sourceIncidentNum': 'INC000006212999', 'sourceIncidentId': '232e5db5-2b6d-47d7-9f41-c9ec0d3c3ae2', 'businessImpact': None, 'cause': None, 'businessCorrectiveAction': None, 'techCorrectiveAction': None, 'dataSource': None, 'descriptionOfOutage': None, 'emailID': None, 'entityUCIC': None, 'hashValues': None, 'ipDetails': None, 'ldwNotifyInformation': None, 'loanAccountNumber': None, 'loginId': None, 'mobileNumber': None, 'businessPreventiveAction': None, 'techPreventiveAction': None, 'resoultionTeam': None, 'rootCause': None, 'systemName': None, 'urlOrDomain': None, 'userDetail': None, 'individualUCIC': None, 'sourceIncCreateddttime': '12-Aug-2026 23:00:28', 'userLocation': '', 'incidentURL': 'https://idfcfirstbanktest2.service-now.com/isupport?sys_id=46b9c4273b2ec7142101d834c3e45a23&view=sp&id=ticket&table=incident'}
-Resolution sent for incident 099430408
-DB updated for incident 099430408 status=on_hold
-╭───────────────────────────── ✅ Flow Completion ─────────────────────────────╮
-│                                                                              │
-│  Flow Execution Completed                                                    │
-│  Name: IncidentManagementFlow                                                │
-│  ID: 70a28f9a-00b4-4efd-9d7e-af8c16b650cb                                    │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
+2026-08-12 18:05:35,631 - new_flow.agents.context_builder - INFO - Searching similar incidents | app=Optimus top_k=5
+shishir.pandey_tho@0325LTPB0124444 ~ %  
 
 
-
-╭────────────────────────── Tracing Preference Saved ──────────────────────────╮
-│                                                                              │
-│  Info: Tracing has been disabled.                                            │
-│                                                                              │
-│  Your preference has been saved. Future Crew/Flow executions will not        │
-│  collect traces.                                                             │
-│                                                                              │
-│  To enable tracing later, do any one of these:                               │
-│  • Set tracing=True in your Crew/Flow code                                   │
-│  • Set CREWAI_TRACING_ENABLED=true in your project's .env file               │
-│  • Run: crewai traces enable                                                 │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-2026-08-12 17:30:29,510 - __main__ - INFO - ✓ Flow completed | incident=099430408
-shishir.pandey_tho@0325LTPB0124444 ~ % 
-
-
-
-
-
-
-
-thisis my plan_agent.py
+this is plan_agent whihc u gave 
 import os
+import logging
 from typing import Dict, Optional
 from pydantic import BaseModel, Field
 
@@ -893,8 +532,9 @@ os.environ["OTEL_SDK_DISABLED"] = "true"
 
 from crewai import Agent, Task, Crew, LLM
 from new_flow.utils.llm import llm_config
-from new_flow.tools.query_tools import JaegerTraceTool
 from new_flow.tools.app_config import get_app_config
+
+logger = logging.getLogger(__name__)
 
 
 class PlanOutput(BaseModel):
@@ -935,33 +575,33 @@ async def run_plan_agent_async(
         base_url=llm_config.url,
         api_key=llm_config.token
     )
-    
+
     try:
         app_config = get_app_config(app)
-        default_service = app_config.default_jaeger_service
+        default_service = app_config.default_jaeger_service or None
     except ValueError:
         default_service = None
-    
-    # Initialize Jaeger tool - LLM will decide when and how to use it
-    jaeger_tool = JaegerTraceTool()
-    
+
     similarity_result = incident_context if incident_context else "No similar incidents found."
-    
-    # Build customer identifiers string for LLM
-    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
-    
+
+    identifiers_text = (
+        "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items())
+        if customer_identifiers else "  None provided"
+    )
+
     analysis_agent = Agent(
         role="Triage Analyst",
         goal="Analyze investigation results and create a plan for resolution",
         backstory=(
             "You are a senior incident analyst. Your job is to analyze "
-            "Similarity Search results and Jaeger traces to understand "
-            "what the issue is and guide the next steps.\n\n"
-            "You have access to tools to fetch additional data when needed.\n\n"
+            "Similarity Search results and the list of available services "
+            "to understand what the issue likely is and recommend which "
+            "service should be investigated next.\n\n"
             "You must determine:\n"
-            "1. Is the issue clear from the data?\n"
-            "2. If yes, what's the next step (ELK or DB)?\n"
-            "3. If no, use tools to gather more info"
+            "1. Is the issue clear enough from the similarity search context?\n"
+            "2. Which service (from the AVAILABLE JAEGER SERVICES list) is "
+            "most likely responsible, based on historic incidents and problem category?\n"
+            "3. If identifiers or context are missing, what should be asked?"
         ),
         tools=[],
         verbose=True,
@@ -972,14 +612,11 @@ async def run_plan_agent_async(
         reasoning=True,
         max_reasoning_attempts=3
     )
-    
-    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
-    
-    # Add discovered services to context if available
+
     services_section = ""
     if discovered_services:
         services_section = f"\n=== AVAILABLE JAEGER SERVICES ===\n{discovered_services}\n"
-    
+
     analysis_task = Task(
         description=(
             f"Analyze the following investigation results and create a plan:\n\n"
@@ -990,112 +627,111 @@ async def run_plan_agent_async(
             f"Problem Category: {problem_category}\n"
             f"Customer Identifiers:\n{identifiers_text}\n"
             f"{services_section}\n"
-            f"You have access to a Jaeger tracing tool. If you need more information about "
-            f"service calls, latency issues, or distributed traces, use the tool to fetch data.\n\n"
-            f"IMPORTANT: When you use the Jaeger tool, include the key findings in your response below.\n\n"
-            f"Provide your analysis in this format:\n"
+            f"Do NOT call any tools. Do not attempt a tool call of any kind. "
+            f"Based only on the text above, output your analysis in this exact format:\n\n"
             f"ISSUE_UNDERSTOOD: yes/no\n"
-            f"ISSUE_SUMMARY: [brief description of what the issue is - include any Jaeger trace findings here]\n"
-            f"JAEGER_FINDINGS: [you MUST use the Jaeger tool to fetch traces - summarize the key trace data including service names, errors, latency issues, etc. NEVER write 'NOT_USED' - always fetch and analyze traces]\n"
-            f"SERVICE: [pick the relevant service name from AVAILABLE JAEGER SERVICE above]\n"
-            f"NEXT_STEPS: [what Execute Agent should do next]\n"
+            f"ISSUE_SUMMARY: [brief description of what the issue likely is, based on similarity search]\n"
+            f"SERVICE: [pick the single most relevant service name, copied EXACTLY as written "
+            f"from the AVAILABLE JAEGER SERVICES list above. If the list is empty or none apply, write NONE]\n"
+            f"NEXT_STEPS: [what Execute Agent should investigate]\n"
             f"NEEDS_MORE_INFO: yes/no\n"
             f"QUESTION_FOR_USER: [if needs more info, what to ask]\n"
         ),
         agent=analysis_agent,
         expected_output=(
-            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, JAEGER_FINDINGS, "
-            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields."
+            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, SERVICE, "
+            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields. No tool calls."
         )
     )
-    
+
     crew = Crew(
         agents=[analysis_agent],
         tasks=[analysis_task],
         verbose=False
     )
-    
+
     result = await crew.akickoff()
     result_text = str(result)
-    
+
     return _parse_plan_output(
         result_text,
-        {},
         customer_identifiers,
-        default_service
+        default_service,
+        discovered_services
     )
 
 
 def _parse_plan_output(
     llm_response: str,
-    jaeger_results: Dict,
     customer_identifiers: Dict[str, str],
-    default_service: str
+    default_service: Optional[str],
+    discovered_services: str = ""
 ) -> PlanOutput:
-    
-    issue_understood = "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower() if "ISSUE_UNDERSTOOD:" in llm_response else "no"
-    
+
+    issue_understood = (
+        "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower()
+        if "ISSUE_UNDERSTOOD:" in llm_response else "no"
+    )
+
     issue_summary = ""
     if "ISSUE_SUMMARY:" in llm_response:
         summary_part = llm_response.split("ISSUE_SUMMARY:")[-1]
-        next_section = summary_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in summary_part else summary_part
+        next_section = summary_part.split("SERVICE:")[0] if "SERVICE:" in summary_part else summary_part
         issue_summary = next_section.strip()
-    
-    # Parse JAEGER_FINDINGS from LLM response
-    jaeger_findings = ""
-    if "JAEGER_FINDINGS:" in llm_response:
-        findings_part = llm_response.split("JAEGER_FINDINGS:")[-1]
-        # Find the next field
-        next_field_match = findings_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in findings_part else findings_part
-        jaeger_findings = next_field_match.strip()
-    llm_service=""
+
+    llm_service = ""
     if "SERVICE:" in llm_response:
-        service_part=llm_response.split("SERVICE:")[-1]
-        next_part=service_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in service_part else service_part
-        llm_service=next_part.strip().split("\n")[0].strip() 
-    # Build jaeger_results from LLM findings
-    # CRITICAL: Jaeger MUST be used - if NOT_USED, force re-investigation
-    if jaeger_findings and jaeger_findings.upper() != "NOT_USED":
-        parsed_jaeger = {
-            "raw": jaeger_findings,
-            "has_errors": "error" in jaeger_findings.lower() or "failed" in jaeger_findings.lower() or "exception" in jaeger_findings.lower(),
-            "trace_count": 0,
-            "used": True
-        }
-        # Try to extract trace count
-        import re
-        match = re.search(r"(\d+)\s*traces?", jaeger_findings, re.IGNORECASE)
-        if match:
-            parsed_jaeger["trace_count"] = int(match.group(1))
-        jaeger_results = parsed_jaeger
-    else:
-        # CRITICAL: Jaeger was NOT used - this is a failure!
-        # Force the issue to be marked as not understood so Execute Agent will use Jaeger
-        issue_understood = "no"
-        issue_summary = "Jaeger traces not fetched - investigation incomplete. Execute Agent must fetch Jaeger traces."
-        jaeger_results = {"used": False, "raw": "", "trace_count": 0, "has_errors": False, "error": "Jaeger not used by Plan Agent"}
-    
+        service_part = llm_response.split("SERVICE:")[-1]
+        next_part = service_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in service_part else service_part
+        llm_service = next_part.strip().split("\n")[0].strip()
+
+    # ── Validate the chosen service against the actual discovered list ──
+    # Prevents hallucinated / near-miss / wrong-cased service names from
+    # silently slipping through to the executor.
+    valid_services = set()
+    for line in discovered_services.splitlines():
+        line = line.strip()
+        if line.startswith("- "):
+            valid_services.add(line[2:].strip())
+
+    chosen_service = ""
+    if llm_service and llm_service.upper() != "NONE":
+        if llm_service in valid_services:
+            chosen_service = llm_service
+        else:
+            lower_map = {s.lower(): s for s in valid_services}
+            if llm_service.lower() in lower_map:
+                chosen_service = lower_map[llm_service.lower()]
+            else:
+                logger.warning(
+                    f"[PlanAgent] LLM chose service '{llm_service}' not found in "
+                    f"discovered list ({len(valid_services)} known) — "
+                    f"falling back to default '{default_service}'"
+                )
+
     next_steps = ""
     if "NEXT_STEPS:" in llm_response:
         steps_part = llm_response.split("NEXT_STEPS:")[-1]
         next_section = steps_part.split("NEEDS_MORE_INFO:")[0] if "NEEDS_MORE_INFO:" in steps_part else steps_part
         next_steps = next_section.strip()
-    
-    needs_more_info = "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower() if "NEEDS_MORE_INFO:" in llm_response else False
-    
+
+    needs_more_info = (
+        "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower()
+        if "NEEDS_MORE_INFO:" in llm_response else False
+    )
+
     question = None
     if "QUESTION_FOR_USER:" in llm_response:
-        question_part = llm_response.split("QUESTION_FOR_USER:")[-1]
-        question = question_part.strip()
-    
+        question = llm_response.split("QUESTION_FOR_USER:")[-1].strip()
+
     return PlanOutput(
         issue_identified=issue_understood == "yes",
         issue_summary=issue_summary or "Unable to determine issue from initial investigation",
-        jaeger_results=jaeger_results,
-        next_steps=next_steps or "Use ELK or DB queries based on findings",
+        jaeger_results={},
+        next_steps=next_steps or "Investigate via Jaeger traces based on findings",
         needs_more_info=needs_more_info,
         question_for_user=question,
-        suggested_service=llm_service or default_service,
+        suggested_service=chosen_service or default_service,
         customer_identifiers=customer_identifiers
     )
 
