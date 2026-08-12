@@ -1,8 +1,14 @@
+time curl -X POST "$SEMANTIC_SEARCH_ENDPOINT" \
+  -H "Content-Type: application/json" \
+  -d '{"metadata":{"application":"optimus"},"query":"test query","index_source":"incidents"}'
+
+
+
 import os
+import time
+import logging
 
 os.environ["OTEL_SDK_DISABLED"] = "true"
-
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -19,15 +25,15 @@ def format_incidents_for_llm(results, max_conversation_chars=100000):
             incident_id = doc.get('id', 'N/A')
             content = doc.get('content', '')
             chunked_content = inc.get('chunked_content', content)
-            
+
             score = inc.get('score') or inc.get('dense_score') or 0
-            
+
             metadata = inc.get('metadata', {})
             assignment_group = metadata.get('assignment_group', 'N/A')
-            
+
             if len(chunked_content) > max_conversation_chars:
                 chunked_content = chunked_content[:max_conversation_chars] + "..."
-            
+
             resolution = "No resolution notes available"
             if 'Ticket Resolution notes is:' in content:
                 try:
@@ -37,9 +43,9 @@ def format_incidents_for_llm(results, max_conversation_chars=100000):
                         resolution = content[resolution_start + 30:resolution_start + 500]
                     else:
                         resolution = content[resolution_start + 30:resolution_end].strip()
-                except:
+                except Exception:
                     pass
-            
+
             incident_str = f"""
 === SIMILAR INCIDENT {i} (Similarity: {score:.2%}) ===
 Incident ID: {incident_id}
@@ -71,6 +77,8 @@ async def run_incident_context_crew_async(incident_description: str, application
 
     logger = logging.getLogger(__name__)
 
+    semantic_search_endpoint = os.getenv("SEMANTIC_SEARCH_ENDPOINT")
+
     async def similarity_search_api_async(index: str, query_string: str, application: str) -> List[Dict]:
         headers = {
             "Content-Type": "application/json",
@@ -80,15 +88,46 @@ async def run_incident_context_crew_async(incident_description: str, application
             "query": query_string,
             "index_source": index
         }
-        response = await http_client_post_async(
-            os.getenv("SEMANTIC_SEARCH_ENDPOINT"),
-            headers=headers,
-            json=body
+
+        logger.info(
+            f"[SemanticSearch] REQUEST START | endpoint={semantic_search_endpoint} "
+            f"application={application} index={index} query_len={len(query_string)}"
         )
+        start_t = time.monotonic()
+
+        try:
+            response = await http_client_post_async(
+                semantic_search_endpoint,
+                headers=headers,
+                json=body
+            )
+        except Exception as e:
+            elapsed = time.monotonic() - start_t
+            logger.error(
+                f"[SemanticSearch] REQUEST FAILED | endpoint={semantic_search_endpoint} "
+                f"elapsed={elapsed:.2f}s exception_type={type(e).__name__} "
+                f"message='{str(e)}'",
+                exc_info=True
+            )
+            raise
+
+        elapsed = time.monotonic() - start_t
+        logger.info(
+            f"[SemanticSearch] REQUEST DONE | endpoint={semantic_search_endpoint} "
+            f"elapsed={elapsed:.2f}s status_code={response.status_code}"
+        )
+
         json_resp: Dict = response.json
         results: List[Dict] = []
-        for obj in json_resp:
-            results.append(obj)
+        if json_resp:
+            for obj in json_resp:
+                results.append(obj)
+
+        logger.info(
+            f"[SemanticSearch] PARSED | elapsed={elapsed:.2f}s "
+            f"result_count={len(results)} raw_type={type(json_resp).__name__}"
+        )
+
         return results
 
     _application = application
@@ -106,14 +145,37 @@ async def run_incident_context_crew_async(incident_description: str, application
             return asyncio.run(self._arun(incident_description, top_k))
 
         async def _arun(self, incident_description: str, top_k: int = 5):
-            logger.info(f"Searching similar incidents | app={_application} top_k={top_k}")
-            results = await similarity_search_api_async(
-                index='incidents',
-                query_string=incident_description,
-                application=_application
+            tool_start = time.monotonic()
+            logger.info(
+                f"[SearchHistoricIncidentsTool] TOOL CALL START | "
+                f"app={_application} top_k={top_k} incident_description_len={len(incident_description)}"
             )
-            logger.info(f"Found {len(results)} similar incidents for app={_application}")
-            return format_incidents_for_llm(results)
+            try:
+                results = await similarity_search_api_async(
+                    index='incidents',
+                    query_string=incident_description,
+                    application=_application
+                )
+                elapsed = time.monotonic() - tool_start
+                logger.info(
+                    f"[SearchHistoricIncidentsTool] TOOL CALL SUCCESS | "
+                    f"app={_application} elapsed={elapsed:.2f}s result_count={len(results)}"
+                )
+                return format_incidents_for_llm(results)
+
+            except Exception as e:
+                elapsed = time.monotonic() - tool_start
+                logger.error(
+                    f"[SearchHistoricIncidentsTool] TOOL CALL FAILED | "
+                    f"app={_application} elapsed={elapsed:.2f}s "
+                    f"exception_type={type(e).__name__} message='{str(e)}'",
+                    exc_info=True
+                )
+                # Fail soft instead of raising — prevents CrewAI's internal
+                # retry loop from stacking on top of http_calls.py's own
+                # retry/backoff, which is what turns one slow call into
+                # a multi-minute stall.
+                return "No similar historic incidents found (search temporarily unavailable)."
 
     tracer = get_tracer(__name__)
 
@@ -174,126 +236,19 @@ async def run_incident_context_crew_async(incident_description: str, application
             verbose=True
         )
 
+        crew_start = time.monotonic()
+        logger.info(f"[ContextBuilder] CREW KICKOFF START | application={application}")
+
         with tracer.start_as_current_span("crew_kickoff_async") as crew_span:
             crew_span.set_attribute("incident_description", incident_description + "..." if len(incident_description) > 100 else incident_description)
             output = str(await crew.akickoff(
                 inputs={"incident_description": incident_description, "top_k": top_k}
             ))
 
+        crew_elapsed = time.monotonic() - crew_start
+        logger.info(
+            f"[ContextBuilder] CREW KICKOFF DONE | application={application} "
+            f"elapsed={crew_elapsed:.2f}s output_len={len(output)}"
+        )
+
         return output
-
-
-
-
-import time
-import asyncio
-import httpx
-from typing import Any, Dict, Optional, Union, Tuple
-
-
-class HttpResponseDTO:
-    def __init__(
-        self,
-        status_code: int,
-        json: Optional[Any] = None,
-        text: Optional[str] = None,
-        headers: Optional[Dict[str, str]] = None,
-    ):
-        self.status_code = status_code
-        self.json = json
-        self.text = text
-        self.headers = headers or {}
-
-
-async def http_client_post_async(
-        url: str,
-        headers: dict = {},
-        data: Optional[Any] = None,
-        form_data: Optional[Any] = None,
-        json: Optional[Any] = None,
-        timeout: float = 60.0,
-        retries: int = 3,
-        verify: Any | str = False
-) -> HttpResponseDTO:
-    if form_data is not None and data is None:
-        import urllib.parse
-        _form_data = urllib.parse.urlencode(form_data)
-        headers['Content-Type'] = 'application/x-www-form-urlencoded'
-        body = _form_data
-    elif json is not None:
-        import json as json_module
-        body = json_module.dumps(json)
-        headers['Content-Type'] = 'application/json'
-    elif data is not None:
-        body = data
-    else:
-        body = None
-
-    response = await _http_request_async(
-        'POST', url, headers=headers, data=body,
-        timeout=timeout, retries=retries, verify=verify
-    )
-    return HttpResponseDTO(
-        status_code=response.status_code,
-        json=response.json(),
-        text=response.text,
-        headers=response.headers or {}
-    )
-
-
-async def http_client_get_async(
-        url: str,
-        headers: dict = {},
-        timeout: float = 60.0,
-        retries: int = 3,
-        verify: Any | str = False
-) -> HttpResponseDTO:
-    """Async version of http_client_get"""
-    response = await _http_request_async(
-        'GET', url, headers=headers,
-        timeout=timeout, retries=retries, verify=verify
-    )
-    return HttpResponseDTO(
-        status_code=response.status_code,
-        json=response.json(),
-        text=response.text,
-        headers=response.headers or {}
-    )
-
-
-async def _http_request_async(
-    method: str,
-    url: str,
-    *,
-    headers: Optional[Dict[str, str]] = None,
-    auth: Optional[Union[Tuple[str, str], httpx.Auth]] = None,
-    params: Optional[Dict[str, Any]] = None,
-    json_data: Optional[Any] = None,
-    data: Optional[Any] = None,
-    timeout: float = 60.0,
-    retries: int = 3,
-    verify: Any | str = False
-) -> httpx.Response:
-    """Async version of _http_request"""
-    auth_obj = httpx.BasicAuth(*auth) if auth and isinstance(auth, tuple) else auth
-
-    async with httpx.AsyncClient(timeout=timeout, auth=auth_obj, verify=verify) as client:
-        for attempt in range(1, retries + 1):
-            try:
-                response = await client.request(
-                    method=method,
-                    url=url,
-                    headers=headers,
-                    params=params,
-                    json=json_data,
-                    data=data,
-                )
-
-                response.raise_for_status()
-                return response
-
-            except httpx.RequestError as exc:
-                if attempt == retries:
-                    raise exc
-                delay = 2 ** attempt
-                await asyncio.sleep(delay)
