@@ -1,205 +1,1966 @@
-"""
-LLM Cache Utility for Incident Manager.
+26-08-13 18:53:27,440 - new_flow.agents.context_builder - INFO - [SearchHistoricIncidentsTool] TOOL CALL START | app=Optimus top_k=5 incident_description_len=78
+2026-08-13 18:53:27,440 - new_flow.agents.context_builder - INFO - [SemanticSearch] REQUEST START | endpoint=http://jira-conf-rag-api-svc:8000/semantic-search application=Optimus index=incidents query_len=78
+2026-08-13 18:53:30,647 - new_flow.agents.context_builder - INFO - [SemanticSearch] REQUEST DONE | endpoint=http://jira-conf-rag-api-svc:8000/semantic-search elapsed=3.21s status_code=200
+2026-08-13 18:53:30,647 - new_flow.agents.context_builder - INFO - [SemanticSearch] PARSED | elapsed=3.21s result_count=5 raw_type=list
+2026-08-13 18:53:30,647 - new_flow.agents.context_builder - INFO - [SearchHistoricIncidentsTool] TOOL CALL SUCCESS | app=Optimus elapsed=3.21s result_count=5
+╭────────────────────── ✅ Tool Execution Completed (#3) ──────────────────────╮
+│                                                                              │
+│  Tool Completed                                                              │
+│  Tool: search_historic_incidents                                             │
+│  Output:                                                                     │
+│  === SIMILAR INCIDENT 1 (Similarity: 79.40%) ===                             │
+│  Incident ID: INC000003343596                                                │
+│  Assignment Group: Optimus BTO Support                                       │
+│                                                                              │
+│  CONTENT:                                                                    │
+│  Short description:                                                          │
+│   cx not able to add beneficiary in mobile app                               │
+│  Description:                                                                │
+│   cx not able to add beneficiary in mobile app                               │
+│  Customer Name-Mrs. NIDHI BHASIN                                             │
+│  Customer ID-5950766147                                                      │
+│  Account Number-10146653733                                                  │
+│  Mobile-9136429064                                                           │
+│  Comments and Work notes:                                                    │
+│   15-Jan-2024 11:16:02 - Vishal Chaurasiya (Additional comments)             │
+│   Ticket Resolution code is: Solved (Permanently)                            │
+│   Ticket Resolution notes is: It is look link at the time of trandaction     │
+│  user is not enable to Toggle for add as beneficary                          │
+│  Ask user to do so then user will able to see the beneficary                 │
+│  Resolution notes:                                                           │
+│   It is look link at the time of trandaction user is not enable to Toggle    │
+│  for add as beneficary                                                       │
+│  Ask user to do so then user will able to see the beneficary Root cause:     │
+│                                                                              │
+│  Resolution code:                                                            │
+│                                                                              │
+│                                                                              │
+│  RESOLUTION:                                                                 │
+│  is look link at the time of trandaction user is not enable to Toggle for    │
+│  add as beneficary                                                           │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│                                                                              │
+│  === SIMILAR INCIDENT 2 (Similarity: 0.03%) ===                              │
+│  Incident ID: INC000008448504                                                │
+│  Assignment Group: N/A                                                       │
+│                                                                              │
+│  CONTENT:                                                                    │
+│  Short description:                                                          │
+│   Unable to Add Payee in IDFC FIRST Bank – IFSC Validation Error             │
+│  Description:                                                                │
+│   Unable to Add Payee in IDFC FIRST Bank – IFSC Validation Error_x000D_      │
+│  _x000D_                                                                     │
+│  Customer Name_x000D_                                                        │
+│  Mr. Kamal Kumar K_x000D_                                                    │
+│  Customer ID_x000D_                                                          │
+│  5706684493_x000D_                                                           │
+│  Mobile_x000D_                                                               │
+│  (995) 208-9743_x000D_                                                       │
+│  Account Number_x000D_                                                       │
+│  10112040307_x000D_                                                          │
+│  _x000D_                                                                     │
+│  ---------- Original Message -------------------_x000D_                      │
+│  _x000D_                                                                     │
+│  From: [kanugak4@gmail.com]_x000D_                                           │
+│  Sent: 2/6/2026_x000D_                                                       │
+│  To: Banker Queue_x000D_                                                     │
+│  Subject: Unable to Add Payee in IDFC FIRST Bank – IFSC Validation           │
+│  Error_x000D_                                                                │
+│  _x000D_                                                                     │
+│  Caution: External mail be careful. If you are suspicious, please  click on  │
+│  ‘report phishing’ button or forward this mail as attachment to              │
+│  phishing.report@idfcfirstbank.com_x000D_                                    │
+│  Dear IDFC FIRST Bank Support Team,_x000D_                                   │
+│  _x000D_                                                                     │
+│  I am facing an issue while trying to add a new payee/beneficiary in my      │
+│  IDFC FIRST Bank account through net banking/mobile banking._x000D_          │
+│  _x000D_                                                                     │
+│  Details of the issue:_x000D_                                                │
+│  _x000D_                                                                     │
+│  Bank Name: INDIA POST PAYMENT BANK_x000D_                                   │
+│  _x000D_                                                                     │
+│  IFSC Code: IPOS0000DOP_x000D_                                               │
+│  _x000D_                                                                     │
+│  Payee Name: POSB Kamal Kumar K_x000D_                                       │
+│  _x000D_                                                                     │
+│  Although I selected the IFSC code directly from the available               │
+│  dropdown/list provided by the application, the system is still showing the  │
+│  error:_x000D_                                                               │
+│  _x000D_                                                                     │
+│  “Please select a valid IFSC code.”_x000D_                                   │
+│  _x000D_                                                                     │
+│  Because of this validation error, I am unable to add the payee and proceed  │
+│  with fund transfer._x000D_                                                  │
+│  _x000D_                                                                     │
+│  I request you to kindly:_x000D_                                             │
+│  _x000D_                                                                     │
+│  Check whether there is any technical issue with beneficiary addition for    │
+│  India Post Payments Bank accounts._x000D_                                   │
+│  _x000D_                                                                     │
+│  Verify if the IFSC code mapping in your system is correct._x000D_           │
+│  _x000D_                                                                     │
+│  Resolve the issue at the earliest or guide me with an alternate method to   │
+│  add the beneficiary._x000D_                                                 │
+│  _x000D_                                                                     │
+│  I have attached the screenshot for reference._x000D_                        │
+│  _x000D_                                                                     │
+│  Please communicate the resolution over email._x000D_                        │
+│  _x000D_                                                                     │
+│  Regards,_x000D_                                                             │
+│  Kamal Kumar K_x000D_                                                        │
+│  _x000D_                                                                     │
+│  Confidential Disclaimer The content of this email (including any            │
+│  attachments) is confidential and intended for the recipient specified in    │
+│  this email only. If you have received this communication via email in       │
+│  error, please notify IDFC FIRST Bank Limited (“The Bank”) immediately by    │
+│  email and promptly destroy the original communication. Kindly note that it  │
+│  is prohibited to participate in any unauthorized reading, distribution or   │
+│  copying of communication. The integrity and security of this email cannot   │
+│  be guaranteed over the internet.                                            │
+│  Comments and Work notes:                                                    │
+│   03-Jun-2026 02:34:53 - Vishal Madgude (Additional comments)                │
+│   Ticket Resolution code is: Solved (Permanently)                            │
+│   Ticket Resolution notes is: Issue description: - Unable to Add Payee in    │
+│  IDFC FIRST Bank – IFSC Validation Error._x000D_                             │
+│  _x000D_                                                                     │
+│  Corrective Action: - Please find attached responsed received from NPCI      │
+│  team for same IFSC Code - _x000D_                                           │
+│  IPOS0000DOP._x000D_                                                         │
+│  _x000D_                                                                     │
+│  Could you please guide the user as per confirmation shared by NPCI.         │
+│                                                                              │
+│  02-Jun-2026 14:03:01 - Raisa Bari (Work notes)                              │
+│  Assignment group set via opcat based Business Rule                          │
+│  Resolution notes:                                                           │
+│   Issue description: - Unable to Add Payee in IDFC FIRST Bank – IFSC         │
+│  Validation Error._x000D_                                                    │
+│  _x000D_                                                                     │
+│  Corrective Action: - Please find attached responsed received from NPCI      │
+│  team for same IFSC Code - _x000D_                                           │
+│  IPOS0000DOP._x000D_                                                         │
+│  _x000D_                                                                     │
+│  Could you please guide the user as per confirmation shared by NPCI. Root    │
+│  cause:                                                                      │
+│                                                                              │
+│  Resolution code:                                                            │
+│   Solved (Permanently)                                                       │
+│                                                                              │
+│  RESOLUTION:                                                                 │
+│  sue description: - Unable to Add Payee in IDFC FIRST Bank – IFSC            │
+│  Validation Error._x000D_                                                    │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│                                                                              │
+│  === SIMILAR INCIDENT 3 (Similarity: 79.09%) ===                             │
+│  Incident ID: INC000007382595                                                │
+│  Assignment Group: N/A                                                       │
+│                                                                              │
+│  CONTENT:                                                                    │
+│  Short description:                                                          │
+│   Customer unable to add the beneficiary in the mobile app as well as the    │
+│  netbanking                                                                  │
+│  Description:                                                                │
+│   Can't add beneficiary into the account                                     │
+│  Comments and Work notes:                                                    │
+│   01-Oct-2025 19:10:48 - onkar.dodke_clo@idfcbank.com (Additional comments)  │
+│   Ticket Resolution code is: Solved (Permanently)                            │
+│   Ticket Resolution notes is: Hi Anil,                                       │
+│  As we checked, no error logs were found for the "add beneficiary" call,     │
+│  and the provided screenshot is not Add Beneficiary Screen.                  │
+│  Please ask the customer to click on Pay Option in net?banking, OR click     │
+│  "Send Money" Option in Mobile Application then able to add Beneficiary .    │
+│  If any issue persists, have them share an error screenshot.                 │
+│                                                                              │
+│  01-Oct-2025 13:30:38 - ANIL BHATIYA (Work notes)                            │
+│  Assignment group set via opcat based Business Rule                          │
+│  Resolution notes:                                                           │
+│   Hi Anil,                                                                   │
+│  As we checked, no error logs were found for the "add beneficiary" call,     │
+│  and the provided screenshot is not Add Beneficiary Screen.                  │
+│  Please ask the customer to click on Pay Option in net?banking, OR click     │
+│  "Send Money" Option in Mobile Application then able to add Beneficiary .    │
+│  If any issue persists, have them share an error screenshot. Root cause:     │
+│                                                                              │
+│  Resolution code:                                                            │
+│   Solved (Permanently)                                                       │
+│                                                                              │
+│  RESOLUTION:                                                                 │
+│  Anil,                                                                       │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│                                                                              │
+│  === SIMILAR INCIDENT 4 (Similarity: 0.02%) ===                              │
+│  Incident ID: INC000004562866                                                │
+│  Assignment Group: Optimus BTO Support                                       │
+│                                                                              │
+│  CONTENT:                                                                    │
+│  Short description:                                                          │
+│   customer not able to get OTP on registered phone no despite repeated       │
+│  tries.                                                                      │
+│  Description:                                                                │
+│   customer is not getting OTP to login into net banking portal, hence cant   │
+│  login and add beneficiary into account. customer is a wealth customer of    │
+│  branch and on top of it, is a senior citizen. kindly assist on priority     │
+│  Comments and Work notes:                                                    │
+│   18-Jul-2024 13:38:19 - Devashish Khandge (Additional comments)             │
+│   Ticket Resolution code is: Solved (Permanently)                            │
+│   Ticket Resolution notes is: As we haven't received any update from your    │
+│  end. We can't keep the ticket long pending.                                 │
+│                                                                              │
+│  Without complete details we are unable to check the exact issue Hence we    │
+│  are closing the ticket.                                                     │
+│                                                                              │
+│  Kindly raise new ticket with complete details.                              │
+│                                                                              │
+│  15-Jul-2024 16:00:28 - Kedar Kadu (Work notes)                              │
+│  Hi Yaksh,                                                                   │
+│                                                                              │
+│  we are awaiting you revert.                                                 │
+│                                                                              │
+│  14-Jul-2024 11:13:11 - Kedar Kadu (Work notes)                              │
+│  Hi Yaksh,                                                                   │
+│                                                                              │
+│  we are awaiting you revert.                                                 │
+│                                                                              │
+│  13-Jul-2024 14:25:34 - Kedar Kadu (Work notes)                              │
+│  Hi Yaksh,                                                                   │
+│                                                                              │
+│  Please refer mail for further updates.                                      │
+│                                                                              │
+│  12-Jul-2024 20:21:16 - Kedar Kadu (Work notes)                              │
+│  Hi Yaksh,                                                                   │
+│                                                                              │
+│  As per SMS Team's revert -                                                  │
+│                                                                              │
+│  To eliminate any handset related issue we recommend :                       │
+│                                                                              │
+│  1. Power cycle the device (restart), this is to ensure a good connection    │
+│  to the end network.                                                         │
+│  2. Clear the inbox of the handset to determine if a full inbox is causing   │
+│  the messages to not be shown.                                               │
+│  3. Remove applications connected to messaging services (I.e. disable I      │
+│  Message for iPhones, messenger for Facebook, Skype).                        │
+│  4. Switch the SIM into a another working mobile handset and make fresh      │
+│  transaction to confirm the delivery status for the same.                    │
+│  5. Perform a factory reset on the device to ensure no third party software  │
+│  is causing the issue.                                                       │
+│                                                                              │
+│  After every step a retest should be done to confirm delivery.               │
+│                                                                              │
+│  NOTE- If junk is created on the handset the above 3 steps would not work    │
+│  to get through with the issue you have to follow 4th or 5th step.           │
+│                                                                              │
+│  Kindly get back to us if issue is still persist.                            │
+│                                                                              │
+│  11-Jul-2024 19:24:15 - mukesh.mandal_acl@idfcbank.com (Work notes)          │
+│  Dear Team,                                                                  │
+│                                                                              │
+│  In response to your email, we have checked at our end and found that        │
+│  messages have been delivered in a timely manner.                            │
+│                                                                              │
+│  Logs for your reference:                                                    │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+│  To eliminate any handset related issue we recommend :                       │
+│                                                                              │
+│  1. Power cycle the device (restart), this is to ensure a good connection    │
+│  to the end network.                                                         │
+│  2. Clear the inbox of the handset to determine if a full inbox is causing   │
+│  the messages to not be shown.                                               │
+│  3. Remove applications connected to messaging services (I.e. disable I      │
+│  Message for iPhones, messenger for Facebook, Skype).                        │
+│  4. Switch the SIM into a another  working mobile handset and make fresh     │
+│  transaction to confirm the delivery status for the same.                    │
+│  5. Perform a factory reset on the device to ensure no third party software  │
+│  is causing the issue.                                                       │
+│                                                                              │
+│  After every step a retest should be done to confirm delivery.               │
+│                                                                              │
+│  NOTE- If junk is created on the handset the above 3 steps would not work    │
+│  to get through with the issue you have to follow 4th or 5th step.           │
+│                                                                              │
+│  Kindly get back to us if issue is still persist.                            │
+│                                                                              │
+│  11-Jul-2024 15:24:04 - Kedar Kadu (Additional comments)                     │
+│  as we checked user has received OTP on his RMN - 919218504988               │
+│                                                                              │
+│  mobileNumber:"919218504988",                                                │
+│  medium:"SMS_V2",                                                            │
+│  message:"{OTP} is the OTP to add Akhil Mohan SB2 to payee list. It is       │
+│  valid for 5 minutes. Please do not share with anyone.",                     │
+│                                                                              │
+│  Please ask user to retry now and confirm the same,                          │
+│                                                                              │
+│  if still facing the same issue then share us the exact date and time frame  │
+│  & confirm the RMN customer is using for login,                              │
+│                                                                              │
+│  so, we can check further.                                                   │
+│                                                                              │
+│  PFA.                                                                        │
+│  Resolution notes:                                                           │
+│   As we haven't received any update from your end. We can't keep the ticket  │
+│  long pending.                                                               │
+│                                                                              │
+│  Without complete details we are unable to check the exact issue Hence we    │
+│  are closing the ticket.                                                     │
+│                                                                              │
+│  Kindly raise new ticket with complete details. Root cause:                  │
+│                                                                              │
+│  Resolution code:                                                            │
+│                                                                              │
+│                                                                              │
+│  RESOLUTION:                                                                 │
+│  we haven't received any update from your end. We can't keep the ticket      │
+│  long pending.                                                               │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│                                                                              │
+│  === SIMILAR INCIDENT 5 (Similarity: 79.05%) ===                             │
+│  Incident ID: INC000005482433                                                │
+│  Assignment Group: Optimus BTO Support                                       │
+│                                                                              │
+│  CONTENT:                                                                    │
+│  Short description:                                                          │
+│   Customer not able to add beneficiary in mobile banking                     │
+│  Description:                                                                │
+│   Customer not able to add beneficiary in mobile banking                     │
+│  Customer name - Mr. Abhijeet Laxman More                                    │
+│  Account no - 10071518356                                                    │
+│  Comments and Work notes:                                                    │
+│   11-Nov-2024 11:05:54 - Vishal Chaurasiya (Additional comments)             │
+│   Ticket Resolution code is: successful                                      │
+│   Ticket Resolution notes is: #Unable to add Benee#                          │
+│                                                                              │
+│  Kindly Ask user to enable to toggle then only beneficary will get added in  │
+│  the bene list                                                               │
+│                                                                              │
+│  Ask User to follow the below Steps found transaction                        │
+│                                                                              │
+│  Pay --> Payments-->Send money -->add payee --> provide the details if user  │
+│  want to add payee ad beneficiary then toggle need to enable                 │
+│  Resolution notes:                                                           │
+│   #Unable to add Benee#                                                      │
+│                                                                              │
+│  Kindly Ask user to enable to toggle then only beneficary will get added in  │
+│  the bene list                                                               │
+│                                                                              │
+│  Ask User to follow the below Steps found transaction                        │
+│                                                                              │
+│  Pay --> Payments-->Send money -->add payee --> provide the details if user  │
+│  want to add payee ad beneficiary then toggle need to enable Root cause:     │
+│                                                                              │
+│  Resolution code:                                                            │
+│                                                                              │
+│                                                                              │
+│  RESOLUTION:                                                                 │
+│  nable to add Benee#                                                         │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│                                                                              │
+│  === SIMILAR INCIDENT 1 (Similarity: 79.40%) ===                             │
+│  Incident ID: INC000003343596                                                │
+│  Assignment Group: Optimus BTO Support                                       │
+│                                                                              │
+│  CONTENT:                                                                    │
+│  Short description:                                                          │
+│   cx not able to add beneficiary in mobile app                               │
+│  Description:                                                                │
+│   cx not able to add beneficiary in mobile app                               │
+│  Customer Name-Mrs. NIDHI BHASIN                                             │
+│  Customer ID-5950766147                                                      │
+│  Account Number-10146653733                                                  │
+│  Mobile-9136429064                                                           │
+│  Comments and Work notes:                                                    │
+│   15-Jan-2024 11:16:02 - Vishal Chaurasiya (Additional comments)             │
+│   Ticket Resolution code is: Solved (Permanently)                            │
+│   Ticket Resolution notes is: It is look link at the time of trandaction     │
+│  user is not enable to Toggle for add as beneficary                          │
+│  Ask user to do so then user will able to see the beneficary                 │
+│  Resolution notes:                                                           │
+│   It is look link at the time of trandaction user is not enable to Toggle    │
+│  for add as beneficary                                                       │
+│  Ask user to do so then user will able to see the beneficary Root cause:     │
+│                                                                              │
+│  Resolution code:                                                            │
+│                                                                              │
+│                                                                              │
+│  RESOLUTION:                                                                 │
+│  is look link at the time of trandaction user is not enable to Toggle for    │
+│  add as beneficary                                                           │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│                                                                              │
+│  === SIMILAR INCIDENT 2 (Similarity: 0.03%) ===                              │
+│  Incident ID: INC000008448504                                                │
+│  Assignment Group: N/A                                                       │
+│                                                                              │
+│  CONTENT:                                                                    │
+│  Short description:                                                          │
+│   Unable to Add Payee in IDFC FIRST Bank – IFSC Validation Error             │
+│  Description:                                                                │
+│   Unable to Add Payee in IDFC FIRST Bank – IFSC Validation Error_x000D_      │
+│  _x000D_                                                                     │
+│  Customer Name_x000D_                                                        │
+│  Mr. Kamal Kumar K_x000D_                                                    │
+│  Customer ID_x000D_                                                          │
+│  5706684493_x000D_                                                           │
+│  Mobile_x000D_                                                               │
+│  (995) 208-9743_x000D_                                                       │
+│  Account Number_x000D_                                                       │
+│  10112040307_x000D_                                                          │
+│  _x000D_                                                                     │
+│  ---------- Original Message -------------------_x000D_                      │
+│  _x000D_                                                                     │
+│  From: [kanugak4@gmail.com]_x000D_                                           │
+│  Sent: 2/6/2026_x000D_                                                       │
+│  To: Banker Queue_x000D_                                                     │
+│  Subject: Unable to Add Payee in IDFC FIRST Bank – IFSC Validation           │
+│  Error_x000D_                                                                │
+│  _x000D_                                                                     │
+│  Caution: External mail be careful. If you are suspicious, please  click on  │
+│  ‘report phishing’ button or forward this mail as attachment to              │
+│  phishing.report@idfcfirstbank.com_x000D_                                    │
+│  Dear IDFC FIRST Bank Support Team,_x000D_                                   │
+│  _x000D_                                                                     │
+│  I am facing an issue while trying to add a new payee/beneficiary in my      │
+│  IDFC FIRST Bank...                                                          │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-Implements caching for LLM instances to avoid recreating them on every call.
-Uses a singleton pattern to ensure LLM instances are reused.
-"""
 
-import os
-import threading
-from typing import Dict, Optional, Any
-from dataclasses import dataclass
+18:53:30 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-13 18:53:30,667 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Historic Incident Analyst                                            │
+│                                                                              │
+│  Final Answer:                                                               │
+│  ## SIMILAR HISTORIC INCIDENTS SEARCH RESULTS                                │
+│                                                                              │
+│  ### Top 5 Most Similar Incidents Found:                                     │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 1 (Similarity: 79.40%)**                                     │
+│  - **Incident ID:** INC000003343596                                          │
+│  - **Assignment Group:** Optimus BTO Support                                 │
+│  - **Short Description:** cx not able to add beneficiary in mobile app       │
+│  - **Customer Details:** Mrs. NIDHI BHASIN, Customer ID: 5950766147,         │
+│  Account: 10146653733                                                        │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  > "It is look link at the time of trandaction user is not enable to Toggle  │
+│  for add as beneficary. Ask user to do so then user will able to see the     │
+│  beneficary"                                                                 │
+│                                                                              │
+│  **Key Resolution Steps:**                                                   │
+│  - User needs to enable the toggle option during transaction to add as       │
+│  beneficiary                                                                 │
+│  - Once toggle is enabled, user can see the beneficiary                      │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 2 (Similarity: 79.09%)**                                     │
+│  - **Incident ID:** INC000007382595                                          │
+│  - **Assignment Group:** N/A                                                 │
+│  - **Short Description:** Customer unable to add the beneficiary in the      │
+│  mobile app as well as the netbanking                                        │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  > "Hi Anil, As we checked, no error logs were found for the 'add            │
+│  beneficiary' call, and the provided screenshot is not Add Beneficiary       │
+│  Screen. Please ask the customer to click on Pay Option in net?banking, OR   │
+│  click 'Send Money' Option in Mobile Application then able to add            │
+│  Beneficiary. If any issue persists, have them share an error screenshot."   │
+│                                                                              │
+│  **Key Resolution Steps:**                                                   │
+│  - Check if the screenshot is actually the Add Beneficiary Screen            │
+│  - Guide user to click "Pay" option in netbanking OR "Send Money" in Mobile  │
+│  Application                                                                 │
+│  - If issue persists, ask for error screenshot                               │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 3 (Similarity: 79.05%)**                                     │
+│  - **Incident ID:** INC000005482433                                          │
+│  - **Assignment Group:** Optimus BTO Support                                 │
+│  - **Short Description:** Customer not able to add beneficiary in mobile     │
+│  banking                                                                     │
+│  - **Customer Details:** Mr. Abhijeet Laxman More, Account no: 10071518356   │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  > "#Unable to add Benee# Kindly Ask user to enable to toggle then only      │
+│  beneficary will get added in the bene list. Ask User to follow the below    │
+│  Steps found transaction: Pay --> Payments --> Send money --> add payee -->  │
+│  provide the details if user want to add payee as beneficiary then toggle    │
+│  need to enable"                                                             │
+│                                                                              │
+│  **Key Resolution Steps:**                                                   │
+│  - User must enable the toggle to add beneficiary                            │
+│  - Correct navigation path: Pay → Payments → Send Money → Add Payee →        │
+│  Provide details → Enable toggle for beneficiary                             │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 4 (Similarity: 0.03%)**                                      │
+│  - **Incident ID:** INC000008448504                                          │
+│  - **Issue:** Unable to Add Payee - IFSC Validation Error                    │
+│  - **Note:** This is a different issue related to IFSC code validation, not  │
+│  directly applicable                                                         │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 5 (Similarity: 0.02%)**                                      │
+│  - **Incident ID:** INC000004562866                                          │
+│  - **Issue:** OTP not received                                               │
+│  - **Note:** This is unrelated to beneficiary addition issue                 │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## SUMMARY OF KEY PATTERNS AND SOLUTIONS:                                   │
+│                                                                              │
+│  ### Common Issues Identified:                                               │
+│  1. **Toggle Not Enabled:** Users are not enabling the toggle option to add  │
+│  a payee as a beneficiary during the transaction                             │
+│  2. **Incorrect Navigation:** Users may not be accessing the correct screen  │
+│  (need to go through Pay/Payments → Send Money → Add Payee)                  │
+│  3. **No Technical Error:** In some cases, no error logs are found,          │
+│  indicating user guidance is needed rather than technical fix                │
+│                                                                              │
+│  ### Recommended Troubleshooting Steps for Current Incident:                 │
+│  1. **Step 1:** Ask user to navigate correctly: Pay → Payments → Send Money  │
+│  → Add Payee                                                                 │
+│  2. **Step 2:** Ensure user enables the toggle option to add as beneficiary  │
+│  3. **Step 3:** If still facing issues, ask for error screenshot to          │
+│  diagnose further                                                            │
+│  4. **Step 4:** Verify if the user is on the correct Add Beneficiary screen  │
+│  (not just any payment screen)                                               │
+│                                                                              │
+│  ### Resolution Code Used:                                                   │
+│  - "Solved (Permanently)" - Ticket Resolution Code                           │
+│                                                                              │
+│  ### Assignment Group:                                                       │
+│  - Optimus BTO Support (for mobile app related issues)                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-os.environ["OTEL_SDK_DISABLED"] = "true"
+╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
+│                                                                              │
+│  Task Completed                                                              │
+│  Name: Find similar incidents                                                │
+│  Agent: Historic Incident Analyst                                            │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-logger = __import__('logging').getLogger(__name__)
-
-
-@dataclass
-class LLMInstanceKey:
-    """Key for LLM instance cache."""
-    model_name: str
-    temperature: float
-    base_url: str
-    
-    def __hash__(self):
-        return hash((self.model_name, self.temperature, self.base_url))
-    
-    def __eq__(self, other):
-        if not isinstance(other, LLMInstanceKey):
-            return False
-        return (self.model_name == other.model_name and 
-                self.temperature == other.temperature and 
-                self.base_url == other.base_url)
-
-
-class LLMCache:
-    """
-    Thread-safe cache for LLM instances.
-    
-    Reuses LLM instances with same configuration to avoid overhead
-    of creating new instances on every call.
-    """
-    
-    def __init__(self, max_size: int = 10):
-        self.max_size = max_size
-        self._cache: Dict[LLMInstanceKey, Any] = {}
-        self._lock = threading.RLock()
-        self._access_count: Dict[LLMInstanceKey, int] = {}
-    
-    def get(
-        self,
-        model_name: str,
-        temperature: float,
-        base_url: str,
-        api_key: str,
-        llm_factory=None
-    ) -> Any:
-        """
-        Get or create an LLM instance.
-        
-        Args:
-            model_name: Model name
-            temperature: Temperature setting
-            base_url: API base URL
-            api_key: API key
-            llm_factory: Factory function to create LLM if not cached
-            
-        Returns:
-            Cached or newly created LLM instance
-        """
-        key = LLMInstanceKey(model_name, temperature, base_url)
-        
-        with self._lock:
-            if key in self._cache:
-                self._access_count[key] = self._access_count.get(key, 0) + 1
-                logger.debug(f"LLM cache hit for {model_name} @ temp={temperature}")
-                return self._cache[key]
-            
-            # Cache miss - create new instance
-            if llm_factory is None:
-                from crewai import LLM
-                llm_instance = LLM(
-                    model="openai/" + model_name,
-                    temperature=temperature,
-                    base_url=base_url,
-                    api_key=api_key
-                )
-            else:
-                llm_instance = llm_factory(model_name, temperature, base_url, api_key)
-            
-            # Evict oldest if at capacity
-            if len(self._cache) >= self.max_size:
-                self._evict_lru()
-            
-            self._cache[key] = llm_instance
-            self._access_count[key] = 1
-            logger.info(f"LLM cache miss - created new instance for {model_name}")
-            
-            return llm_instance
-    
-    def _evict_lru(self) -> None:
-        """Evict least recently used LLM instance."""
-        if not self._access_count:
-            return
-        
-        # Find least recently used (lowest access count)
-        lru_key = min(self._access_count, key=self._access_count.get)
-        del self._cache[lru_key]
-        del self._access_count[lru_key]
-        logger.debug(f"LLM cache evicted {lru_key.model_name}")
-    
-    def clear(self) -> None:
-        """Clear all cached LLM instances."""
-        with self._lock:
-            self._cache.clear()
-            self._access_count.clear()
-            logger.info("LLM cache cleared")
-    
-    def get_stats(self) -> Dict[str, int]:
-        """Get cache statistics."""
-        with self._lock:
-            return {
-                "size": len(self._cache),
-                "max_size": self.max_size,
-                "access_counts": dict(self._access_count)
-            }
-
-
-# Global LLM cache instance
-_llm_cache: Optional[LLMCache] = None
-_cache_lock = threading.Lock()
-
-
-def get_llm_cache() -> LLMCache:
-    """Get the global LLM cache instance."""
-    global _llm_cache
-    if _llm_cache is None:
-        with _cache_lock:
-            if _llm_cache is None:
-                _llm_cache = LLMCache(max_size=10)
-    return _llm_cache
-
-
-def get_cached_llm(
-    model_name: str,
-    temperature: float = 0.0,
-    base_url: str = None,
-    api_key: str = None
-) -> Any:
-    """
-    Get a cached LLM instance.
-    
-    This is the main entry point for getting LLM instances.
-    It will reuse existing instances when possible.
-    
-    Args:
-        model_name: Model name (e.g., "gpt-4o")
-        temperature: Temperature setting (default: 0.0)
-        base_url: API base URL (defaults to llm_config.url)
-        api_key: API key (defaults to llm_config.token)
-        
-    Returns:
-        Cached or new LLM instance
-    """
-    from utils.llm import llm_config
-
-    if base_url is None:
-        base_url = llm_config.url
-    if api_key is None:
-        api_key = llm_config.token
-
-    cache = get_llm_cache()
-
-    return cache.get(
-        model_name=model_name,
-        temperature=temperature,
-        base_url=base_url,
-        api_key=api_key
-    )
+2026-08-13 18:53:46,125 - new_flow.agents.context_builder - INFO - [ContextBuilder] CREW KICKOFF DONE | application=Optimus elapsed=36.13s output_len=3745
+2026-08-13 18:53:46,126 - new_flow.flow - INFO - Resolver | incident=b184a9373be6c750b6986f34c3e45a33 app=optimus
+╭────────────────────────────── Crew Completion ───────────────────────────────╮
+│                                                                              │
+│  Crew Execution Completed                                                    │
+│  Name: crew                                                                  │
+│  ID: cff25d8a-a08f-4a49-bce6-a0fb12ace092                                    │
+│  Final Output: ## SIMILAR HISTORIC INCIDENTS SEARCH RESULTS                  │
+│                                                                              │
+│  ### Top 5 Most Similar Incidents Found:                                     │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 1 (Similarity: 79.40%)**                                     │
+│  - **Incident ID:** INC000003343596                                          │
+│  - **Assignment Group:** Optimus BTO Support                                 │
+│  - **Short Description:** cx not able to add beneficiary in mobile app       │
+│  - **Customer Details:** Mrs. NIDHI BHASIN, Customer ID: 5950766147,         │
+│  Account: 10146653733                                                        │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  > "It is look link at the time of trandaction user is not enable to Toggle  │
+│  for add as beneficary. Ask user to do so then user will able to see the     │
+│  beneficary"                                                                 │
+│                                                                              │
+│  **Key Resolution Steps:**                                                   │
+│  - User needs to enable the toggle option during transaction to add as       │
+│  beneficiary                                                                 │
+│  - Once toggle is enabled, user can see the beneficiary                      │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 2 (Similarity: 79.09%)**                                     │
+│  - **Incident ID:** INC000007382595                                          │
+│  - **Assignment Group:** N/A                                                 │
+│  - **Short Description:** Customer unable to add the beneficiary in the      │
+│  mobile app as well as the netbanking                                        │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  > "Hi Anil, As we checked, no error logs were found for the 'add            │
+│  beneficiary' call, and the provided screenshot is not Add Beneficiary       │
+│  Screen. Please ask the customer to click on Pay Option in net?banking, OR   │
+│  click 'Send Money' Option in Mobile Application then able to add            │
+│  Beneficiary. If any issue persists, have them share an error screenshot."   │
+│                                                                              │
+│  **Key Resolution Steps:**                                                   │
+│  - Check if the screenshot is actually the Add Beneficiary Screen            │
+│  - Guide user to click "Pay" option in netbanking OR "Send Money" in Mobile  │
+│  Application                                                                 │
+│  - If issue persists, ask for error screenshot                               │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 3 (Similarity: 79.05%)**                                     │
+│  - **Incident ID:** INC000005482433                                          │
+│  - **Assignment Group:** Optimus BTO Support                                 │
+│  - **Short Description:** Customer not able to add beneficiary in mobile     │
+│  banking                                                                     │
+│  - **Customer Details:** Mr. Abhijeet Laxman More, Account no: 10071518356   │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  > "#Unable to add Benee# Kindly Ask user to enable to toggle then only      │
+│  beneficary will get added in the bene list. Ask User to follow the below    │
+│  Steps found transaction: Pay --> Payments --> Send money --> add payee -->  │
+│  provide the details if user want to add payee as beneficiary then toggle    │
+│  need to enable"                                                             │
+│                                                                              │
+│  **Key Resolution Steps:**                                                   │
+│  - User must enable the toggle to add beneficiary                            │
+│  - Correct navigation path: Pay → Payments → Send Money → Add Payee →        │
+│  Provide details → Enable toggle for beneficiary                             │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 4 (Similarity: 0.03%)**                                      │
+│  - **Incident ID:** INC000008448504                                          │
+│  - **Issue:** Unable to Add Payee - IFSC Validation Error                    │
+│  - **Note:** This is a different issue related to IFSC code validation, not  │
+│  directly applicable                                                         │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 5 (Similarity: 0.02%)**                                      │
+│  - **Incident ID:** INC000004562866                                          │
+│  - **Issue:** OTP not received                                               │
+│  - **Note:** This is unrelated to beneficiary addition issue                 │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## SUMMARY OF KEY PATTERNS AND SOLUTIONS:                                   │
+│                                                                              │
+│  ### Common Issues Identified:                                               │
+│  1. **Toggle Not Enabled:** Users are not enabling the toggle option to add  │
+│  a payee as a beneficiary during the transaction                             │
+│  2. **Incorrect Navigation:** Users may not be accessing the correct screen  │
+│  (need to go through Pay/Payments → Send Money → Add Payee)                  │
+│  3. **No Technical Error:** In some cases, no error logs are found,          │
+│  indicating user guidance is needed rather than technical fix                │
+│                                                                              │
+│  ### Recommended Troubleshooting Steps for Current Incident:                 │
+│  1. **Step 1:** Ask user to navigate correctly: Pay → Payments → Send Money  │
+│  → Add Payee                                                                 │
+│  2. **Step 2:** Ensure user enables the toggle option to add as beneficiary  │
+│  3. **Step 3:** If still facing issues, ask for error screenshot to          │
+│  diagnose further                                                            │
+│  4. **Step 4:** Verify if the user is on the correct Add Beneficiary screen  │
+│  (not just any payment screen)                                               │
+│                                                                              │
+│  ### Resolution Code Used:                                                   │
+│  - "Solved (Permanently)" - Ticket Resolution Code                           │
+│                                                                              │
+│  ### Assignment Group:                                                       │
+│  - Optimus BTO Support (for mobile app related issues)                       │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
+│                                                                              │
+│  Method: semantic_search                                                     │
+│  Status: Completed                                                           │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
+│                                                                              │
+│  Method: run_resolver_crew                                                   │
+│  Status: Running                                                             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
 
-# Convenience function for creating cached CrewAI LLM instances
-def create_cached_llm(
-    model_name: str,
-    temperature: float = 0.0,
-    base_url: str = None,
-    api_key: str = None
-) -> Any:
-    """
-    Create a cached LLM instance for CrewAI.
-    
-    Usage:
-        llm = create_cached_llm("gpt-4o", temperature=0.0)
-        
-    Args:
-        model_name: Model name
-        temperature: Temperature
-        base_url: Base URL
-        api_key: API key
-        
-    Returns:
-        CrewAI LLM instance
-    """
-    return get_cached_llm(model_name, temperature, base_url, api_key)this is llm_cache.py
+
+2026-08-13 18:53:46,232 - new_flow.flow - INFO - agents.plan_agent import PlanOutput=optimus
+18:53:46 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-13 18:53:46,241 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+18:53:54 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-13 18:53:54,485 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+18:53:54 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-13 18:53:54,487 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+18:53:58 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-13 18:53:58,323 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+18:53:58 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-13 18:53:58,325 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+18:54:03 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-13 18:54:03,286 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2026-08-13 18:54:03,287 - crewai.utilities.reasoning_handler - WARNING - Agent planning reached maximum attempts (3) without being ready. Proceeding with current plan.
+18:54:03 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-13 18:54:03,291 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Triage Analyst                                                       │
+│                                                                              │
+│  Task: Analyze the following investigation results and create a plan:        │
+│                                                                              │
+│  === INCIDENT ANALYSIS (from Intent Classifier) ===                          │
+│                                                                              │
+│  Incident Summary:                                                           │
+│  - Application: Mobile/Net Banking                                           │
+│  - Problem Category: application_issue                                       │
+│                                                                              │
+│  Customer Identifiers:                                                       │
+│  - ucic: 1062034032                                                          │
+│  - customer_id: 1062034032                                                   │
+│                                                                              │
+│  LLM Analysis:                                                               │
+│  - User Goal: The user wants to add a beneficiary to their account but is    │
+│  unable to do so                                                             │
+│  - Issue Description: User is unable to add a beneficiary (spelled as        │
+│  'bneenficary' in the input) and is asking to check why they cannot          │
+│  complete this action                                                        │
+│  - Problem Summary: The user is experiencing a technical issue where they    │
+│  cannot add a beneficiary to their account. The input contains               │
+│  typographical errors ('bneenficary' for 'beneficiary', 'cehck whyb' for     │
+│  'check why'), suggesting the user may be frustrated or having difficulty    │
+│  typing. They are requesting assistance to understand why they cannot add a  │
+│  beneficiary and want the system to investigate the cause of this issue.     │
+│  This appears to be an initial request for help with a specific              │
+│  functionality problem, not a response to a previous system question.        │
+│                                                                              │
+│  Original Description:                                                       │
+│  Short Description: Unable to add the bneenficary                            │
+│  Description: Unable to add the bneenficary  cehck whyb                      │
+│                                                                              │
+│  Please investigate this issue starting with Similarity Search for similar   │
+│  historic incidents,                                                         │
+│  then check Jaeger traces to understand the current error context.           │
+│                                                                              │
+│                                                                              │
+│  === SIMILARITY SEARCH RESULTS ===                                           │
+│  ## SIMILAR HISTORIC INCIDENTS SEARCH RESULTS                                │
+│                                                                              │
+│  ### Top 5 Most Similar Incidents Found:                                     │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 1 (Similarity: 79.40%)**                                     │
+│  - **Incident ID:** INC000003343596                                          │
+│  - **Assignment Group:** Optimus BTO Support                                 │
+│  - **Short Description:** cx not able to add beneficiary in mobile app       │
+│  - **Customer Details:** Mrs. NIDHI BHASIN, Customer ID: 5950766147,         │
+│  Account: 10146653733                                                        │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  > "It is look link at the time of trandaction user is not enable to Toggle  │
+│  for add as beneficary. Ask user to do so then user will able to see the     │
+│  beneficary"                                                                 │
+│                                                                              │
+│  **Key Resolution Steps:**                                                   │
+│  - User needs to enable the toggle option during transaction to add as       │
+│  beneficiary                                                                 │
+│  - Once toggle is enabled, user can see the beneficiary                      │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 2 (Similarity: 79.09%)**                                     │
+│  - **Incident ID:** INC000007382595                                          │
+│  - **Assignment Group:** N/A                                                 │
+│  - **Short Description:** Customer unable to add the beneficiary in the      │
+│  mobile app as well as the netbanking                                        │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  > "Hi Anil, As we checked, no error logs were found for the 'add            │
+│  beneficiary' call, and the provided screenshot is not Add Beneficiary       │
+│  Screen. Please ask the customer to click on Pay Option in net?banking, OR   │
+│  click 'Send Money' Option in Mobile Application then able to add            │
+│  Beneficiary. If any issue persists, have them share an error screenshot."   │
+│                                                                              │
+│  **Key Resolution Steps:**                                                   │
+│  - Check if the screenshot is actually the Add Beneficiary Screen            │
+│  - Guide user to click "Pay" option in netbanking OR "Send Money" in Mobile  │
+│  Application                                                                 │
+│  - If issue persists, ask for error screenshot                               │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 3 (Similarity: 79.05%)**                                     │
+│  - **Incident ID:** INC000005482433                                          │
+│  - **Assignment Group:** Optimus BTO Support                                 │
+│  - **Short Description:** Customer not able to add beneficiary in mobile     │
+│  banking                                                                     │
+│  - **Customer Details:** Mr. Abhijeet Laxman More, Account no: 10071518356   │
+│                                                                              │
+│  **Resolution:**                                                             │
+│  > "#Unable to add Benee# Kindly Ask user to enable to toggle then only      │
+│  beneficary will get added in the bene list. Ask User to follow the below    │
+│  Steps found transaction: Pay --> Payments --> Send money --> add payee -->  │
+│  provide the details if user want to add payee as beneficiary then toggle    │
+│  need to enable"                                                             │
+│                                                                              │
+│  **Key Resolution Steps:**                                                   │
+│  - User must enable the toggle to add beneficiary                            │
+│  - Correct navigation path: Pay → Payments → Send Money → Add Payee →        │
+│  Provide details → Enable toggle for beneficiary                             │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 4 (Similarity: 0.03%)**                                      │
+│  - **Incident ID:** INC000008448504                                          │
+│  - **Issue:** Unable to Add Payee - IFSC Validation Error                    │
+│  - **Note:** This is a different issue related to IFSC code validation, not  │
+│  directly applicable                                                         │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### **INCIDENT 5 (Similarity: 0.02%)**                                      │
+│  - **Incident ID:** INC000004562866                                          │
+│  - **Issue:** OTP not received                                               │
+│  - **Note:** This is unrelated to beneficiary addition issue                 │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## SUMMARY OF KEY PATTERNS AND SOLUTIONS:                                   │
+│                                                                              │
+│  ### Common Issues Identified:                                               │
+│  1. **Toggle Not Enabled:** Users are not enabling the toggle option to add  │
+│  a payee as a beneficiary during the transaction                             │
+│  2. **Incorrect Navigation:** Users may not be accessing the correct screen  │
+│  (need to go through Pay/Payments → Send Money → Add Payee)                  │
+│  3. **No Technical Error:** In some cases, no error logs are found,          │
+│  indicating user guidance is needed rather than technical fix                │
+│                                                                              │
+│  ### Recommended Troubleshooting Steps for Current Incident:                 │
+│  1. **Step 1:** Ask user to navigate correctly: Pay → Payments → Send Money  │
+│  → Add Payee                                                                 │
+│  2. **Step 2:** Ensure user enables the toggle option to add as beneficiary  │
+│  3. **Step 3:** If still facing issues, ask for error screenshot to          │
+│  diagnose further                                                            │
+│  4. **Step 4:** Verify if the user is on the correct Add Beneficiary screen  │
+│  (not just any payment screen)                                               │
+│                                                                              │
+│  ### Resolution Code Used:                                                   │
+│  - "Solved (Permanently)" - Ticket Resolution Code                           │
+│                                                                              │
+│  ### Assignment Group:                                                       │
+│  - Optimus BTO Support (for mobile app related issues)                       │
+│                                                                              │
+│  === CONTEXT ===                                                             │
+│  Application: optimus                                                        │
+│  Problem Category: application_issue                                         │
+│  Customer Identifiers:                                                       │
+│    - ucic: 1062034032                                                        │
+│    - customer_id: 1062034032                                                 │
+│                                                                              │
+│  === AVAILABLE JAEGER SERVICES ===                                           │
+│  Discovered 216 services from Jaeger:                                        │
+│                                                                              │
+│    - APPLY-FM-API                                                            │
+│    - APPLY-HL-API                                                            │
+│    - APPLY-LOAN-API                                                          │
+│    - APPLY-LOAN-API-MESSAGE-HANDLER                                          │
+│    - APPROVAL-API                                                            │
+│    - AUDITLOG-EVENT-CONSUMER                                                 │
+│    - AUTH-ADMIN-API                                                          │
+│    - AUTH-SERVICE                                                            │
+│    - AUTHZ-ADMIN-API                                                         │
+│    - AVC-API                                                                 │
+│    - BAS-API                                                                 │
+│    - BAS-API-MESSAGE-HANDLER                                                 │
+│    - BXP-LOGIN-PROVIDER                                                      │
+│    - CA-BO-MobileApp                                                         │
+│    - CARDLESS-CASH-WITHDRAWAL-API-MESSAGE-HANDLER                            │
+│    - CAS-API                                                                 │
+│    - CAS-API-MESSAGE-HANDLER                                                 │
+│    - CBS-DORMANCY                                                            │
+│    - CEL-UI                                                                  │
+│    - CHEQUE-CONSENT-SERVICE                                                  │
+│    - CREATE-ACCOUNT-API                                                      │
+│    - CREDIT-CARD-ACQUISITION-OFFERS-MESSAGE-HANDLER                          │
+│    - CREDIT-CARD-API                                                         │
+│    - CREDIT-CARD-API-MESSAGE-HANDLER                                         │
+│    - CRON-JOBS                                                               │
+│    - CUSTOMER-ACQUISITION-SERVICE-MESSAGE-HANDLER                            │
+│    - CUSTOMER-FEEDBACK-SERVICE                                               │
+│    - CUSTOMER-LOGIN-PROVIDER                                                 │
+│    - CX-API                                                                  │
+│    - DEAF-API                                                                │
+│    - DEBITCARD-API                                                           │
+│    - DEMAT-API                                                               │
+│    - DEPOSITS-API-MESSAGE-HANDLER                                            │
+│    - DEPOSITS-API-TEMPORAL-WORKER                                            │
+│    - DEVICE-FINGERPRINT-SERVICE                                              │
+│    - DEVICE-MANAGEMENT-SERVICE                                               │
+│    - DEVICE-MANAGEMENT-SERVICE-CS-MESSAGE-HANDLER                            │
+│    - DSB-API                                                                 │
+│    - E-CHEQUE-API                                                            │
+│    - ECOM-MERCHANT-LOGIN-PROVIDER                                            │
+│    - ECOM-UI-WEB                                                             │
+│    - EMANDATE                                                                │
+│    - EMPLOYEE-LOGIN-PROVIDER                                                 │
+│    - ENTERPRISE-AUTHORIZATION-SERVICE                                        │
+│    - ESIGN-API                                                               │
+│    - EXTERNAL-LOGIN-PROVIDER                                                 │
+│    - FAQ-API                                                                 │
+│    - FEATURE-TOGGLE-API                                                      │
+│    - FEATURE-TOGGLE-API-MESSAGE-HANDLER                                      │
+│    - FRAUD-MONITORING-SERVICE                                                │
+│    - FX-API                                                                  │
+│    - FX-API-MESSAGE-HANDLER                                                  │
+│    - GRADE-API                                                               │
+│    - GRADE_API_APPLAUNCH_MESSAGE_HANDLER                                     │
+│    - GRADE_API_MESSAGE_HANDLER                                               │
+│    - GST-API                                                                 │
+│    - HYDRA-MANAGER-API                                                       │
+│    - INSURANCE-API                                                           │
+│    - IPO-API                                                                 │
+│    - KORE-AI-EVENT-CONSUMER                                                  │
+│    - KRATOS-CSR                                                              │
+│    - KRATOS-QUANTUMCASH                                                      │
+│    - KRATOS-TRADEX                                                           │
+│    - KYC-SERVICE-MESSAGE-HANDLER                                             │
+│    - LAI-API-MESSAGE-HANDLER                                                 │
+│    - LAS-API                                                                 │
+│    - LIABILITY-PLATFORM-MESSAGE-HANDLER                                      │
+│    - LOANS-API                                                               │
+│    - LOANS-API-MESSAGE-HANDLER                                               │
+│    - LOGIN-AUDITLOG-EVENT-CONSUMER                                           │
+│    - MANDATE-HUB-API                                                         │
+│    - MDH-MESSAGE-HANDLER                                                     │
+│    - MDS-MDH-MESSAGE-HANDLER                                                 │
+│    - MERCHANT-ONBOARDING-API                                                 │
+│    - METADATA-SERVICE                                                        │
+│    - MF-COMPLIANCE-API                                                       │
+│    - MF-COMPLIANCE-API-MESSAGE-HANDLER                                       │
+│    - MIGRATION-API                                                           │
+│    - MOCK-MESSAGE-EXCHANGE-SERVICE                                           │
+│    - Mobile-app                                                              │
+│    - NR-API                                                                  │
+│    - NTB-FD-STABLE-MONEY-MESSAGE-HANDLER                                     │
+│    - OAUTH-SERVER                                                            │
+│    - OFFERS-DATAMART-API                                                     │
+│    - OFFERS-DATAMART-API-MESSAGE-HANDLER                                     │
+│    - ON-API                                                                  │
+│    - OPS-USER-API                                                            │
+│    - OPTIMUS-AUTH-INTEGRATION-API                                            │
+│    - OPTIMUS-EVENT-CONSUMER                                                  │
+│    - OPTIMUS-PRIME-API                                                       │
+│    - OVERDRAFT-API                                                           │
+│    - PAYMENT-GATEWAY-SERVICE                                                 │
+│    - PDF-API                                                                 │
+│    - RAS-API                                                                 │
+│    - RAS-API-MDH-MESSAGE-HANDLER                                             │
+│    - RAS-API-MESSAGE-HANDLER                                                 │
+│    - RAS-API-TEMPORAL-WORKER                                                 │
+│    - RE-KYC-API                                                              │
+│    - REDIS-EXPIRED-EVENT-CONSUMER                                            │
+│    - REWARDS-INTEGRATION-API                                                 │
+│    - RFX-INWARD-API                                                          │
+│    - RISK-CONTROL-API                                                        │
+│    - RISK-CONTROL-BIOCATCH-DATA-CONSUMER                                     │
+│    - RISK-CONTROL-CUSTOMER-DATA-CONSUMER                                     │
+│    - RISK-CONTROL-CUSTOMER-FAILURE-LOGIN-DATA-CONSUMER                       │
+│    - RISK-CONTROL-FINGERPRINT-DATA-CONSUMER                                  │
+│    - RISK-CONTROL-FRAUD-RISK-INDICATOR-DATA-CONSUMER                         │
+│    - RISK-CONTROL-IP-PROFILE-TRUST-VALIDATION-DATA-CONSUMER                  │
+│    - RISK-CONTROL-RASP-THREAT-DETECTION-ALERT-DATA-CONSUMER                  │
+│    - RISK-CONTROL-REQUEST-DATA-CONSUMER                                      │
+│    - RISK-CONTROL-SERVICE                                                    │
+│    - RISK-CONTROL-SUSPECT-DATA-CONSUMER                                      │
+│    - RISK-CONTROL-SUSPECT-DATA-DEGRADATION-CONSUMER                          │
+│    - SALARY-OD-API                                                           │
+│    - SECUREPASS-AUTHENTICATOR                                                │
+│    - SERVICE-REQUEST-API                                                     │
+│    - SESSION-MANAGEMENT-SERVICE                                              │
+│    - SESSION-TRANSFER-SERVICE                                                │
+│    - SGB-API                                                                 │
+│    - SSO-API                                                                 │
+│    - TOKEN-MANAGEMENT-SERVICE                                                │
+│    - TRACING-API                                                             │
+│    - UI-FM-MICROSITE                                                         │
+│    - UI-WEB                                                                  │
+│    - UIDAI-INTEGRATION-API                                                   │
+│    - USER-PROFILE-API-MESSAGE-HANDLER                                        │
+│    - USER-PROFILE-SVC                                                        │
+│    - USER-SESSION-ACTIVITY-EVENT-CONSUMER                                    │
+│    - WALLET-INTEGRATION-API                                                  │
+│    - WEALTH-API                                                              │
+│    - WEALTH-API-MESSAGE-HANDLER                                              │
+│    - WEALTH-API-VALUEFY-MESSAGE-HANDLER                                      │
+│    - account-aggregator-api                                                  │
+│    - account-aggregator-api-bureau-accounts-handler                          │
+│    - account-aggregator-api-external-message-handler                         │
+│    - account-aggregator-api-message-handler                                  │
+│    - account-aggregator-api-tsp-consent-handler                              │
+│    - account-aggregator-api-tsp-data-ready-handler                           │
+│    - ai-chat-optimus-adapter                                                 │
+│    - ai-chat-service                                                         │
+│    - ai-voice-optimus-adapter                                                │
+│    - apply-pl-api                                                            │
+│    - approval-workflow-engine                                                │
+│    - assisted-service                                                        │
+│    - beneficiary-api                                                         │
+│    - billpay-api                                                             │
+│    - billpay-api-message-handler                                             │
+│    - bulk-payments-api                                                       │
+│    - bulk-payments-api-message-handler                                       │
+│    - cardless-cash-withdrawal                                                │
+│    - cel-arap                                                                │
+│    - cel-auth                                                                │
+│    - cel-core                                                                │
+│    - cel-cron-executor                                                       │
+│    - cel-erp-invoice-ingestion                                               │
+│    - cel-investment                                                          │
+│    - cel-orch                                                                │
+│    - cel-schedule                                                            │
+│    - cel-smart-collection                                                    │
+│    - cel-tax-payment                                                         │
+│    - channel-service                                                         │
+│    - corporate-portal-api                                                    │
+│    - crypto-service                                                          │
+│    - customer-acquisition-service                                            │
+│    - customer-communication-gateway                                          │
+│    - customer-details-service                                                │
+│    - deposits-api                                                            │
+│    - deposits-api-cdms-message-handler                                       │
+│    - deposits-api-giftwrapper-cbs-message-handler                            │
+│    - ecom-api                                                                │
+│    - email-verification-api                                                  │
+│    - event-tracker-service                                                   │
+│    - fastag-service                                                          │
+│    - fastag-service-message-handler                                          │
+│    - fi-curing-api                                                           │
+│    - fx_temporal_worker_name                                                 │
+│    - gestalt                                                                 │
+│    - grafana                                                                 │
+│    - idp-api                                                                 │
+│    - idp-api-message-handler                                                 │
+│    - jaeger                                                                  │
+│    - kyc-service                                                             │
+│    - lic-agent-portal-api                                                    │
+│    - login-event-consumer                                                    │
+│    - mapper-api                                                              │
+│    - mdh-data-service                                                        │
+│    - message-exchange-service                                                │
+│    - msme-tally-integrator-api                                               │
+│    - msme-tally-processor-api                                                │
+│    - multifactor-authentication-api                                          │
+│    - nginx                                                                   │
+│    - onboarding                                                              │
+│    - optimus-notification-service                                            │
+│    - optimus-notification-service-message-handler                            │
+│    - optimus-offers-service                                                  │
+│    - payments-api                                                            │
+│    - payments-api-message-handler                                            │
+│    - pfm-api                                                                 │
+│    - pfm-api-message-handler                                                 │
+│    - pfm-api-realtime-txn-message-handler                                    │
+│    - platform-service                                                        │
+│    - platform-service-message-handler                                        │
+│    - risk-monitor-api                                                        │
+│    - socket-tracing-service                                                  │
+│    - tfx-deal                                                                │
+│    - tfx-remittance-api                                                      │
+│    - tfx-sso-integration-service                                             │
+│    - totp-service                                                            │
+│    - track-my-application-api                                                │
+│    - traefik-infra                                                           │
+│    - transaction-insights-api                                                │
+│    - universal-search-api                                                    │
+│    - upcoming-api                                                            │
+│    - upi-api                                                                 │
+│    - upi-api-message-handler                                                 │
+│    - user-profile-api-cdms-message-handler                                   │
+│                                                                              │
+│  Note: These are ALL services that have sent traces in the last 1 hour.      │
+│  Use any service name directly with fetch_jaeger_traces tool.                │
+│                                                                              │
+│  Do NOT call any tools. Do not attempt a tool call of any kind. Based only   │
+│  on the text above, output your analysis in this exact format:               │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes/no                                                    │
+│  ISSUE_SUMMARY: [brief description of what the issue likely is, based on     │
+│  similarity search]                                                          │
+│  SERVICE: [pick the single most relevant service name, copied EXACTLY as     │
+│  written from the AVAILABLE JAEGER SERVICES list above. If the list is       │
+│  empty or none apply, write NONE]                                            │
+│  NEXT_STEPS: [what Execute Agent should investigate]                         │
+│  NEEDS_MORE_INFO: yes/no                                                     │
+│  QUESTION_FOR_USER: [if needs more info, what to ask]                        │
+│                                                                              │
+│                                                                              │
+│  Planning:                                                                   │
+│                                                                              │
+│                                                                              │
+│  REFINED_PLAN:                                                               │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes                                                       │
+│  ISSUE_SUMMARY: Customer unable to add beneficiary in mobile/net banking.    │
+│  Based on 3 highly similar historic incidents (79%+ match), this is a user   │
+│  guidance issue - users fail to enable the toggle option to add as           │
+│  beneficiary during the transaction flow, or navigate incorrect path (Pay →  │
+│  Payments → Send Money → Add Payee). No technical errors found in similar    │
+│  cases.                                                                      │
+│  SERVICE: beneficiary-api                                                    │
+│  NEXT_STEPS:                                                                 │
+│  1. Guide customer: Navigate to Pay → Payments → Send Money → Add Payee and  │
+│  ensure the toggle option "Add as Beneficiary" is enabled before confirming  │
+│  the transaction                                                             │
+│  2. Ask customer: Have you already tried these steps? If yes, please share   │
+│  any error message or screenshot                                             │
+│  3. If customer confirms following steps but still failing: Fetch Jaeger     │
+│  traces from beneficiary-api for customer_id 1062034032                      │
+│  4. If traces show specific error: Analyze and escalate to technical team    │
+│  5. Document resolution in ticket                                            │
+│                                                                              │
+│  READY                                                                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Triage Analyst                                                       │
+│                                                                              │
+│  Final Answer:                                                               │
+│                                                                              │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes                                                       │
+│  ISSUE_SUMMARY: Customer unable to add beneficiary in mobile/net banking.    │
+│  Based on 3 highly similar historic incidents (79%+ match), this is a user   │
+│  guidance issue - users fail to enable the toggle option to add as           │
+│  beneficiary during the transaction flow, or navigate incorrect path (Pay →  │
+│  Payments → Send Money → Add Payee). No technical errors found in similar    │
+│  cases.                                                                      │
+│  SERVICE: beneficiary-api                                                    │
+│  NEXT_STEPS:                                                                 │
+│  1. Guide customer: Navigate to Pay → Payments → Send Money → Add Payee and  │
+│  ensure the toggle option "Add as Beneficiary" is enabled before confirming  │
+│  the transaction                                                             │
+│  2. Ask customer: Have you already tried these steps? If yes, please share   │
+│  any error message or screenshot                                             │
+│  3. If customer confirms following steps but still failing: Fetch Jaeger     │
+│  traces from beneficiary-api for customer_id 1062034032                      │
+│  4. If traces show specific error: Analyze and escalate to technical team    │
+│  5. Document resolution in ticket                                            │
+│  NEEDS_MORE_INFO: yes                                                        │
+│  QUESTION_FOR_USER: Have you already tried navigating to Pay → Payments →    │
+│  Send Money → Add Payee and enabled the toggle to add as beneficiary? If     │
+│  yes, please share any error message or screenshot you're seeing.            │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-13 18:54:07,533 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-08-13 18:54:07,533 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: beneficiary-api, Tag: customer_id=1062034032
+2026-08-13 18:54:07,533 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-13 18:54:07,533 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=beneficiary-api, tag=customer_id=1062034032
+2026-08-13 18:54:07,533 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=beneficiary-api customer_id=1062034032 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'beneficiary-api', 'start': 1786560847533706, 'end': 1786647247533706, 'limit': 100, 'tags': '{"customer_id": "1062034032"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-13 18:54:10,970 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=20
+2026-08-13 18:54:10,974 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/20] traceID=c843d3f97b97b580c237c840923115fc http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:10,975 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/20] traceID=68dc3706548188df076abc339407b755 http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:10,977 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/20] traceID=fa16fa1ca20f1198b08865f7fb2acdbc http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:10,978 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/20] traceID=09c79469575ade774ec2e7162a0bba7f http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:10,981 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/20] traceID=692c6b36f0c4b2abb92ca6ea2bbdcdf9 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:10,982 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/20] traceID=15100120a6f33c2d04ff1ef4db5766fd http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:10,984 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/20] traceID=16252811576406f4455c498ee9c568f0 http_codes={'200', '204', '404'} error_flag=True error_logs_count=9 classified=ERROR
+2026-08-13 18:54:10,985 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/20] traceID=1d082b0c883700748d469604f77cac93 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:10,988 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/20] traceID=ecb2156ba51d7fc3b2d1c2d802b046e6 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:10,989 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/20] traceID=041630821b19f0ec48a6d0dbd7c07b2c http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:10,991 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/20] traceID=b6800a95893c25de89dcdc8cf4f767fb http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:10,992 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/20] traceID=bbf50064f1eb4a25125d74a7299697e3 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:10,995 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/20] traceID=916f44b5e463faaf57794ec53c097234 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:10,996 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/20] traceID=78dbe4f98f5b89e8a5f6508feab105d3 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:10,998 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/20] traceID=f2337bb44410ef507d9df3c638946111 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:10,999 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 16/20] traceID=153887734859521ae82ee5d58d504ce7 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:11,002 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 17/20] traceID=91e6caaa562514190a4cf82ea2e635d3 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:11,003 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 18/20] traceID=481c04e260d4a1b0c178e51a7a586d15 http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:11,005 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 19/20] traceID=58f80b3318a6cca721b7e5d1f07b16b2 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:11,006 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 20/20] traceID=72479abace0109467942a0b32d57e1e1 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:11,006 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=20 failed=20 happy_endpoints=0 sessions=8 success_sessions=0
+2026-08-13 18:54:11,024 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=beneficiary-api tag=customer_id=1062034032 range=0-24h ago total_scanned=20 failed_traces_count=10 happy_hits={} sessions=8 success_sessions=0 error=None
+2026-08-13 18:54:11,024 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-13 18:37:28 IST
+60c9f4e5cdd5845c - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    53c55ce63b11d798 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:11,024 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-13 18:37:18 IST
+ce9d94f88a136d8f - payments-api - /api/payments/v2/fundtransfer/limits/validate
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    b64aef3fc25462d9 - payments-api - /api/payments/v2/fundtransfer/limits/validate | request/response
+    HTTP Status: 200
+      request: {"transactionAmount":1
+2026-08-13 18:54:11,024 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-13 17:44:15 IST
+d507afb856dac61a - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    c0a35c0f6058505a - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:11,024 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 20 traces in time range 0-24h ago:
+
+=== SESSIONS ===
+  Total sessions: 8
+  Successful sessions: 0
+
+=== 10 FAILED TRACES ===
+
+Time: 2026-08-13 18:37:28 IST
+60c9f4e5cdd5845c - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    53c55ce63b11d798 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAccountNumber":"21500852847","remitterVpa":"8147430128-4@idfcfirstacq","channel":"06","beneficiaryAccountNumber":null,"remitterName":"Paul St","beneficiaryName":"Add Money_
+2026-08-13 18:54:11,024 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=0
+2026-08-13 18:54:11,024 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
+2026-08-13 18:54:11,024 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
+2026-08-13 18:54:11,024 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=beneficiary-api, tag=customer_id=1062034032
+2026-08-13 18:54:11,025 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=beneficiary-api customer_id=1062034032 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'beneficiary-api', 'start': 1786474451024963, 'end': 1786560851024963, 'limit': 100, 'tags': '{"customer_id": "1062034032"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-13 18:54:13,291 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=15
+2026-08-13 18:54:13,294 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/15] traceID=718456d393dd7d43b9f30e5ef02279db http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:13,295 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/15] traceID=22195fc2ae162f2bb43eb38b3e12652e http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:13,297 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/15] traceID=0f04c264a39cf369a0b8732b9275ca73 http_codes={'200', '204'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:13,298 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/15] traceID=bc9d49af9ffadbdf80c537ab09eb8b83 http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:13,299 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/15] traceID=d1e786710c5e75e08c268636089f3afd http_codes={'200', '204'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:13,299 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/15] traceID=24e02c46b6535e04982cefee3bc41d9f http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:13,300 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/15] traceID=ed0ec015b342e883ffc05077845224bf http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:13,300 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/15] traceID=fa666b5b519f868a72551fed043b1294 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:13,300 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/15] traceID=f5fcac4ac1e38a57501351ee9fb12a09 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:13,300 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/15] traceID=f8cd6b07f8529136603ac506d76f5c4a http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:13,301 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/15] traceID=a9f7b35b7dda54780a8ceb2b78333d5c http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:13,301 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/15] traceID=56f1e26bb0b9b1b620265af53baa81e5 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:13,301 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/15] traceID=93da462b53c8c329625d2f8442e96ac0 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:13,301 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/15] traceID=1a192cf841d96d4c16afaaece9039144 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:13,301 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/15] traceID=0b57e73795ee8d53c3f518d308d28f8b http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:13,302 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=15 failed=11 happy_endpoints=4 sessions=2 success_sessions=1
+2026-08-13 18:54:13,302 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=beneficiary-api tag=customer_id=1062034032 range=24-48h ago total_scanned=15 failed_traces_count=10 happy_hits={'3fab09f8071d1f8b - beneficiary-api - /api/beneficiary/v1/payee': 1, '09dc7928ed1c671f - beneficiary-api - /api/beneficiary/v1/payee/search': 1, '8d81b865278d0f08 - beneficiary-api - /api/beneficiary/v1/payee/search': 1, '1c888764d21fb1fa - beneficiary-api - /api/beneficiary/v1/payee/search': 1} sessions=2 success_sessions=1 error=None
+2026-08-13 18:54:13,302 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-12 22:57:06 IST
+f4a507b385b35ae9 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    fd3a6f22e0b0fbd4 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:13,302 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-12 22:56:53 IST
+f61462c03ecff2a0 - payments-api - /api/payments/v2/fundtransfer/limits/validate
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    4c523d640f6203ec - payments-api - /api/payments/v2/fundtransfer/limits/validate | request/response
+    HTTP Status: 200
+      request: {"transactionAmount":3
+2026-08-13 18:54:13,302 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-12 22:46:29 IST
+247d662099b138d8 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+    83f1721b9a8bf488 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAccountNumber":"21500852847","remitterVpa":"8147430128-4@idfcfirstacq","channel":"06","beneficiaryAccountNumber":null,"remitterName":"Mr. Paul  St","beneficiaryName":"Miss. Hrishika  Gupta","amount":"8.00","paymentM
+2026-08-13 18:54:13,302 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 15 traces in time range 24-48h ago:
+
+=== HAPPY PATH (Successful Traces) ===
+  3fab09f8071d1f8b - beneficiary-api - /api/beneficiary/v1/payee → Success: 1
+  09dc7928ed1c671f - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+  8d81b865278d0f08 - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+  1c888764d21fb1fa - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+
+=== SESSIONS ===
+  Total sessions: 2
+  Successful sessions: 1
+
+=== 10 FAILED TRACES ===
+
+Time: 2026-08-12 22:57:06 IST
+f4a507b385b35ae9 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee:
+2026-08-13 18:54:13,303 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=traces_found for range=1
+2026-08-13 18:54:13,303 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 1
+2026-08-13 18:54:13,303 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][EVIDENCE COLLECTED] service=beneficiary-api tag=customer_id range=1 chars=42508
+18:54:13 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-13 18:54:13,313 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+Plan Agent completed for incident b184a9373be6c750b6986f34c3e45a33
+
+
+╭────────────────────────── Tracing Preference Saved ──────────────────────────╮
+│                                                                              │
+│  Info: Tracing has been disabled.                                            │
+│                                                                              │
+│  Your preference has been saved. Future Crew/Flow executions will not        │
+│  collect traces.                                                             │
+│                                                                              │
+│  To enable tracing later, do any one of these:                               │
+│  • Set tracing=True in your Crew/Flow code                                   │
+│  • Set CREWAI_TRACING_ENABLED=true in your project's .env file               │
+│  • Run: crewai traces enable                                                 │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-13 18:54:13,376 - new_flow.utils.llm - INFO - Token expired (attempt 1/3), refreshing token and retrying in 1s...
+2026-08-13 18:54:13,524 - new_flow.utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-13 18:54:14,527 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-08-13 18:54:14,527 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: beneficiary-api, Tag: customer_id=1062034032
+2026-08-13 18:54:14,527 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-13 18:54:14,527 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=beneficiary-api, tag=customer_id=1062034032
+2026-08-13 18:54:14,527 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=beneficiary-api customer_id=1062034032 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'beneficiary-api', 'start': 1786560854527340, 'end': 1786647254527340, 'limit': 100, 'tags': '{"customer_id": "1062034032"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-13 18:54:16,440 - asyncio - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x7fb201052e50>
+2026-08-13 18:54:16,441 - asyncio - ERROR - Unclosed client session
+client_session: <aiohttp.client.ClientSession object at 0x7fb2005edb50>
+2026-08-13 18:54:16,539 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=20
+2026-08-13 18:54:16,543 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/20] traceID=c843d3f97b97b580c237c840923115fc http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,544 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/20] traceID=68dc3706548188df076abc339407b755 http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,547 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/20] traceID=fa16fa1ca20f1198b08865f7fb2acdbc http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,548 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/20] traceID=09c79469575ade774ec2e7162a0bba7f http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:16,551 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/20] traceID=692c6b36f0c4b2abb92ca6ea2bbdcdf9 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,552 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/20] traceID=15100120a6f33c2d04ff1ef4db5766fd http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,555 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/20] traceID=16252811576406f4455c498ee9c568f0 http_codes={'200', '204', '404'} error_flag=True error_logs_count=9 classified=ERROR
+2026-08-13 18:54:16,556 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/20] traceID=1d082b0c883700748d469604f77cac93 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:16,559 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/20] traceID=ecb2156ba51d7fc3b2d1c2d802b046e6 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,560 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/20] traceID=041630821b19f0ec48a6d0dbd7c07b2c http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:16,562 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/20] traceID=b6800a95893c25de89dcdc8cf4f767fb http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,563 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/20] traceID=bbf50064f1eb4a25125d74a7299697e3 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:16,565 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/20] traceID=916f44b5e463faaf57794ec53c097234 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,566 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/20] traceID=78dbe4f98f5b89e8a5f6508feab105d3 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:16,569 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/20] traceID=f2337bb44410ef507d9df3c638946111 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,570 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 16/20] traceID=153887734859521ae82ee5d58d504ce7 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:16,572 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 17/20] traceID=91e6caaa562514190a4cf82ea2e635d3 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,573 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 18/20] traceID=481c04e260d4a1b0c178e51a7a586d15 http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,576 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 19/20] traceID=58f80b3318a6cca721b7e5d1f07b16b2 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:16,577 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 20/20] traceID=72479abace0109467942a0b32d57e1e1 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:16,577 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=20 failed=20 happy_endpoints=0 sessions=8 success_sessions=0
+2026-08-13 18:54:16,592 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=beneficiary-api tag=customer_id=1062034032 range=0-24h ago total_scanned=20 failed_traces_count=10 happy_hits={} sessions=8 success_sessions=0 error=None
+2026-08-13 18:54:16,592 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-13 18:37:28 IST
+60c9f4e5cdd5845c - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    53c55ce63b11d798 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:16,592 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-13 18:37:18 IST
+ce9d94f88a136d8f - payments-api - /api/payments/v2/fundtransfer/limits/validate
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    b64aef3fc25462d9 - payments-api - /api/payments/v2/fundtransfer/limits/validate | request/response
+    HTTP Status: 200
+      request: {"transactionAmount":1
+2026-08-13 18:54:16,592 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-13 17:44:15 IST
+d507afb856dac61a - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    c0a35c0f6058505a - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:16,592 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 20 traces in time range 0-24h ago:
+
+=== SESSIONS ===
+  Total sessions: 8
+  Successful sessions: 0
+
+=== 10 FAILED TRACES ===
+
+Time: 2026-08-13 18:37:28 IST
+60c9f4e5cdd5845c - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    53c55ce63b11d798 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAccountNumber":"21500852847","remitterVpa":"8147430128-4@idfcfirstacq","channel":"06","beneficiaryAccountNumber":null,"remitterName":"Paul St","beneficiaryName":"Add Money_
+2026-08-13 18:54:16,592 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=0
+2026-08-13 18:54:16,592 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
+2026-08-13 18:54:16,592 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
+2026-08-13 18:54:16,593 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=beneficiary-api, tag=customer_id=1062034032
+2026-08-13 18:54:16,593 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=beneficiary-api customer_id=1062034032 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'beneficiary-api', 'start': 1786474456592999, 'end': 1786560856592999, 'limit': 100, 'tags': '{"customer_id": "1062034032"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-13 18:54:17,268 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=15
+2026-08-13 18:54:17,271 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/15] traceID=718456d393dd7d43b9f30e5ef02279db http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:17,272 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/15] traceID=22195fc2ae162f2bb43eb38b3e12652e http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:17,274 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/15] traceID=0f04c264a39cf369a0b8732b9275ca73 http_codes={'200', '204'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:17,275 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/15] traceID=bc9d49af9ffadbdf80c537ab09eb8b83 http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:17,275 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/15] traceID=d1e786710c5e75e08c268636089f3afd http_codes={'200', '204'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:17,276 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/15] traceID=24e02c46b6535e04982cefee3bc41d9f http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:17,276 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/15] traceID=ed0ec015b342e883ffc05077845224bf http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:17,276 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/15] traceID=fa666b5b519f868a72551fed043b1294 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:17,276 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/15] traceID=f5fcac4ac1e38a57501351ee9fb12a09 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:17,277 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/15] traceID=f8cd6b07f8529136603ac506d76f5c4a http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:17,277 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/15] traceID=a9f7b35b7dda54780a8ceb2b78333d5c http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:17,277 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/15] traceID=56f1e26bb0b9b1b620265af53baa81e5 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:17,277 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/15] traceID=93da462b53c8c329625d2f8442e96ac0 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:17,278 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/15] traceID=1a192cf841d96d4c16afaaece9039144 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:17,278 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/15] traceID=0b57e73795ee8d53c3f518d308d28f8b http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:17,278 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=15 failed=11 happy_endpoints=4 sessions=2 success_sessions=1
+2026-08-13 18:54:17,282 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=beneficiary-api tag=customer_id=1062034032 range=24-48h ago total_scanned=15 failed_traces_count=10 happy_hits={'3fab09f8071d1f8b - beneficiary-api - /api/beneficiary/v1/payee': 1, '09dc7928ed1c671f - beneficiary-api - /api/beneficiary/v1/payee/search': 1, '8d81b865278d0f08 - beneficiary-api - /api/beneficiary/v1/payee/search': 1, '1c888764d21fb1fa - beneficiary-api - /api/beneficiary/v1/payee/search': 1} sessions=2 success_sessions=1 error=None
+2026-08-13 18:54:17,282 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-12 22:57:06 IST
+f4a507b385b35ae9 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    fd3a6f22e0b0fbd4 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:17,282 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-12 22:56:53 IST
+f61462c03ecff2a0 - payments-api - /api/payments/v2/fundtransfer/limits/validate
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    4c523d640f6203ec - payments-api - /api/payments/v2/fundtransfer/limits/validate | request/response
+    HTTP Status: 200
+      request: {"transactionAmount":3
+2026-08-13 18:54:17,282 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-12 22:46:29 IST
+247d662099b138d8 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+    83f1721b9a8bf488 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAccountNumber":"21500852847","remitterVpa":"8147430128-4@idfcfirstacq","channel":"06","beneficiaryAccountNumber":null,"remitterName":"Mr. Paul  St","beneficiaryName":"Miss. Hrishika  Gupta","amount":"8.00","paymentM
+2026-08-13 18:54:17,282 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 15 traces in time range 24-48h ago:
+
+=== HAPPY PATH (Successful Traces) ===
+  3fab09f8071d1f8b - beneficiary-api - /api/beneficiary/v1/payee → Success: 1
+  09dc7928ed1c671f - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+  8d81b865278d0f08 - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+  1c888764d21fb1fa - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+
+=== SESSIONS ===
+  Total sessions: 2
+  Successful sessions: 1
+
+=== 10 FAILED TRACES ===
+
+Time: 2026-08-12 22:57:06 IST
+f4a507b385b35ae9 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee:
+2026-08-13 18:54:17,282 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=traces_found for range=1
+2026-08-13 18:54:17,282 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 1
+2026-08-13 18:54:17,282 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][EVIDENCE COLLECTED] service=beneficiary-api tag=customer_id range=1 chars=42508
+18:54:17 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-13 18:54:17,292 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+
+
+2026-08-13 18:54:17,305 - new_flow.utils.llm - INFO - Token expired (attempt 2/3), refreshing token and retrying in 2s...
+╭────────────────────────── Tracing Preference Saved ──────────────────────────╮
+│                                                                              │
+│  Info: Tracing has been disabled.                                            │
+│                                                                              │
+│  Your preference has been saved. Future Crew/Flow executions will not        │
+│  collect traces.                                                             │
+│                                                                              │
+│  To enable tracing later, do any one of these:                               │
+│  • Set tracing=True in your Crew/Flow code                                   │
+│  • Set CREWAI_TRACING_ENABLED=true in your project's .env file               │
+│  • Run: crewai traces enable                                                 │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-13 18:54:17,420 - new_flow.utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-13 18:54:19,423 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-08-13 18:54:19,423 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: beneficiary-api, Tag: customer_id=1062034032
+2026-08-13 18:54:19,423 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-13 18:54:19,423 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=beneficiary-api, tag=customer_id=1062034032
+2026-08-13 18:54:19,424 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=beneficiary-api customer_id=1062034032 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'beneficiary-api', 'start': 1786560859423957, 'end': 1786647259423957, 'limit': 100, 'tags': '{"customer_id": "1062034032"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-13 18:54:20,960 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=20
+2026-08-13 18:54:20,964 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/20] traceID=c843d3f97b97b580c237c840923115fc http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,965 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/20] traceID=68dc3706548188df076abc339407b755 http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,968 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/20] traceID=fa16fa1ca20f1198b08865f7fb2acdbc http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,969 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/20] traceID=09c79469575ade774ec2e7162a0bba7f http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:20,971 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/20] traceID=692c6b36f0c4b2abb92ca6ea2bbdcdf9 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,973 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/20] traceID=15100120a6f33c2d04ff1ef4db5766fd http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,975 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/20] traceID=16252811576406f4455c498ee9c568f0 http_codes={'200', '204', '404'} error_flag=True error_logs_count=9 classified=ERROR
+2026-08-13 18:54:20,976 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/20] traceID=1d082b0c883700748d469604f77cac93 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:20,979 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/20] traceID=ecb2156ba51d7fc3b2d1c2d802b046e6 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,980 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/20] traceID=041630821b19f0ec48a6d0dbd7c07b2c http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:20,982 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/20] traceID=b6800a95893c25de89dcdc8cf4f767fb http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,983 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/20] traceID=bbf50064f1eb4a25125d74a7299697e3 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:20,986 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/20] traceID=916f44b5e463faaf57794ec53c097234 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,987 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/20] traceID=78dbe4f98f5b89e8a5f6508feab105d3 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:20,989 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/20] traceID=f2337bb44410ef507d9df3c638946111 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,990 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 16/20] traceID=153887734859521ae82ee5d58d504ce7 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:20,992 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 17/20] traceID=91e6caaa562514190a4cf82ea2e635d3 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,993 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 18/20] traceID=481c04e260d4a1b0c178e51a7a586d15 http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,996 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 19/20] traceID=58f80b3318a6cca721b7e5d1f07b16b2 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:20,997 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 20/20] traceID=72479abace0109467942a0b32d57e1e1 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:20,997 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=20 failed=20 happy_endpoints=0 sessions=8 success_sessions=0
+2026-08-13 18:54:21,015 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=beneficiary-api tag=customer_id=1062034032 range=0-24h ago total_scanned=20 failed_traces_count=10 happy_hits={} sessions=8 success_sessions=0 error=None
+2026-08-13 18:54:21,015 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-13 18:37:28 IST
+60c9f4e5cdd5845c - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    53c55ce63b11d798 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:21,015 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-13 18:37:18 IST
+ce9d94f88a136d8f - payments-api - /api/payments/v2/fundtransfer/limits/validate
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    b64aef3fc25462d9 - payments-api - /api/payments/v2/fundtransfer/limits/validate | request/response
+    HTTP Status: 200
+      request: {"transactionAmount":1
+2026-08-13 18:54:21,015 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-13 17:44:15 IST
+d507afb856dac61a - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    c0a35c0f6058505a - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:21,015 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 20 traces in time range 0-24h ago:
+
+=== SESSIONS ===
+  Total sessions: 8
+  Successful sessions: 0
+
+=== 10 FAILED TRACES ===
+
+Time: 2026-08-13 18:37:28 IST
+60c9f4e5cdd5845c - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    53c55ce63b11d798 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAccountNumber":"21500852847","remitterVpa":"8147430128-4@idfcfirstacq","channel":"06","beneficiaryAccountNumber":null,"remitterName":"Paul St","beneficiaryName":"Add Money_
+2026-08-13 18:54:21,016 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=0
+2026-08-13 18:54:21,016 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
+2026-08-13 18:54:21,016 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
+2026-08-13 18:54:21,016 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=beneficiary-api, tag=customer_id=1062034032
+2026-08-13 18:54:21,016 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=beneficiary-api customer_id=1062034032 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'beneficiary-api', 'start': 1786474461016367, 'end': 1786560861016367, 'limit': 100, 'tags': '{"customer_id": "1062034032"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-13 18:54:21,378 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=15
+2026-08-13 18:54:21,381 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/15] traceID=718456d393dd7d43b9f30e5ef02279db http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:21,382 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/15] traceID=22195fc2ae162f2bb43eb38b3e12652e http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:21,384 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/15] traceID=0f04c264a39cf369a0b8732b9275ca73 http_codes={'200', '204'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:21,385 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/15] traceID=bc9d49af9ffadbdf80c537ab09eb8b83 http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:21,386 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/15] traceID=d1e786710c5e75e08c268636089f3afd http_codes={'200', '204'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:21,386 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/15] traceID=24e02c46b6535e04982cefee3bc41d9f http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:21,386 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/15] traceID=ed0ec015b342e883ffc05077845224bf http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:21,387 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/15] traceID=fa666b5b519f868a72551fed043b1294 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:21,387 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/15] traceID=f5fcac4ac1e38a57501351ee9fb12a09 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:21,387 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/15] traceID=f8cd6b07f8529136603ac506d76f5c4a http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:21,387 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/15] traceID=a9f7b35b7dda54780a8ceb2b78333d5c http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:21,388 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/15] traceID=56f1e26bb0b9b1b620265af53baa81e5 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:21,388 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/15] traceID=93da462b53c8c329625d2f8442e96ac0 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:21,388 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/15] traceID=1a192cf841d96d4c16afaaece9039144 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:21,388 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/15] traceID=0b57e73795ee8d53c3f518d308d28f8b http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:21,388 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=15 failed=11 happy_endpoints=4 sessions=2 success_sessions=1
+2026-08-13 18:54:21,388 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=beneficiary-api tag=customer_id=1062034032 range=24-48h ago total_scanned=15 failed_traces_count=10 happy_hits={'3fab09f8071d1f8b - beneficiary-api - /api/beneficiary/v1/payee': 1, '09dc7928ed1c671f - beneficiary-api - /api/beneficiary/v1/payee/search': 1, '8d81b865278d0f08 - beneficiary-api - /api/beneficiary/v1/payee/search': 1, '1c888764d21fb1fa - beneficiary-api - /api/beneficiary/v1/payee/search': 1} sessions=2 success_sessions=1 error=None
+2026-08-13 18:54:21,389 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-12 22:57:06 IST
+f4a507b385b35ae9 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    fd3a6f22e0b0fbd4 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:21,389 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-12 22:56:53 IST
+f61462c03ecff2a0 - payments-api - /api/payments/v2/fundtransfer/limits/validate
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    4c523d640f6203ec - payments-api - /api/payments/v2/fundtransfer/limits/validate | request/response
+    HTTP Status: 200
+      request: {"transactionAmount":3
+2026-08-13 18:54:21,389 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-12 22:46:29 IST
+247d662099b138d8 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+    83f1721b9a8bf488 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAccountNumber":"21500852847","remitterVpa":"8147430128-4@idfcfirstacq","channel":"06","beneficiaryAccountNumber":null,"remitterName":"Mr. Paul  St","beneficiaryName":"Miss. Hrishika  Gupta","amount":"8.00","paymentM
+2026-08-13 18:54:21,389 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 15 traces in time range 24-48h ago:
+
+=== HAPPY PATH (Successful Traces) ===
+  3fab09f8071d1f8b - beneficiary-api - /api/beneficiary/v1/payee → Success: 1
+  09dc7928ed1c671f - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+  8d81b865278d0f08 - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+  1c888764d21fb1fa - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+
+=== SESSIONS ===
+  Total sessions: 2
+  Successful sessions: 1
+
+=== 10 FAILED TRACES ===
+
+Time: 2026-08-12 22:57:06 IST
+f4a507b385b35ae9 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee:
+2026-08-13 18:54:21,389 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=traces_found for range=1
+2026-08-13 18:54:21,389 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 1
+2026-08-13 18:54:21,389 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][EVIDENCE COLLECTED] service=beneficiary-api tag=customer_id range=1 chars=42508
+18:54:21 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-13 18:54:21,400 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+
+
+╭────────────────────────── Tracing Preference Saved ──────────────────────────╮
+│                                                                              │
+│  Info: Tracing has been disabled.                                            │
+│                                                                              │
+│  Your preference has been saved. Future Crew/Flow executions will not        │
+│  collect traces.                                                             │
+│                                                                              │
+│  To enable tracing later, do any one of these:                               │
+│  • Set tracing=True in your Crew/Flow code                                   │
+│  • Set CREWAI_TRACING_ENABLED=true in your project's .env file               │
+│  • Run: crewai traces enable                                                 │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-13 18:54:21,422 - new_flow.utils.llm - INFO - Token expired (attempt 3/3), refreshing token and retrying in 4s...
+2026-08-13 18:54:21,465 - new_flow.utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-13 18:54:25,468 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-08-13 18:54:25,468 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: beneficiary-api, Tag: customer_id=1062034032
+2026-08-13 18:54:25,468 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-13 18:54:25,468 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=beneficiary-api, tag=customer_id=1062034032
+2026-08-13 18:54:25,468 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=beneficiary-api customer_id=1062034032 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'beneficiary-api', 'start': 1786560865468790, 'end': 1786647265468790, 'limit': 100, 'tags': '{"customer_id": "1062034032"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-13 18:54:27,268 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=20
+2026-08-13 18:54:27,272 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/20] traceID=c843d3f97b97b580c237c840923115fc http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,274 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/20] traceID=68dc3706548188df076abc339407b755 http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,277 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/20] traceID=fa16fa1ca20f1198b08865f7fb2acdbc http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,278 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/20] traceID=09c79469575ade774ec2e7162a0bba7f http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:27,281 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/20] traceID=692c6b36f0c4b2abb92ca6ea2bbdcdf9 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,282 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/20] traceID=15100120a6f33c2d04ff1ef4db5766fd http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,284 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/20] traceID=16252811576406f4455c498ee9c568f0 http_codes={'200', '204', '404'} error_flag=True error_logs_count=9 classified=ERROR
+2026-08-13 18:54:27,285 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/20] traceID=1d082b0c883700748d469604f77cac93 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:27,288 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/20] traceID=ecb2156ba51d7fc3b2d1c2d802b046e6 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,289 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/20] traceID=041630821b19f0ec48a6d0dbd7c07b2c http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:27,292 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/20] traceID=b6800a95893c25de89dcdc8cf4f767fb http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,293 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/20] traceID=bbf50064f1eb4a25125d74a7299697e3 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:27,295 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/20] traceID=916f44b5e463faaf57794ec53c097234 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,296 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/20] traceID=78dbe4f98f5b89e8a5f6508feab105d3 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:27,299 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/20] traceID=f2337bb44410ef507d9df3c638946111 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,300 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 16/20] traceID=153887734859521ae82ee5d58d504ce7 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:27,302 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 17/20] traceID=91e6caaa562514190a4cf82ea2e635d3 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,303 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 18/20] traceID=481c04e260d4a1b0c178e51a7a586d15 http_codes={'200', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,306 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 19/20] traceID=58f80b3318a6cca721b7e5d1f07b16b2 http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:27,307 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 20/20] traceID=72479abace0109467942a0b32d57e1e1 http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:27,307 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=20 failed=20 happy_endpoints=0 sessions=8 success_sessions=0
+2026-08-13 18:54:27,324 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=beneficiary-api tag=customer_id=1062034032 range=0-24h ago total_scanned=20 failed_traces_count=10 happy_hits={} sessions=8 success_sessions=0 error=None
+2026-08-13 18:54:27,324 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-13 18:37:28 IST
+60c9f4e5cdd5845c - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    53c55ce63b11d798 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:27,325 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-13 18:37:18 IST
+ce9d94f88a136d8f - payments-api - /api/payments/v2/fundtransfer/limits/validate
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    b64aef3fc25462d9 - payments-api - /api/payments/v2/fundtransfer/limits/validate | request/response
+    HTTP Status: 200
+      request: {"transactionAmount":1
+2026-08-13 18:54:27,325 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-13 17:44:15 IST
+d507afb856dac61a - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    c0a35c0f6058505a - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:27,325 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 20 traces in time range 0-24h ago:
+
+=== SESSIONS ===
+  Total sessions: 8
+  Successful sessions: 0
+
+=== 10 FAILED TRACES ===
+
+Time: 2026-08-13 18:37:28 IST
+60c9f4e5cdd5845c - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    53c55ce63b11d798 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAccountNumber":"21500852847","remitterVpa":"8147430128-4@idfcfirstacq","channel":"06","beneficiaryAccountNumber":null,"remitterName":"Paul St","beneficiaryName":"Add Money_
+2026-08-13 18:54:27,325 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=0
+2026-08-13 18:54:27,325 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
+2026-08-13 18:54:27,325 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
+2026-08-13 18:54:27,325 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=beneficiary-api, tag=customer_id=1062034032
+2026-08-13 18:54:27,325 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=beneficiary-api customer_id=1062034032 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'beneficiary-api', 'start': 1786474467325729, 'end': 1786560867325729, 'limit': 100, 'tags': '{"customer_id": "1062034032"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-13 18:54:28,091 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=15
+2026-08-13 18:54:28,096 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/15] traceID=718456d393dd7d43b9f30e5ef02279db http_codes={'200', '204', '404'} error_flag=True error_logs_count=8 classified=ERROR
+2026-08-13 18:54:28,098 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/15] traceID=22195fc2ae162f2bb43eb38b3e12652e http_codes={'200', '404'} error_flag=True error_logs_count=7 classified=ERROR
+2026-08-13 18:54:28,101 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/15] traceID=0f04c264a39cf369a0b8732b9275ca73 http_codes={'200', '204'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:28,102 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/15] traceID=bc9d49af9ffadbdf80c537ab09eb8b83 http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:28,103 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/15] traceID=d1e786710c5e75e08c268636089f3afd http_codes={'200', '204'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:28,104 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/15] traceID=24e02c46b6535e04982cefee3bc41d9f http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:28,104 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/15] traceID=ed0ec015b342e883ffc05077845224bf http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:28,105 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/15] traceID=fa666b5b519f868a72551fed043b1294 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:28,105 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/15] traceID=f5fcac4ac1e38a57501351ee9fb12a09 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:28,105 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/15] traceID=f8cd6b07f8529136603ac506d76f5c4a http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-08-13 18:54:28,106 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/15] traceID=a9f7b35b7dda54780a8ceb2b78333d5c http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-13 18:54:28,106 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/15] traceID=56f1e26bb0b9b1b620265af53baa81e5 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:28,106 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/15] traceID=93da462b53c8c329625d2f8442e96ac0 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:28,106 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/15] traceID=1a192cf841d96d4c16afaaece9039144 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:28,107 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/15] traceID=0b57e73795ee8d53c3f518d308d28f8b http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-08-13 18:54:28,107 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=15 failed=11 happy_endpoints=4 sessions=2 success_sessions=1
+2026-08-13 18:54:28,112 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=beneficiary-api tag=customer_id=1062034032 range=24-48h ago total_scanned=15 failed_traces_count=10 happy_hits={'3fab09f8071d1f8b - beneficiary-api - /api/beneficiary/v1/payee': 1, '09dc7928ed1c671f - beneficiary-api - /api/beneficiary/v1/payee/search': 1, '8d81b865278d0f08 - beneficiary-api - /api/beneficiary/v1/payee/search': 1, '1c888764d21fb1fa - beneficiary-api - /api/beneficiary/v1/payee/search': 1} sessions=2 success_sessions=1 error=None
+2026-08-13 18:54:28,112 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-12 22:57:06 IST
+f4a507b385b35ae9 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    fd3a6f22e0b0fbd4 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAcc
+2026-08-13 18:54:28,112 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-12 22:56:53 IST
+f61462c03ecff2a0 - payments-api - /api/payments/v2/fundtransfer/limits/validate
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee: a******y@i*****q not found
+    4c523d640f6203ec - payments-api - /api/payments/v2/fundtransfer/limits/validate | request/response
+    HTTP Status: 200
+      request: {"transactionAmount":3
+2026-08-13 18:54:28,112 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-12 22:46:29 IST
+247d662099b138d8 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+    83f1721b9a8bf488 - payments-api - /api/payments/v2/fundtransfer | request/response
+    HTTP Status: 200
+      request: {"remitterAccountRefNumber":"21500852847","remitterAccountNumber":"21500852847","remitterVpa":"8147430128-4@idfcfirstacq","channel":"06","beneficiaryAccountNumber":null,"remitterName":"Mr. Paul  St","beneficiaryName":"Miss. Hrishika  Gupta","amount":"8.00","paymentM
+2026-08-13 18:54:28,113 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 15 traces in time range 24-48h ago:
+
+=== HAPPY PATH (Successful Traces) ===
+  3fab09f8071d1f8b - beneficiary-api - /api/beneficiary/v1/payee → Success: 1
+  09dc7928ed1c671f - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+  8d81b865278d0f08 - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+  1c888764d21fb1fa - beneficiary-api - /api/beneficiary/v1/payee/search → Success: 1
+
+=== SESSIONS ===
+  Total sessions: 2
+  Successful sessions: 1
+
+=== 10 FAILED TRACES ===
+
+Time: 2026-08-12 22:57:06 IST
+f4a507b385b35ae9 - payments-api - /api/payments/v2/fundtransfer
+HTTP Status: 200
+  ERROR: error while checking vpa payee existence: StatusCode : 404, ResponseBody : {"errorCode":"ERR_BEN_PAYEE_NOT_EXISTS","errorMessage":"payee not exists"}
+  ERROR: requested payee:
+2026-08-13 18:54:28,113 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=traces_found for range=1
+2026-08-13 18:54:28,113 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 1
+2026-08-13 18:54:28,113 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][EVIDENCE COLLECTED] service=beneficiary-api tag=customer_id range=1 chars=42508
+18:54:28 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-13 18:54:28,123 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+
+
+2026-08-13 18:54:28,137 - new_flow.utils.llm - ERROR - Max retries (3) reached for crew execution
+╭────────────────────────── Tracing Preference Saved ──────────────────────────╮
+│                                                                              │
+│  Info: Tracing has been disabled.                                            │
+│                                                                              │
+│  Your preference has been saved. Future Crew/Flow executions will not        │
+│  collect traces.                                                             │
+│                                                                              │
+│  To enable tracing later, do any one of these:                               │
+│  • Set tracing=True in your Crew/Flow code                                   │
+│  • Set CREWAI_TRACING_ENABLED=true in your project's .env file               │
+│  • Run: crewai traces enable                                                 │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-13 18:54:28,147 - crewai.flow.flow - ERROR - Error executing listener run_resolver_crew: litellm.AuthenticationError: AuthenticationError: OpenAIException - Error code: 401 - {'error': 'invalid_token', 'error_description': 'The access token is invalid or has expired'}
+2026-08-13 18:54:28,147 - __main__ - ERROR - ✗ Flow FAILED | incident=b184a9373be6c750b6986f34c3e45a33 module=new_flow.flow error=litellm.AuthenticationError: AuthenticationError: OpenAIException - Error code: 401 - {'error': 'invalid_token', 'error_description': 'The access token is invalid or has expired'}
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 823, in acompletion
+    headers, response = await self.make_openai_chat_completion_request(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/logging_utils.py", line 190, in async_wrapper
+    result = await func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 454, in make_openai_chat_completion_request
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 436, in make_openai_chat_completion_request
+    await openai_aclient.chat.completions.with_raw_response.create(
+  File "/usr/local/lib/python3.11/site-packages/openai/_legacy_response.py", line 386, in wrapped
+    return cast(LegacyAPIResponse[R], await func(*args, **kwargs))
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 2907, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/_base_client.py", line 1992, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/_base_client.py", line 1777, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.AuthenticationError: Error code: 401 - {'error': 'invalid_token', 'error_description': 'The access token is invalid or has expired'}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/litellm/main.py", line 599, in acompletion
+    response = await init_response
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 870, in acompletion
+    raise OpenAIError(
+litellm.llms.openai.common_utils.OpenAIError: Error code: 401 - {'error': 'invalid_token', 'error_description': 'The access token is invalid or has expired'}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/app/worker.py", line 127, in process_message
+    await flow.akickoff()
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2211, in akickoff
+    return await self.kickoff_async(inputs, input_files)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2091, in kickoff_async
+    await asyncio.gather(*tasks)
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2262, in _execute_start_method
+    await self._execute_listeners(start_method_name, result, finished_event_id)
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2552, in _execute_listeners
+    await asyncio.gather(*tasks)
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2820, in _execute_single_listener
+    await self._execute_listeners(
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2552, in _execute_listeners
+    await asyncio.gather(*tasks)
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2806, in _execute_single_listener
+    listener_result, finished_event_id = await self._execute_method(
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2428, in _execute_method
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2341, in _execute_method
+    result = await method(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/flow.py", line 344, in run_resolver_crew
+    return await self._run_agentic_resolver(app)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/flow.py", line 385, in _run_agentic_resolver
+    execution_result = await run_crew_with_retry_async(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/utils/llm.py", line 132, in run_crew_with_retry_async
+    raise last_error
+  File "/app/new_flow/utils/llm.py", line 92, in run_crew_with_retry_async
+    result = await crew_coro
+             ^^^^^^^^^^^^^^^
+  File "/app/new_flow/agents/execute_agent_jaeger.py", line 734, in run_jaeger_only_async
+    return await agent.execute(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/agents/execute_agent_jaeger.py", line 190, in execute
+    decision = await self._decide_after_traces(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/agents/execute_agent_jaeger.py", line 534, in _decide_after_traces
+    result = await crew.akickoff()
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/crew.py", line 976, in akickoff
+    result = await self._arun_sequential_process()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/crew.py", line 1035, in _arun_sequential_process
+    return await self._aexecute_tasks(self.tasks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/crew.py", line 1097, in _aexecute_tasks
+    task_output = await task.aexecute_sync(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/task.py", line 578, in aexecute_sync
+    return await self._aexecute_core(agent, context, tools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/task.py", line 694, in _aexecute_core
+    raise e  # Re-raise the exception after emitting the event
+    ^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/task.py", line 602, in _aexecute_core
+    result = await agent.aexecute_task(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 892, in aexecute_task
+    result = await self._handle_execution_error_async(e, task, context, tools)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 697, in _handle_execution_error_async
+    self._check_execution_error(e, task)
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 643, in _check_execution_error
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 879, in aexecute_task
+    result = await self._aexecute_without_timeout(task_prompt, task)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 937, in _aexecute_without_timeout
+    result = await self.agent_executor.ainvoke(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1131, in ainvoke
+    formatted_answer = await self._ainvoke_loop()
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1170, in _ainvoke_loop
+    return await self._ainvoke_loop_react()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1285, in _ainvoke_loop_react
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1195, in _ainvoke_loop_react
+    answer = await aget_llm_response(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 531, in aget_llm_response
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 521, in aget_llm_response
+    answer = await llm.acall(
+             ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/llm.py", line 1931, in acall
+    return await self._ahandle_non_streaming_response(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/llm.py", line 1339, in _ahandle_non_streaming_response
+    response = await litellm.acompletion(**params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/utils/minimax_tool_call_patch.py", line 65, in acompletion
+    return _recover(await _orig_acompletion(*args, **kwargs))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/utils.py", line 1642, in wrapper_async
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/litellm/utils.py", line 1488, in wrapper_async
+    result = await original_function(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/main.py", line 618, in acompletion
+    raise exception_type(
+          ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 2328, in exception_type
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 482, in exception_type
+    raise AuthenticationError(
+litellm.exceptions.AuthenticationError: litellm.AuthenticationError: AuthenticationError: OpenAIException - Error code: 401 - {'error': 'invalid_token', 'error_description': 'The access token is invalid or has expired'}
+2026-08-13 18:54:29,006 - __main__ - INFO -   Fallback rejection sent | incident=b184a9373be6c750b6986f34c3e45a33
+2026-08-13 18:57:29,052 - utils.llm - INFO - OPENAI_API_KEY refreshed
+shishir.pandey_tho@0325LTPB0124444 ~ % 2026-08-13 18:54:10,970 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=20
 
