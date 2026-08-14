@@ -1,168 +1,1535 @@
-import os
-import re
-from typing import Dict, List
-from pydantic import BaseModel, Field
+───────────────────── ✅ Tool Execution Completed (#291) ─────────────────────╮
+│                                                                              │
+│  Tool Completed                                                              │
+│  Tool: idp_get_user_id_from_ucic                                             │
+│  Output: {'success': False, 'data': None, 'error': 'DPY-6005: cannot         │
+│  connect to database (CONNECTION_ID=YWeUCnHm1FzBPuVtDVehIA==).\ntimed out'}  │
+│                                                                              │
+│                                                                              │
+│  You ONLY have access to the following tools, and should NEVER make up       │
+│  tools that are not listed here:                                             │
+│                                                                              │
+│  Tool Name: login_password_check                                             │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check net banking / web login traces. The response        │
+│  payload contains the actual error returned by the login API for this        │
+│  specific customer — read and report it exactly as it appears, whatever it   │
+│  says. Pass tag_name='customer_id' with the UCIC value (the tool resolves    │
+│  the tag automatically). If a mobile number is present in the incident, run  │
+│  this tool a SECOND time with tag_name='mobile_number' — some traces are     │
+│  only tagged by mobile. ALSO run login_mode_check for the same customer —    │
+│  the login error alone is often not enough to tell wrong password apart      │
+│  from wrong username or mobile typed into the username field;                │
+│  login_mode_check shows what the customer actually entered. Never invent or  │
+│  assume an error — only state what the trace payload shows.                  │
+│  This queries the 'idp-api' service.                                         │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: login_mode_check                                                 │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Shows which identifier the customer actually typed at     │
+│  login — USERNAME, CUSTOMER_ID, or MOBILE NUMBER — as recorded in the        │
+│  trace. Use this alongside login_password_check to work out whether a login  │
+│  failure was due to the password itself or due to the customer entering the  │
+│  wrong identifier (e.g. mobile number typed into the username field). Also   │
+│  surfaces the CDP validation call                                            │
+│  (cdp.idfcfirstbank.com/v1/customers/search, field primaryMobileWithIsd) if  │
+│  present in the trace — check its result rather than assuming what it says.  │
+│  Pass tag_name='customer_id' with the UCIC value, or 'mobile_number'.        │
+│  Report only what the trace actually contains.                               │
+│  This queries the 'idp-api' service.                                         │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: account_view_check                                               │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check account view-details traces to diagnose 'All Good   │
+│  things take time' error when customer cannot view current account. If       │
+│  partnership/sole-prop account, check admin portal setup at                  │
+│  https://admin.my.idfcfirstbank.com.                                         │
+│  This queries the 'bas-api' service.                                         │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: device_registration_check                                        │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Device registration traces (/api/idp/v6/registration).    │
+│  Pass tag_name='customer_id' with the UCIC value, or 'mobile_number'. If     │
+│  the incident describes a registration LOOP (registration screen appears     │
+│  repeatedly)                                                                 │
+│  This queries the 'idp-api' service.                                         │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: beneficiary_add_check                                            │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check beneficiary/payee addition traces to diagnose       │
+│  errors like 'Payee already exists' when customer is unable to add           │
+│  beneficiary details.                                                        │
+│  This queries the 'beneficiary-api' service.                                 │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: fund_transfer_check                                              │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check fund transfer and UPI transaction traces. Covers    │
+│  payments-api fund transfer endpoint and downstream upi-api                  │
+│  merchant/request endpoint. Look for errors like INVALID VIRTUAL ADDRESS     │
+│  from finacq.phi.idfcbank.com.                                               │
+│  This queries the 'payments-api' service.                                    │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: upi_merchant_request_check                                       │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check UPI merchant request/response traces in upi-api     │
+│  service. This is the downstream service called by payments-api for UPI      │
+│  transactions. Look for errors from                                          │
+│  finacq.phi.idfcbank.com/merchant/request endpoint.                          │
+│  This queries the 'upi-api' service.                                         │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: billpay_transaction_check                                        │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check BillPay transaction traces to diagnose failures     │
+│  when customer is unable to pay a bill.                                      │
+│  This queries the 'billpay-api' service.                                     │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: billpay_biller_fetch_check                                       │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check biller details fetch traces. This calls a           │
+│  downstream Billdesk endpoint                                                │
+│  (billdesk-payment-services-sys/validateBDPayment). If no response is found  │
+│  from Billdesk, this is a Billdesk-side issue that needs to be raised with   │
+│  the Billdesk team — not resolvable from our side.                           │
+│  This queries the 'billpay-api' service.                                     │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: billpay_add_biller_check                                         │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check add-new-biller traces. This calls downstream        │
+│  Billdesk endpoint (billdesk-billermgmt-sys/createBDBillerAccount). Common   │
+│  error: customer is trying to add a biller with a short name that already    │
+│  exists in the system for another biller — instruct customer to use a        │
+│  different short name.                                                       │
+│  This queries the 'billpay-api' service.                                     │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: billpay_modify_biller_check                                      │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check modify-existing-biller traces. This calls           │
+│  downstream Billdesk endpoint                                                │
+│  (billdesk-billermgmt-sys/modifyBDBillerAccount). Common error: timeout      │
+│  from Billdesk side — needs escalation to Billdesk team.                     │
+│  This queries the 'billpay-api' service.                                     │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: debitcard_view_check                                             │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check debit card details view traces. Common cause:       │
+│  customer is in Asset_Only category — debit cards are not issued for         │
+│  asset-only customers.                                                       │
+│  This queries the 'DEBITCARD-API' service.                                   │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: debitcard_international_limit_check                              │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check traces for setting international transaction        │
+│  limits on debit card. This calls downstream SFDC endpoint                   │
+│  (generic-case-exp/cardServices) present in the same trace.                  │
+│  This queries the 'DEBITCARD-API' service.                                   │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: debitcard_virtual_card_check                                     │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check virtual debit card request traces. This calls       │
+│  downstream DCMS endpoint (card-mgmt-proc/createVirtualCard). Common error:  │
+│  timeout from DCMS side.                                                     │
+│  This queries the 'DEBITCARD-API' service.                                   │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: debitcard_pin_generation_check                                   │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check debit card PIN generation traces. This calls        │
+│  downstream DCMS endpoint (fss-card-services-sys/generatePin). The actual    │
+│  error message is encrypted in the response and needs decryption to          │
+│  identify root cause.                                                        │
+│  This queries the 'DEBITCARD-API' service.                                   │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: fixed_deposit_view_check                                         │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check fixed deposit details view traces. Common errors:   │
+│  (1) 'unauthorized to perform action' — customer does not have deposit       │
+│  permissions, (2) timeout from CBS endpoint (bancs/fdList) — CBS-side        │
+│  issue.                                                                      │
+│  This queries the 'deposit-api' service.                                     │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: fixed_deposit_advice_download_check                              │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check FD advice download traces. Common error:            │
+│  'unauthorized to perform action' — customer does not have deposit           │
+│  permissions.                                                                │
+│  This queries the 'deposits-api' service.                                    │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: fixed_deposit_tds_check                                          │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check TDS certificate download traces for fixed           │
+│  deposits. Common error: 'unauthorized to perform action' — customer does    │
+│  not have deposit permissions.                                               │
+│  This queries the 'deposits-api' service.                                    │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: form121_eligibility_check                                        │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check Form 121 eligibility traces. Common error:          │
+│  'Country of tax residence not eligible'.                                    │
+│  This queries the 'deposits-api' service.                                    │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: credit_card_view_check                                           │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check credit card details view traces. Calls downstream   │
+│  Prime endpoint (ccei/creditcard/entityinquiry). Common error: timeout from  │
+│  Prime end.                                                                  │
+│  This queries the 'CREDIT-CARD-API' service.                                 │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: credit_card_balance_transfer_check                               │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check balance transfer initiation traces. Common          │
+│  failure: 'no active offer available'. Verify downstream offer service call  │
+│  to customer-generic-info-exp/v2/offer.                                      │
+│  This queries the 'CREDIT-CARD-API' service.                                 │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: credit_card_addon_application_check                              │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check Add-on Credit Card application traces. Verify       │
+│  downstream call to creditcard-application-exp/v1/createAddOnAppln for       │
+│  application errors.                                                         │
+│  This queries the 'CREDIT-CARD-API' service.                                 │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: payments_add_funds_check                                         │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check Add Funds transaction traces. Common error:         │
+│  'account not found' while adding funds.                                     │
+│  This queries the 'payments-api' service.                                    │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: mutual_fund_holdings_check                                       │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check Mutual Fund holdings traces when customer is        │
+│  unable to view investment details.                                          │
+│  This queries the 'WEALTH-API' service.                                      │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: idp_customer_username_lookup                                     │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "key": {                                                                │
+│        "title": "Key",                                                       │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "key"                                                                   │
+│    ],                                                                        │
+│    "title": "SQLToolSchema",                                                 │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Validate username and UCIC mapping in IDP customer        │
+│  table. Used when username mismatch or login issues occur.                   │
+│  Enter the ucic in key, it should contain Customer UCIC                      │
+│  Tool Name: idp_get_user_id_from_ucic                                        │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "key": {                                                                │
+│        "title": "Key",                                                       │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "key"                                                                   │
+│    ],                                                                        │
+│    "title": "SQLToolSchema",                                                 │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: MANDATORY FIRST STEP for any mobile-app / MPIN incident.  │
+│  Converts a customer UCIC into the user_id UUID and device_id required by    │
+│  mpin_login_check. Jaeger MPIN traces are tagged ONLY by user_id, so this    │
+│  must be run before any MPIN log search.                                     │
+│  Enter the ucic in key, it should contain Customer UCIC                      │
+│  Tool Name: idp_device_multiuser_lookup                                      │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "key": {                                                                │
+│        "title": "Key",                                                       │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "key"                                                                   │
+│    ],                                                                        │
+│    "title": "SQLToolSchema",                                                 │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check if a device_id is linked to multiple user_ids       │
+│  causing registration/login conflicts.                                       │
+│  Enter the device_id in key, it should contain Device identifier             │
+│  Tool Name: idp_password_expiry_check                                        │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "key": {                                                                │
+│        "title": "Key",                                                       │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "key"                                                                   │
+│    ],                                                                        │
+│    "title": "SQLToolSchema",                                                 │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check password status and expiry for login failures.      │
+│  Enter the ucic in key, it should contain Customer UCIC                      │
+│                                                                              │
+│  IMPORTANT: Use the following format in your response:                       │
+│                                                                              │
+│  ```                                                                         │
+│  Thought: you should always think about what to do                           │
+│  Action: the action to take, only one name of [login_password_check,         │
+│  login_mode_check, account_view_check, device_registration_check,            │
+│  beneficiary_add_check, fund_transfer_check, upi_merchant_request_check,     │
+│  billpay_transaction_check, billpay_biller_fetch_check,                      │
+│  billpay_add_biller_check, billpay_modify_biller_check,                      │
+│  debitcard_view_check, debitcard_international_limit_check,                  │
+│  debitcard_virtual_card_check, debitcard_pin_generation_check,               │
+│  fixed_deposit_view_check, fixed_deposit_advice_download_check,              │
+│  fixed_deposit_tds_check, form121_eligibility_check,                         │
+│  credit_card_view_check, credit_card_balance_transfer_check,                 │
+│  credit_card_addon_application_check, payments_add_funds_check,              │
+│  mutual_fund_holdings_check, idp_customer_username_lookup,                   │
+│  idp_get_user_id_from_ucic, idp_device_multiuser_lookup,                     │
+│  idp_password_expiry_check], just the name, exactly as it's written.         │
+│  Action Input: the input to the action, just a simple JSON object, enclosed  │
+│  in curly braces, using " to wrap keys and values.                           │
+│  Observation: the result of the action                                       │
+│  ```                                                                         │
+│                                                                              │
+│  Once all necessary information is gathered, return the following format:    │
+│                                                                              │
+│  ```                                                                         │
+│  Thought: I now know the final answer                                        │
+│  Final Answer: the final answer to the original input question               │
+│  ```                                                                         │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│  {'success': False, 'data': None, 'error': 'DPY-6005: cannot connect to      │
+│  database (CONNECTION_ID=YWeUCnHm1FzBPuVtDVehIA==).\ntimed out'}             │
+│                                                                              │
+│                                                                              │
+│  You ONLY have access to the following tools, and should NEVER make up       │
+│  tools that are not listed here:                                             │
+│                                                                              │
+│  Tool Name: login_password_check                                             │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "Tag Value",                                                 │
+│        "type": "string"                                                      │
+│      }                                                                       │
+│    },                                                                        │
+│    "required": [                                                             │
+│      "tag_name",                                                             │
+│      "tag_value"                                                             │
+│    ],                                                                        │
+│    "title": "JaegerToolSchema",                                              │
+│    "type": "object",                                                         │
+│    "additionalProperties": false                                             │
+│  }                                                                           │
+│  Tool Description: Check net banking / web login traces. The response        │
+│  payload contains the actual error returned by the login API for this        │
+│  specific customer — read and report it exactly as it appears, whatever it   │
+│  says. Pass tag_name='customer_id' with the UCIC value (the tool resolves    │
+│  the tag automatically). If a mobile number is present in the incident, run  │
+│  this tool a SECOND time with tag_name='mobile_number' — some traces are     │
+│  only tagged by mobile. ALSO run login_mode_check for the same customer —    │
+│  the login error alone is often not enough to tell wrong password apart      │
+│  from wrong username or mobile typed into the username field;                │
+│  login_mode_check shows what the customer actually entered. Never invent or  │
+│  assume an error — only state what the trace payload shows.                  │
+│  This queries the 'idp-api' service.                                         │
+│  tag_name: identifier type (ucic, customer_id, mobile_number, username,      │
+│  user_id)                                                                    │
+│  tag_value: the actual identifier value                                      │
+│  Note: if ucic/customer_id is provided, the tool automatically tries both    │
+│  tag keys internally — you do not need to retry manually.                    │
+│  Only failed/error traces are returned. If no failures are found, the issue  │
+│  may not be reproducible in logs.Always return all error code and there      │
+│  message in reponse                                                          │
+│  Tool Name: login_mode_check                                                 │
+│  Tool Arguments: {                                                           │
+│    "properties": {                                                           │
+│      "tag_name": {                                                           │
+│        "title": "Tag Name",                                                  │
+│        "type": "string"                                                      │
+│      },                                                                      │
+│      "tag_value": {                                                          │
+│        "title": "...                                                         │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-os.environ["OTEL_SDK_DISABLED"] = "true"
 
-from crewai import Agent, Task, Crew, LLM
-from new_flow.utils.llm import llm_config
-from new_flow.agents.execute_agent_jaeger import JaegerExecutionResult
-from new_flow.agents.plan_agents import PlanOutput
+10:16:55 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-14 10:16:55,842 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────── 🔧 Tool Execution Started (#287) ──────────────────────╮
+│                                                                              │
+│  Tool: account_view_check                                                    │
+│  Args: {"tag_name": "customer_id", "tag_value": "10078167386"}               │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-14 10:16:58,954 - tools.tool - INFO - [JAEGER] service=bas-api customer_id=10078167386
+2026-08-14 10:16:59,053 - tools.tool - ERROR - [JAEGER] API returned 401: <html>
+<head><title>401 Authorization Required</title></head>
+<body>
+<center><h1>401 Authorization Required</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+
+2026-08-14 10:16:59,053 - tools.tool - INFO - [JAEGER] service=bas-api ucic=10078167386
+2026-08-14 10:16:59,497 - tools.tool - ERROR - [JAEGER] API returned 401: <html>
+<head><title>401 Authorization Required</title></head>
+<body>
+<center><h1>401 Authorization Required</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+
+2026-08-14 10:16:59,497 - tools.tool - INFO - [JaegerTool account_view_check] no traces found after trying tag_names=['customer_id', 'ucic']
+╭───────────────────── ✅ Tool Execution Completed (#287) ─────────────────────╮
+│                                                                              │
+│  Tool Completed                                                              │
+│  Tool: account_view_check                                                    │
+│  Output: {'service': 'bas-api', 'tag_name': 'ucic', 'tag_value':             │
+│  '10078167386', 'total_traces_scanned': 0, 'failed_traces': [], 'error':     │
+│  'Jaeger API returned 401', 'tag_names_tried': ['customer_id', 'ucic']}      │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│  {'service': 'bas-api', 'tag_name': 'ucic', 'tag_value': '10078167386',      │
+│  'total_traces_scanned': 0, 'failed_traces': [], 'error': 'Jaeger API        │
+│  returned 401', 'tag_names_tried': ['customer_id', 'ucic']}                  │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+10:16:59 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-14 10:16:59,506 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────── 🔧 Tool Execution Started (#42) ───────────────────────╮
+│                                                                              │
+│  Tool: upi_merchant_request_check                                            │
+│  Args: {"tag_name": "customer_id", "tag_value": "5558180832"}                │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-14 10:17:23,149 - tools.tool - INFO - [JAEGER] service=upi-api customer_id=5558180832
+2026-08-14 10:17:23,205 - tools.tool - ERROR - [JAEGER] API returned 401: <html>
+<head><title>401 Authorization Required</title></head>
+<body>
+<center><h1>401 Authorization Required</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+
+2026-08-14 10:17:23,206 - tools.tool - INFO - [JAEGER] service=upi-api ucic=5558180832
+2026-08-14 10:17:23,264 - tools.tool - ERROR - [JAEGER] API returned 401: <html>
+<head><title>401 Authorization Required</title></head>
+<body>
+<center><h1>401 Authorization Required</h1></center>
+<hr><center>nginx</center>
+</body>
+</html>
+
+2026-08-14 10:17:23,264 - tools.tool - INFO - [JaegerTool upi_merchant_request_check] no traces found after trying tag_names=['customer_id', 'ucic']
+╭───────────────────── ✅ Tool Execution Completed (#42) ──────────────────────╮
+│                                                                              │
+│  Tool Completed                                                              │
+│  Tool: upi_merchant_request_check                                            │
+│  Output: {'service': 'upi-api', 'tag_name': 'ucic', 'tag_value':             │
+│  '5558180832', 'total_traces_scanned': 0, 'failed_traces': [], 'error':      │
+│  'Jaeger API returned 401', 'tag_names_tried': ['customer_id', 'ucic']}      │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│  {'service': 'upi-api', 'tag_name': 'ucic', 'tag_value': '5558180832',       │
+│  'total_traces_scanned': 0, 'failed_traces': [], 'error': 'Jaeger API        │
+│  returned 401', 'tag_names_tried': ['customer_id', 'ucic']}                  │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+10:17:23 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-14 10:17:23,272 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭──────────────────────────────── ❌ LLM Error ────────────────────────────────╮
+│                                                                              │
+│  LLM Call Failed                                                             │
+│  Error: litellm.AuthenticationError: AuthenticationError: OpenAIException -  │
+│  Error code: 401 - {'error_description': 'The access token is invalid or     │
+│  has expired', 'error': 'invalid_token'}                                     │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 📋 Task Failure ───────────────────────────────╮
+│                                                                              │
+│  Task Failed                                                                 │
+│  Name: Identify Customer                                                     │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────── Crew Failure ────────────────────────────────╮
+│                                                                              │
+│  Crew Execution Failed                                                       │
+│  Name: crew                                                                  │
+│  ID: 9948b973-a3ca-4f8c-aa5a-6ef7dea37bcf                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
 
 
-class SummaryOutput(BaseModel):
-    diagnosis: str = Field(description="Root cause analysis")
-    solution: str = Field(description="Resolution steps")
-    questions: List[str] = Field(
-        default_factory=list,
-        description="Clarification questions if needed"
-    )
-    resolved: str = Field(description="yes/no")
+╭────────────────────────── Tracing Preference Saved ──────────────────────────╮
+│                                                                              │
+│  Info: Tracing has been disabled.                                            │
+│                                                                              │
+│  Your preference has been saved. Future Crew/Flow executions will not        │
+│  collect traces.                                                             │
+│                                                                              │
+│  To enable tracing later, do any one of these:                               │
+│  • Set tracing=True in your Crew/Flow code                                   │
+│  • Set CREWAI_TRACING_ENABLED=true in your project's .env file               │
+│  • Run: crewai traces enable                                                 │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-14 10:17:23,331 - utils.llm - INFO - Token expired (attempt 1/3), refreshing token and retrying in 1s...
+2026-08-14 10:17:23,372 - utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-14 10:17:24,374 - tools.tool - INFO - Loading tools for app: optimus
+2026-08-14 10:17:24,375 - tools.tool - INFO - Adding tool: login_password_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,378 - tools.tool - INFO - Adding tool: login_mode_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,380 - tools.tool - INFO - Adding tool: account_view_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,382 - tools.tool - INFO - Adding tool: device_registration_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,385 - tools.tool - INFO - Adding tool: beneficiary_add_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,387 - tools.tool - INFO - Adding tool: fund_transfer_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,390 - tools.tool - INFO - Adding tool: upi_merchant_request_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,392 - tools.tool - INFO - Adding tool: billpay_transaction_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,394 - tools.tool - INFO - Adding tool: billpay_biller_fetch_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,396 - tools.tool - INFO - Adding tool: billpay_add_biller_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,399 - tools.tool - INFO - Adding tool: billpay_modify_biller_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,401 - tools.tool - INFO - Adding tool: debitcard_view_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,403 - tools.tool - INFO - Adding tool: debitcard_international_limit_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,405 - tools.tool - INFO - Adding tool: debitcard_virtual_card_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,407 - tools.tool - INFO - Adding tool: debitcard_pin_generation_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,409 - tools.tool - INFO - Adding tool: fixed_deposit_view_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,412 - tools.tool - INFO - Adding tool: fixed_deposit_advice_download_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,414 - tools.tool - INFO - Adding tool: fixed_deposit_tds_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,416 - tools.tool - INFO - Adding tool: form121_eligibility_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,418 - tools.tool - INFO - Adding tool: credit_card_view_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,420 - tools.tool - INFO - Adding tool: credit_card_balance_transfer_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,422 - tools.tool - INFO - Adding tool: credit_card_addon_application_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,425 - tools.tool - INFO - Adding tool: payments_add_funds_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,427 - tools.tool - INFO - Adding tool: mutual_fund_holdings_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:24,431 - tools.tool - INFO - Adding tool: idp_customer_username_lookup (type=SQL, db_instance=platform)
+2026-08-14 10:17:24,433 - tools.tool - INFO - Adding tool: idp_get_user_id_from_ucic (type=SQL, db_instance=platform)
+2026-08-14 10:17:24,436 - tools.tool - INFO - Adding tool: idp_device_multiuser_lookup (type=SQL, db_instance=platform)
+2026-08-14 10:17:24,438 - tools.tool - INFO - Adding tool: idp_password_expiry_check (type=SQL, db_instance=platform)
+2026-08-14 10:17:24,442 - agents.debugger - INFO - Loaded 28 tools for app=optimus
+╭───────────────────────── 🚀 Crew Execution Started ──────────────────────────╮
+│                                                                              │
+│  Crew Execution Started                                                      │
+│  Name: crew                                                                  │
+│  ID: acc691c4-a0b3-4643-ad66-a08f03b7aed0                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+10:17:40 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-14 10:17:40,491 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
+│                                                                              │
+│  Task Started                                                                │
+│  Name: Identify Customer                                                     │
+│  ID: 138a8988-6e18-4fba-9329-831fa175d473                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│  Task: Extract customer identifiers from the incident.                       │
+│                                                                              │
+│  UCIC field: 5558180832                                                      │
+│  Incident: Short Description: Customer Name Mr. Purshottamdas Nipun Tulsyan  │
+│  Customer ID 5558180832 Account Number 10204806221                           │
+│  Description: Customer Name Mr. Purshottamdas Nipun Tulsyan Customer ID      │
+│  5558180832 Account Number 10204806221 IFSC code IPOS0000DOP UNABLE TO PAY   │
+│  VIA NEFT                                                                    │
+│                                                                              │
+│  Extract these identifiers if present:                                       │
+│  - ucic                                                                      │
+│  - mobile_number                                                             │
+│  - username                                                                  │
+│  - customer_id                                                               │
+│  - txn_id / txn_request_id                                                   │
+│                                                                              │
+│  Then use fetch_optimus_logs tool with:                                      │
+│  - tag_name = the identifier type you found                                  │
+│  - tag_value = the actual value                                              │
+│  - service = pick from tool description based on incident type               │
+│  - time_description = 'last 48 hours' unless user mentions a specific time   │
+│                                                                              │
+│  If no logs found with ucic, retry with mobile_number if available.          │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Historic Incident Analyst                                            │
+│                                                                              │
+│  Final Answer:                                                               │
+│  Based on my comprehensive search of the historic incident database, I was   │
+│  unable to find any similar past incidents to the current issue described.   │
+│  Here are the search attempts made:                                          │
+│                                                                              │
+│  1. **Search 1**: "The customer has stopped the SIP but unable to view the   │
+│  same to redeem that. Their mobile app is updated to the latest version." -  │
+│  No results found                                                            │
+│  2. **Search 2**: "SIP stopped but unable to view redeem mobile app latest   │
+│  version" - No results found                                                 │
+│  3. **Search 3**: "SIP redemption issue mobile app not showing stopped       │
+│  investment" - No results found                                              │
+│  4. **Search 4**: "investment stopped cannot view redeem mobile app issue"   │
+│  - No results found                                                          │
+│                                                                              │
+│  **Current Incident Details:**                                               │
+│  - UCIC: 5957513713                                                          │
+│  - Issue: Customer has stopped SIP but cannot view it to redeem              │
+│  - Mobile app is updated to latest version                                   │
+│                                                                              │
+│  **Summary:**                                                                │
+│  Since no similar historic incidents were found in the database, I cannot    │
+│  provide resolution context, troubleshooting steps, or patterns from past    │
+│  cases. The system does not have any precedent for this specific issue type  │
+│  in its historic incident records.                                           │
+│                                                                              │
+│  **Recommendation for Resolution:**                                          │
+│  Without historic reference data, standard troubleshooting approaches for    │
+│  this type of issue would include:                                           │
+│  1. Verify the SIP stop request was properly processed in the system         │
+│  2. Check if there's a delay in reflecting the stopped SIP status on the     │
+│  mobile app                                                                  │
+│  3. Confirm the user's login credentials and account permissions             │
+│  4. Verify if the SIP appears in a different section of the mobile app       │
+│  (e.g., "Completed" or "History" vs "Active")                                │
+│  5. Check for any system outages or synchronization issues between backend   │
+│  and mobile app                                                              │
+│  6. Consider clearing cache or re-installing the mobile app as a             │
+│  troubleshooting step                                                        │
+│  7. Escalate to technical team if the issue persists to check backend data   │
+│  integrity                                                                   │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
 
-async def run_summary_agent_async(
-    incident_description: str,
-    execution_result: JaegerExecutionResult,
-    historic_context: str = "",
-    user_qa_pairs: List[Dict] = None
-) -> SummaryOutput:
-    llm = LLM(
-        model="openai/" + llm_config.model_name,
-        temperature=0.0,
-        base_url=llm_config.url,
-        api_key=llm_config.token
-    )
+╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
+│                                                                              │
+│  Task Completed                                                              │
+│  Name: Find similar incidents                                                │
+│  Agent: Historic Incident Analyst                                            │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-    # Build all context
-    tool_calls_text = ""
-    if execution_result.tool_calls:
-        tool_calls_text = "\n=== TOOL CALLS MADE ===\n"
-        for call in execution_result.tool_calls:
-            tool_calls_text += f"\n{call['tool_name']}:\n{call['output']}\n"
+╭────────────────────────────── Crew Completion ───────────────────────────────╮
+│                                                                              │
+│  Crew Execution Completed                                                    │
+│  Name: crew                                                                  │
+│  ID: ebf6d086-8334-483f-a74f-d79701c5d081                                    │
+│  Final Output: Based on my comprehensive search of the historic incident     │
+│  database, I was unable to find any similar past incidents to the current    │
+│  issue described. Here are the search attempts made:                         │
+│                                                                              │
+│  1. **Search 1**: "The customer has stopped the SIP but unable to view the   │
+│  same to redeem that. Their mobile app is updated to the latest version." -  │
+│  No results found                                                            │
+│  2. **Search 2**: "SIP stopped but unable to view redeem mobile app latest   │
+│  version" - No results found                                                 │
+│  3. **Search 3**: "SIP redemption issue mobile app not showing stopped       │
+│  investment" - No results found                                              │
+│  4. **Search 4**: "investment stopped cannot view redeem mobile app issue"   │
+│  - No results found                                                          │
+│                                                                              │
+│  **Current Incident Details:**                                               │
+│  - UCIC: 5957513713                                                          │
+│  - Issue: Customer has stopped SIP but cannot view it to redeem              │
+│  - Mobile app is updated to latest version                                   │
+│                                                                              │
+│  **Summary:**                                                                │
+│  Since no similar historic incidents were found in the database, I cannot    │
+│  provide resolution context, troubleshooting steps, or patterns from past    │
+│  cases. The system does not have any precedent for this specific issue type  │
+│  in its historic incident records.                                           │
+│                                                                              │
+│  **Recommendation for Resolution:**                                          │
+│  Without historic reference data, standard troubleshooting approaches for    │
+│  this type of issue would include:                                           │
+│  1. Verify the SIP stop request was properly processed in the system         │
+│  2. Check if there's a delay in reflecting the stopped SIP status on the     │
+│  mobile app                                                                  │
+│  3. Confirm the user's login credentials and account permissions             │
+│  4. Verify if the SIP appears in a different section of the mobile app       │
+│  (e.g., "Completed" or "History" vs "Active")                                │
+│  5. Check for any system outages or synchronization issues between backend   │
+│  and mobile app                                                              │
+│  6. Consider clearing cache or re-installing the mobile app as a             │
+│  troubleshooting step                                                        │
+│  7. Escalate to technical team if the issue persists to check backend data   │
+│  integrity                                                                   │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-    qa_text = ""
-    if user_qa_pairs:
-        qa_text = "\n=== USER Q&A ===\n"
-        for qa in user_qa_pairs:
-            qa_text += f"Q: {qa.get('question', '')}\nA: {qa.get('answer', '')}\n"
+╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
+│                                                                              │
+│  Method: semantic_search                                                     │
+│  Status: Completed                                                           │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-    # If execution already has a result, use it
-    if execution_result.resolved:
-        # Try to enhance the result
-        summary_agent = Agent(
-            role="L1/L2 Bank Support Engineer",
-            goal="Create a customer-friendly resolution response",
-            backstory=(
-                "You are a senior bank support engineer responding to a customer issue. "
-                "Your response should be professional, clear, and actionable. "
-                "IMPORTANT: Never mention technical tools like Jaeger, ELK, database queries, or any debugging tools. "
-                "Explain the issue and solution in simple terms that a branch employee can understand and communicate to the customer."
-            ),
-            verbose=False,
-            allow_delegation=False,
-            llm=llm,
-            temperature=0
-        )
+2026-08-14 10:17:40,565 - utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-14 10:17:40,569 - flow - INFO - Resolver | incident=08f77cc097760f10cb9ebf17f053af13 app=optimus
+2026-08-14 10:17:40,569 - tools.tool - INFO - Loading tools for app: optimus
+╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
+│                                                                              │
+│  Method: run_resolver_crew                                                   │
+│  Status: Running                                                             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-        format_task = Task(
-            description=(
-                f"Create a final resolution for a bank customer issue.\n\n"
-                f"=== INCIDENT ===\n{incident_description}\n\n"
-                f"=== INVESTIGATION FINDINGS ===\n"
-                f"Root Cause: {execution_result.diagnosis}\n"
-                f"Resolution: {execution_result.solution}\n"
-                f"{tool_calls_text}\n\n"
-                f"=== HISTORIC SIMILAR INCIDENTS ===\n{historic_context}\n\n"
-                f"=== USER Q&A ===\n{qa_text}\n\n"
-                "IMPORTANT: Write your response as a bank support engineer would speak to a branch employee. "
-                "Do NOT mention any technical tools (Jaeger, ELK, database, etc.). "
-                "Use simple, clear language. Explain what happened and what action the customer needs to take.\n\n"
-                f"Format the output as JSON:\n"
-                f'{{"diagnosis": "...", "solution": "...", "questions": [], "resolved": "yes"}}'
-            ),
-            agent=summary_agent,
-            expected_output="JSON with diagnosis, solution, questions, and resolved fields"
-        )
+2026-08-14 10:17:40,571 - tools.tool - INFO - Adding tool: login_password_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,578 - tools.tool - INFO - Adding tool: login_mode_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,581 - tools.tool - INFO - Adding tool: account_view_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,585 - tools.tool - INFO - Adding tool: device_registration_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,588 - tools.tool - INFO - Adding tool: beneficiary_add_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,590 - tools.tool - INFO - Adding tool: fund_transfer_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,594 - tools.tool - INFO - Adding tool: upi_merchant_request_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,596 - tools.tool - INFO - Adding tool: billpay_transaction_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,600 - tools.tool - INFO - Adding tool: billpay_biller_fetch_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,603 - tools.tool - INFO - Adding tool: billpay_add_biller_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,606 - tools.tool - INFO - Adding tool: billpay_modify_biller_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,609 - tools.tool - INFO - Adding tool: debitcard_view_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,612 - tools.tool - INFO - Adding tool: debitcard_international_limit_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,615 - tools.tool - INFO - Adding tool: debitcard_virtual_card_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,618 - tools.tool - INFO - Adding tool: debitcard_pin_generation_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,621 - tools.tool - INFO - Adding tool: fixed_deposit_view_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,624 - tools.tool - INFO - Adding tool: fixed_deposit_advice_download_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,627 - tools.tool - INFO - Adding tool: fixed_deposit_tds_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,631 - tools.tool - INFO - Adding tool: form121_eligibility_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,634 - tools.tool - INFO - Adding tool: credit_card_view_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,637 - tools.tool - INFO - Adding tool: credit_card_balance_transfer_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,640 - tools.tool - INFO - Adding tool: credit_card_addon_application_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,644 - tools.tool - INFO - Adding tool: payments_add_funds_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,646 - tools.tool - INFO - Adding tool: mutual_fund_holdings_check (type=JAEGER, db_instance=main)
+2026-08-14 10:17:40,649 - tools.tool - INFO - Adding tool: idp_customer_username_lookup (type=SQL, db_instance=platform)
+2026-08-14 10:17:40,651 - tools.tool - INFO - Adding tool: idp_get_user_id_from_ucic (type=SQL, db_instance=platform)
+2026-08-14 10:17:40,653 - tools.tool - INFO - Adding tool: idp_device_multiuser_lookup (type=SQL, db_instance=platform)
+2026-08-14 10:17:40,655 - tools.tool - INFO - Adding tool: idp_password_expiry_check (type=SQL, db_instance=platform)
+2026-08-14 10:17:40,658 - agents.debugger - INFO - Loaded 28 tools for app=optimus
+╭───────────────────────── 🚀 Crew Execution Started ──────────────────────────╮
+│                                                                              │
+│  Crew Execution Started                                                      │
+│  Name: crew                                                                  │
+│  ID: ac16ccfd-b94a-4102-a79c-455e2f6c38f9                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-        crew = Crew(
-            agents=[summary_agent],
-            tasks=[format_task],
-            verbose=False
-        )
+╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
+│                                                                              │
+│  Task Started                                                                │
+│  Name: Identify Customer                                                     │
+│  ID: 67da91d1-6e64-4787-9848-26b125fc3886                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-        result = await crew.akickoff()
-        return _parse_summary_result(str(result))
+10:17:56 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-14 10:17:56,707 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│  Task: Extract customer identifiers from the incident.                       │
+│                                                                              │
+│  UCIC field: 5957513713                                                      │
+│  Incident: Short Description: The customer has stopped the SIP but unable    │
+│  to view the same to redeem that. Their mobile app is updated to the latest  │
+│  version.                                                                    │
+│  Description: The customer has stopped the SIP but unable to view the same   │
+│  to redeem that. Their mobile app is updated to the latest version.          │
+│                                                                              │
+│  Extract these identifiers if present:                                       │
+│  - ucic                                                                      │
+│  - mobile_number                                                             │
+│  - username                                                                  │
+│  - customer_id                                                               │
+│  - txn_id / txn_request_id                                                   │
+│                                                                              │
+│  Then use fetch_optimus_logs tool with:                                      │
+│  - tag_name = the identifier type you found                                  │
+│  - tag_value = the actual value                                              │
+│  - service = pick from tool description based on incident type               │
+│  - time_description = 'last 48 hours' unless user mentions a specific time   │
+│                                                                              │
+│  If no logs found with ucic, retry with mobile_number if available.          │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-    diagnosis = execution_result.diagnosis if execution_result.diagnosis else "Issue not fully resolved"
-    solution = execution_result.solution if execution_result.solution else "Manual investigation required"
-    questions = execution_result.questions if execution_result.questions else []
+╭────────────────────── 🔧 Tool Execution Started (#292) ──────────────────────╮
+│                                                                              │
+│  Tool: idp_get_user_id_from_ucic                                             │
+│  Args: {"key": "6366924966"}                                                 │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-    return SummaryOutput(
-        diagnosis=diagnosis,
-        solution=solution,
-        questions=questions,
-        resolved="yes" if execution_result.resolved else "no"
-    )
+2026-08-14 10:17:56,727 - tools.tool - INFO - [idp_get_user_id_from_ucic] app=optimus db=platform query=SELECT device_id, user_id FROM IDP.customerdevice WHERE user_id IN (SELECT user_id FROM IDP.customer WHERE ucic = '6366924966')
+2026-08-14 10:18:16,745 - utils.oracle_connection - ERROR - DB Error [optimus:platform]: DPY-6005: cannot connect to database (CONNECTION_ID=ksYgtYMG/HFcpwzRwYbTQw==).
+timed out
+Traceback (most recent call last):
+  File "src/oracledb/impl/thin/connection.pyx", line 421, in oracledb.thin_impl.ThinConnImpl._connect_with_address
+  File "src/oracledb/impl/thin/protocol.pyx", line 268, in oracledb.thin_impl.Protocol._connect_phase_one
+  File "src/oracledb/impl/thin/protocol.pyx", line 402, in oracledb.thin_impl.Protocol._connect_tcp
+  File "/usr/local/lib/python3.11/socket.py", line 851, in create_connection
+    raise exceptions[0]
+  File "/usr/local/lib/python3.11/socket.py", line 836, in create_connection
+    sock.connect(sa)
+TimeoutError: timed out
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/utils/oracle_connection.py", line 148, in execute_oracle_query_async
+    result = await asyncio.to_thread(
+             ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/utils/oracle_connection.py", line 126, in _execute_query_sync
+    with pool.acquire() as connection:
+         ^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/oracledb/pool.py", line 428, in acquire
+    return oracledb.connect(
+           ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/oracledb/connection.py", line 1768, in connect
+    return conn_class(dsn=dsn, pool=pool, params=params, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/oracledb/connection.py", line 889, in __init__
+    impl = pool_impl.acquire(params_impl)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "src/oracledb/impl/thin/pool.pyx", line 642, in oracledb.thin_impl.ThinPoolImpl.acquire
+  File "src/oracledb/impl/thin/pool.pyx", line 648, in oracledb.thin_impl.ThinPoolImpl.acquire
+  File "src/oracledb/impl/thin/pool.pyx", line 644, in oracledb.thin_impl.ThinPoolImpl.acquire
+  File "/usr/local/lib/python3.11/threading.py", line 363, in wait_for
+    result = predicate()
+             ^^^^^^^^^^^
+  File "src/oracledb/impl/thin/pool.pyx", line 951, in oracledb.thin_impl.PooledConnRequest.fulfill
+  File "src/oracledb/impl/thin/pool.pyx", line 611, in oracledb.thin_impl.ThinPoolImpl._process_request
+  File "src/oracledb/impl/thin/pool.pyx", line 584, in oracledb.thin_impl.ThinPoolImpl._create_conn_impl
+  File "src/oracledb/impl/thin/connection.pyx", line 544, in oracledb.thin_impl.ThinConnImpl.connect
+  File "src/oracledb/impl/thin/connection.pyx", line 540, in oracledb.thin_impl.ThinConnImpl.connect
+  File "src/oracledb/impl/thin/connection.pyx", line 482, in oracledb.thin_impl.ThinConnImpl._connect_with_params
+  File "src/oracledb/impl/thin/connection.pyx", line 463, in oracledb.thin_impl.ThinConnImpl._connect_with_description
+  File "src/oracledb/impl/thin/connection.pyx", line 425, in oracledb.thin_impl.ThinConnImpl._connect_with_address
+  File "/usr/local/lib/python3.11/site-packages/oracledb/errors.py", line 199, in _raise_err
+    raise error.exc_type(error) from cause
+oracledb.exceptions.OperationalError: DPY-6005: cannot connect to database (CONNECTION_ID=ksYgtYMG/HFcpwzRwYbTQw==).
+timed out
+╭───────────────────── ✅ Tool Execution Completed (#292) ─────────────────────╮
+│                                                                              │
+│  Tool Completed                                                              │
+│  Tool: idp_get_user_id_from_ucic                                             │
+│  Output: {'success': False, 'data': None, 'error': 'DPY-6005: cannot         │
+│  connect to database (CONNECTION_ID=ksYgtYMG/HFcpwzRwYbTQw==).\ntimed out'}  │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────── Tool Output ─────────────────────────────────╮
+│                                                                              │
+│  {'success': False, 'data': None, 'error': 'DPY-6005: cannot connect to      │
+│  database (CONNECTION_ID=ksYgtYMG/HFcpwzRwYbTQw==).\ntimed out'}             │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+10:18:16 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-14 10:18:16,755 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭──────────────────────────────── ❌ LLM Error ────────────────────────────────╮
+│                                                                              │
+│  LLM Call Failed                                                             │
+│  Error: litellm.AuthenticationError: AuthenticationError: OpenAIException -  │
+│  Error code: 401 - {'error_description': 'The access token is invalid or     │
+│  has expired', 'error': 'invalid_token'}                                     │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 📋 Task Failure ───────────────────────────────╮
+│                                                                              │
+│  Task Failed                                                                 │
+│  Name: Diagnose Optimus Issue                                                │
+│  Agent: Incident Resolution Agent                                            │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭──────────────────────────────── Crew Failure ────────────────────────────────╮
+│                                                                              │
+│  Crew Execution Failed                                                       │
+│  Name: crew                                                                  │
+│  ID: 645eb013-cd27-4d0e-8a23-43754708eaec                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
 
-def _parse_summary_result(result_text: str) -> SummaryOutput:
-    """Parse LLM response into SummaryOutput."""
-    import json
-    
-    # Try to find JSON
-    json_match = re.search(r'\{[\s\S]*\}', result_text)
-    if json_match:
-        try:
-            data = json.loads(json_match.group())
-            return SummaryOutput(
-                diagnosis=data.get("diagnosis", ""),
-                solution=data.get("solution", ""),
-                questions=data.get("questions", []),
-                resolved=data.get("resolved", "no")
-            )
-        except:
-            pass
-    
-    # Fallback: extract from text
-    resolved = "yes" in result_text.lower().split("resolved")[-1].split("}")[0].lower() if "resolved" in result_text.lower() else "no"
-    
-    return SummaryOutput(
-        diagnosis=result_text[:300],
-        solution="See diagnosis",
-        resolved=resolved
-    )
 
+╭────────────────────────── Tracing Preference Saved ──────────────────────────╮
+│                                                                              │
+│  Info: Tracing has been disabled.                                            │
+│                                                                              │
+│  Your preference has been saved. Future Crew/Flow executions will not        │
+│  collect traces.                                                             │
+│                                                                              │
+│  To enable tracing later, do any one of these:                               │
+│  • Set tracing=True in your Crew/Flow code                                   │
+│  • Set CREWAI_TRACING_ENABLED=true in your project's .env file               │
+│  • Run: crewai traces enable                                                 │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
 
-
-def create_simple_summary(
-    plan_output: PlanOutput,
-    execution_result: JaegerExecutionResult
-) -> SummaryOutput:
-    if execution_result.resolved:
-        return SummaryOutput(
-            diagnosis=execution_result.diagnosis,
-            solution=execution_result.solution,
-            questions=execution_result.questions,
-            resolved="yes"
-        )
-
-    if plan_output.needs_more_info:
-        return SummaryOutput(
-            diagnosis="Additional information needed",
-            solution="Waiting for user response",
-            questions=[plan_output.question_for_user or "Please provide more details"],
-            resolved="no"
-        )
-
-    # Default - use execution result or plan output
-    diagnosis = execution_result.diagnosis or plan_output.issue_summary or "Investigation incomplete"
-    solution = execution_result.solution or "Manual investigation required"
-
-    return SummaryOutput(
-        diagnosis=diagnosis,
-        solution=solution,
-        questions=[],
-        resolved="no"
-    )
+2026-08-14 10:18:16,788 - utils.llm - INFO - Token expired (attempt 1/3), refreshing token and retrying in 1s...
+2026-08-14 10:18:16,827 - utils.llm - IN
