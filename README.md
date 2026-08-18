@@ -1,4 +1,28 @@
-Generated incident description for UCIC 3242232332
+ot-collector.tracing.svc.cluster.local tetsing1
+╭───────────────────────────── 🌊 Flow Execution ──────────────────────────────╮
+│                                                                              │
+│  Starting Flow Execution                                                     │
+│  Name: IncidentManagementFlow                                                │
+│  ID: fab336b6-9086-4038-b383-79f6548781eb                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 🌊 Flow Started ───────────────────────────────╮
+│                                                                              │
+│  Flow Started                                                                │
+│  Name: IncidentManagementFlow                                                │
+│  ID: fab336b6-9086-4038-b383-79f6548781eb                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+Flow started with ID: fab336b6-9086-4038-b383-79f6548781eb
+2026-08-18 14:26:48,251 - crewai.flow.flow - INFO - Flow started with ID: fab336b6-9086-4038-b383-79f6548781eb
+2026-08-18 14:26:48,252 - flow - INFO - ++++++++
+2026-08-18 14:26:48,252 - flow - INFO - masked: {'callerId': 'shishir.pandey_tho@idfcfirstext.bank.in', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Fund Transfer', 'tier3': 'Set Standing Instructions/ Recurring payment', 'impact': 'Medium', 'urgency': 'Medium', 'shortDescription': 'Unable to do the transfer why this happend ', 'description': 'Unable to do the transfer why this happend', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006217478', 'sourceIncidentId': '', 'assignmentGroup': 'Optimus BTO Support', 'businessImpact': '', 'cause': '', 'businessCorrectiveAction': '', 'techCorrectiveAction': '', 'dataSource': '', 'descriptionOfOutage': '', 'emailId': None, 'entityUCIC': '1062071711', 'hashValues': '', 'ipDetails': '', 'ldwNotifyInformation': '', 'loanAccountNumber': '', 'loginId': '', 'mobileNumber': '', 'businessPreventiveAction': '', 'techPreventiveAction': '', 'resoultionTeam': '', 'rootCause': '', 'systemName': '', 'urlOrDomain': '', 'userDetail': '', 'taskEffectiveNumber': None, 'individualUCIC': '1062071711', 'sourceIncCreateddttime': '18-Aug-2026 19:56:24', 'incidentId': 'e7485e1d2bbacb10ea06f771fe91bf4f', 'state': 'New', 'causedByPatch': None, 'resolutionCode': None, 'solutionType': None, 'outageType': None, 'vendorGroup': None, 'additionalComments': '', 'onHoldReason': None, 'resolutionNotes': None, 'userLocation': '', 'incidentNumber': 'INC000006217478', 'assignedTo': None, 'file_description': '[Attached image: image (1).jpeg]\nBank Transfer Failed\nYour transfer request has been declined by your bank. Please contact your bank for any queries.', 'created_at': '2026-08-18T14:26:28.285452', 'status': 'created', 'interaction_counter': 0, 'headers': {'Content-Type': 'application/json', 'correlationId': '3d65dbf5-6af5-41b8-a86b-17a2fa2333a8', 'source': 'IncidentBot', 'transactionId': '0b70d729-c5d0-48bf-be82-7cfce4a3cea1'}}
+2026-08-18 14:26:48,252 - flow - INFO - ++++++++
+Generated incident description for UCIC 1062071711
 ╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
 │                                                                              │
 │  Method: initialize_and_classify                                             │
@@ -11,15 +35,11 @@ Generated incident description for UCIC 3242232332
 │                                                                              │
 │  Crew Execution Started                                                      │
 │  Name: crew                                                                  │
-│  ID: d1690169-b8a2-44a2-adae-d780fdefc70b                                    │
+│  ID: 33f34f80-7639-4d7a-bee4-f9bd20fd2670                                    │
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-11:03:15 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
-2026-08-18 11:03:15,909 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
 ╭────────────────────────────── 📋 Task Started ───────────────────────────────╮
 │                                                                              │
 │  Task Started                                                                │
@@ -32,8 +52,14 @@ LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
 │                                                                              │
 │  User Input:                                                                 │
 │  ```                                                                         │
-│  Short Description: no kyc option in app                                     │
-│  Description: no kyc option in app no kyc option in app                      │
+│  Short Description: Unable to do the transfer why this happend               │
+│  Description: Unable to do the transfer why this happend                     │
+│                                                                              │
+│  --- ATTACHED FILES ---                                                      │
+│  [Attached image: image (1).jpeg]                                            │
+│  Bank Transfer Failed                                                        │
+│  Your transfer request has been declined by your bank. Please contact your   │
+│  bank for any queries.                                                       │
 │  ```                                                                         │
 │                                                                              │
 │  Latest Interaction:                                                         │
@@ -60,10 +86,14 @@ LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
 │  expresses frustration with the system's request, it MUST be 'rebuttal'.     │
 │                                                                              │
 │  Output ONLY the category name.                                              │
-│  ID: 1612f03d-4f96-49cf-b5b5-4a40d294bd4a                                    │
+│  ID: 9fb400dd-25e9-4bde-9b5e-a98c67535bf6                                    │
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
+14:27:04 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
+2026-08-18 14:27:04,314 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
 ╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
 │                                                                              │
 │  Agent: Intent Classifier                                                    │
@@ -77,8 +107,14 @@ LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
 │                                                                              │
 │  User Input:                                                                 │
 │  ```                                                                         │
-│  Short Description: no kyc option in app                                     │
-│  Description: no kyc option in app no kyc option in app                      │
+│  Short Description: Unable to do the transfer why this happend               │
+│  Description: Unable to do the transfer why this happend                     │
+│                                                                              │
+│  --- ATTACHED FILES ---                                                      │
+│  [Attached image: image (1).jpeg]                                            │
+│  Bank Transfer Failed                                                        │
+│  Your transfer request has been declined by your bank. Please contact your   │
+│  bank for any queries.                                                       │
 │  ```                                                                         │
 │                                                                              │
 │  Latest Interaction:                                                         │
@@ -109,8 +145,8 @@ LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
 
-2026-08-18 11:03:16,204 - openai._base_client - INFO - Retrying request to /chat/completions in 0.385611 seconds
-2026-08-18 11:03:16,597 - openai._base_client - INFO - Retrying request to /chat/completions in 0.783925 seconds
+2026-08-18 14:27:04,606 - openai._base_client - INFO - Retrying request to /chat/completions in 0.399310 seconds
+2026-08-18 14:27:05,013 - openai._base_client - INFO - Retrying request to /chat/completions in 0.987611 seconds
 ╭──────────────────────────────── ❌ LLM Error ────────────────────────────────╮
 │                                                                              │
 │  LLM Call Failed                                                             │
@@ -131,8 +167,14 @@ LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
 │                                                                              │
 │  User Input:                                                                 │
 │  ```                                                                         │
-│  Short Description: no kyc option in app                                     │
-│  Description: no kyc option in app no kyc option in app                      │
+│  Short Description: Unable to do the transfer why this happend               │
+│  Description: Unable to do the transfer why this happend                     │
+│                                                                              │
+│  --- ATTACHED FILES ---                                                      │
+│  [Attached image: image (1).jpeg]                                            │
+│  Bank Transfer Failed                                                        │
+│  Your transfer request has been declined by your bank. Please contact your   │
+│  bank for any queries.                                                       │
 │  ```                                                                         │
 │                                                                              │
 │  Latest Interaction:                                                         │
@@ -168,7 +210,7 @@ LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
 │                                                                              │
 │  Crew Execution Failed                                                       │
 │  Name: crew                                                                  │
-│  ID: d1690169-b8a2-44a2-adae-d780fdefc70b                                    │
+│  ID: 33f34f80-7639-4d7a-bee4-f9bd20fd2670                                    │
 │                                                                              │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
@@ -197,7 +239,7 @@ LiteLLM completion() model= /app/models/Qwen3-14B-FP8; provider = openai
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-2026-08-18 11:03:17,414 - __main__ - ERROR - ✗ Flow FAILED | incident=1b5a65512bf2cb10ea06f771fe91bf02 module=flow error=litellm.InternalServerError: InternalServerError: OpenAIException - An unexpected error occurred
+2026-08-18 14:27:06,032 - __main__ - ERROR - ✗ Flow FAILED | incident=e7485e1d2bbacb10ea06f771fe91bf4f module=flow error=litellm.InternalServerError: InternalServerError: OpenAIException - An unexpected error occurred
 Traceback (most recent call last):
   File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 823, in acompletion
     headers, response = await self.make_openai_chat_completion_request(
@@ -220,7 +262,7 @@ Traceback (most recent call last):
            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
   File "/usr/local/lib/python3.11/site-packages/openai/_base_client.py", line 1777, in request
     raise self._make_status_error_from_response(err.response) from None
-openai.InternalServerError: Error code: 500 - {'message': 'An unexpected error occurred', 'request_id': '0653d50aaad8356621103c156fe44876'}
+openai.InternalServerError: Error code: 500 - {'message': 'An unexpected error occurred', 'request_id': 'aa844b6a8caf866b5fbde2379614cd58'}
 
 During handling of the above exception, another exception occurred:
 
@@ -230,7 +272,7 @@ Traceback (most recent call last):
                ^^^^^^^^^^^^^^^^^^^
   File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 870, in acompletion
     raise OpenAIError(
-litellm.llms.openai.common_utils.OpenAIError: Error code: 500 - {'message': 'An unexpected error occurred', 'request_id': '0653d50aaad8356621103c156fe44876'}
+litellm.llms.openai.common_utils.OpenAIError: Error code: 500 - {'message': 'An unexpected error occurred', 'request_id': 'aa844b6a8caf866b5fbde2379614cd58'}
 
 During handling of the above exception, another exception occurred:
 
@@ -331,26 +373,8 @@ Traceback (most recent call last):
   File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 527, in exception_type
     raise InternalServerError(
 litellm.exceptions.InternalServerError: litellm.InternalServerError: InternalServerError: OpenAIException - An unexpected error occurred
-2026-08-18 11:03:17,422 - flow - INFO - ++++++++
-2026-08-18 11:03:17,422 - flow - INFO - masked: {'callerId': 'vedang.bhole@idfcfirst.bank.in', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'AcePL', 'tier3': 'Unable to complete VKYC', 'impact': 'Medium', 'urgency': 'Medium', 'shortDescription': 'no kyc option in app', 'description': 'no kyc option in app no kyc option in app', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006217476', 'sourceIncidentId': '', 'assignmentGroup': 'Optimus BTO Support', 'businessImpact': '', 'cause': 'Assign to an Engineer.', 'businessCorrectiveAction': '', 'techCorrectiveAction': '', 'dataSource': '', 'descriptionOfOutage': '', 'emailId': None, 'entityUCIC': '', 'hashValues': '', 'ipDetails': '', 'ldwNotifyInformation': '', 'loanAccountNumber': '', 'loginId': '', 'mobileNumber': '', 'businessPreventiveAction': '', 'techPreventiveAction': '', 'resoultionTeam': '', 'rootCause': '', 'systemName': '', 'urlOrDomain': '', 'userDetail': '', 'taskEffectiveNumber': None, 'individualUCIC': '3242232332', 'sourceIncCreateddttime': '18-Aug-2026 16:32:36', 'incidentId': '1b5a65512bf2cb10ea06f771fe91bf02', 'state': 'On Hold', 'causedByPatch': None, 'resolutionCode': None, 'solutionType': None, 'outageType': None, 'vendorGroup': None, 'additionalComments': 'BOT is unable to resolve, assign to an Engineer', 'onHoldReason': None, 'resolutionNotes': '', 'userLocation': 'Navi Mumbai-Juinagar-Mindspace Office', 'assignedTo': None}
-2026-08-18 11:03:17,422 - flow - INFO - ++++++++
-2026-08-18 11:03:19,418 - __main__ - INFO -   Fallback rejection sent | incident=1b5a65512bf2cb10ea06f771fe91bf02
-2026-08-18 11:04:54,400 - utils.llm - INFO - OPENAI_API_KEY refreshed
-shishir.pandey_tho@0325LTPB0124444 ~ % kubectl get pods                             
-NAME                                                    READY   STATUS             RESTARTS           AGE
-ai-hub-ui-58fd6664c-9x22l                               1/1     Running            0                  18d
-ai-hub-ui-58fd6664c-h4lrp                               1/1     Running            0                  18d
-bank-intel-in-memory-869d595dcb-j5tz6                   1/1     Running            0                  3d16h
-bank-intel-in-memory-ui-b5d96cfbc-xsdbv                 1/1     Running            0                  18d
-blueprint-api-78dd9644fb-vhcg5                          1/1     Running            3 (71m ago)        9h
-blueprint-ui-6ff88fc8fc-4h9rp                           1/1     Running            0                  18d
-blueprint-ui-6ff88fc8fc-zk87s                           1/1     Running            0                  18d
-bob-api-f684d47fd-ldwjg                                 1/1     Running            0                  8h
-bob-api-mongodb-migrate-l9gzj                           0/1     Completed          0                  8h
-bob-ui-fd8947445-7dz8m                                  1/1     Running            0                  18d
-bob-ui-fd8947445-7pst9                                  1/1     Running            0                  18d
-cbs-incident-bot-748d466745-gbftq                       0/1     CrashLoopBackOff   5538 (3m7s ago)    18d
-customer-issues-agent-dbb5cddd-25tcj                    1/1     Running            0                  18d
-customer-issues-bot-8457ccb95b-8pkls                    1/1     Running            0                  18d
-dora-api-56dfb77f7f-fr46t                               1/1     Running            0                  40h
-dora-ui-db4944db7-gwskk                           
+2026-08-18 14:27:06,041 - flow - INFO - ++++++++
+2026-08-18 14:27:06,041 - flow - INFO - masked: {'callerId': 'shishir.pandey_tho@idfcfirstext.bank.in', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Fund Transfer', 'tier3': 'Set Standing Instructions/ Recurring payment', 'impact': 'Medium', 'urgency': 'Medium', 'shortDescription': 'Unable to do the transfer why this happend ', 'description': 'Unable to do the transfer why this happend', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006217478', 'sourceIncidentId': '', 'assignmentGroup': 'Optimus BTO Support', 'businessImpact': '', 'cause': 'Assign to an Engineer.', 'businessCorrectiveAction': '', 'techCorrectiveAction': '', 'dataSource': '', 'descriptionOfOutage': '', 'emailId': None, 'entityUCIC': '1062071711', 'hashValues': '', 'ipDetails': '', 'ldwNotifyInformation': '', 'loanAccountNumber': '', 'loginId': '', 'mobileNumber': '', 'businessPreventiveAction': '', 'techPreventiveAction': '', 'resoultionTeam': '', 'rootCause': '', 'systemName': '', 'urlOrDomain': '', 'userDetail': '', 'taskEffectiveNumber': None, 'individualUCIC': '1062071711', 'sourceIncCreateddttime': '18-Aug-2026 19:56:24', 'incidentId': 'e7485e1d2bbacb10ea06f771fe91bf4f', 'state': 'On Hold', 'causedByPatch': None, 'resolutionCode': None, 'solutionType': None, 'outageType': None, 'vendorGroup': None, 'additionalComments': 'BOT is unable to resolve, assign to an Engineer', 'onHoldReason': None, 'resolutionNotes': '', 'userLocation': '', 'assignedTo': None}
+2026-08-18 14:27:06,041 - flow - INFO - ++++++++
+2026-08-18 14:27:07,321 - __main__ - INFO -   Fallback rejection sent | incident=e7485e1d2bbacb10ea06f771fe91bf4f
+shishir.pandey_tho@0325LTPB0124444 ~ % 
