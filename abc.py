@@ -1,662 +1,583 @@
-import os
-from observability import init_telemetry, get_tracer
-import logging
-import html
-import pkce
-import urllib.parse
-# Add these to existing imports
-from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
+from pydantic import BaseModel
+from typing import List, Optional, Dict
 import httpx
-from typing import Optional,List
-from starlette.middleware.sessions import SessionMiddleware
-from starlette.middleware.base import BaseHTTPMiddleware
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-)
+import os
+import json
+import re
+from dotenv import load_dotenv
+from crewai.flow.flow import Flow, start, listen, router
+from new_flow.utils.incident_db_async import upsert_incident_payload_async
+from new_flow.agents.context_builder import run_incident_context_crew_async, run_incident_context_deterministic_async
+from new_flow.agents.intent_classifier import run_classifier_with_enrichment_async
+from new_flow.agents.plan_agents import run_plan_agent_async
+from new_flow.agents.execute_agent_jaeger import run_jaeger_only_async
+from new_flow.agents.summary_agent import run_summary_agent_async, run_context_only_summary_async
+from new_flow.agents.self_critique import run_self_critique_async, should_escalate
+from new_flow.utils.llm import run_crew_with_retry_async
+from new_flow.tools.discovery_tools import discover_jaeger_services_impl
+from new_flow.tools.app_config import app_has_observability
+
+
+load_dotenv()
+
+CA_CERT_FILE = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "/app/models/MiniMax-M2.5")
+CHAT_COMPLETIONS_URL = f"{OPENAI_API_BASE}/chat/completions"
+
+EXEPEMPTED_PAYLOAD_KEYS = [
+    "__agent_data",
+    "created_at",
+    "headers",
+    "file_description",
+    "interaction_counter",
+    "incidentNumber",
+    "status"
+]
+
+import logging
+from utils.observability import get_tracer
 
 logger = logging.getLogger(__name__)
 
-telemetry_endpoint = os.getenv("TELEMETRY_ENDPOINT")
-if telemetry_endpoint:
-    logger.info("OpenTelemetry tracer initialization started...")
+
+def extract_json_from_output(output: str) -> dict:
+    if not output or not output.strip():
+        logger.warning("Empty output received, returning fallback response")
+        return {"diagnosis": "Unable to process incident", "solution": "Please try again later", "questions": [], "resolved": "no"}
+    
     try:
-        init_telemetry()
-        logger.info("OpenTelemetry tracer initialized")
-    except Exception as e:
-        logger.warning(f"Failed to initialize OpenTelemetry: {e}")
-
-from fastapi import FastAPI, Request, HTTPException, Depends, status, BackgroundTasks
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.templating import Jinja2Templates
-from fastapi.staticfiles import StaticFiles
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
-import asyncio
-import json
-from datetime import datetime
-from dotenv import load_dotenv
-from pydantic import BaseModel, Field, field_validator
-
-from typing import Optional
-import secrets
-import uuid
-from  file_processor import process_attachments
-from oracle_connection import test_oracle_connection
-from incident_db import (
-    get_incident,
-    get_incident_status,
-    set_incident_status,
-    get_last_25_incidents
-)
-from incident_db_async import upsert_incident_payload_async
-from confluent_kafka import Producer
-
-load_dotenv()
-JIRA_RAG_INGEST_URL = os.getenv(
-    "JIRA_RAG_INGEST_URL",
-    "https://internal-app.uat-devutils.idfcfirstbank.com/api/jira-conf-rag/ingest/incidents"
-)
-logger.info("crew_main.py loaded successfully")
-logger.info(f"INCIDENT_BOT_ENABLED = {os.getenv('INCIDENT_BOT_ENABLED')}")
-logger.info(f"KAFKA_BROKER_URL = {os.getenv('KAFKA_BROKER_URL')}")
-logger.info(f"KAFKA_TOPIC = {os.getenv('KAFKA_TOPIC', 'GEN-AI-DE-INCIDENT-EVENTS')}")
-
-
-CLIENT_ID = os.getenv('ENT_AUTH_CLIENT_ID')
-AUTHORIZE_URL = os.getenv('ENT_AUTH_URL')
-TOKEN_URL = os.getenv('ENT_AUTH_TOKEN_URL')
-USER_INFO_URL = os.getenv('ENT_AUTH_USER_INFO_URL')
-REDIRECT_URL = os.getenv('ENT_AUTH_REDIRECT_URL', 'https://internal-app.uat-devutils.idfcfirstbank.com/incident_agent/auth/oauth/ent_auth/callback')
-VALIDATION_URL = os.getenv('ENT_AUTH_VALIDATION_URL')
-EXTEND_URL = os.getenv('ENT_AUTH_KEEPALIVE_URL')
-SESSION_SECRET = os.getenv('SESSION_SECRET', 'incident-agent-session-secret-change-in-production')
-
-verifier_store = {}
-
-PUBLIC = [
-    "/",
-    "/incident_agent",
-    "/incident_agent/login",
-    "/incident_agent/auth/oauth/ent_auth/callback",
-    "/incident_agent/health",
-    "/incident_agent/health/oracle",
-    "/incident_agent/ingest-incidents",
-    "/incident_agent/incident/create",
-    "/incident_agent/incident/{incident_id}"
-]
-
-class AuthMiddleware(BaseHTTPMiddleware):
-
-    @staticmethod
-    async def _is_session_valid(request: Request):
-        try:
-            # Check if session exists and has user data
-            if not hasattr(request, 'session') or not request.session:
-                templates.env.globals["user"] = None
-                return False
-            
-            user_data = request.session.get("user")
-            if not user_data:
-                templates.env.globals["user"] = None
-                return False
-                
-            access_token = user_data.get("access_token")
-            if not access_token:
-                templates.env.globals["user"] = None
-                return False
-                
-            async with httpx.AsyncClient(verify=False) as client:
-                validity_response = await client.get(
-                    url=VALIDATION_URL,
-                    headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
-                )
-                if validity_response.status_code not in range(200, 205):
-                    templates.env.globals["user"] = None
-                    if validity_response.status_code == 401:
-                        return False
-                    raise HTTPException(status_code=validity_response.status_code, detail=validity_response.text)
-
-                templates.env.globals["user"] = user_data
-                return True
-        except Exception as e:
-            logger.warning(f"Session validation error: {e}")
+        return json.loads(output.strip())
+    except json.JSONDecodeError:
+        pass
+    
+    json_patterns = [
+        r'```json\s*([\s\S]*?)\s*```',
+        r'```\s*([\s\S]*?)\s*```',
+    ]
+    
+    for pattern in json_patterns:
+        match = re.search(pattern, output)
+        if match:
+            json_str = match.group(1).strip()
             try:
-                if hasattr(request, 'session') and request.session:
-                    request.session.clear()
-            except Exception:
+                return json.loads(json_str)
+            except json.JSONDecodeError:
                 pass
-            templates.env.globals["user"] = None
-            return False
-
-    @staticmethod
-    async def _is_service_token_valid(request: Request):
+    
+    json_like_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+    match = re.search(json_like_pattern, output)
+    if match:
         try:
-            service_token = request.headers.get("X-Service-Token")
-            if not service_token:
-                return False
-
-            async with httpx.AsyncClient(verify=False) as client:
-                validity_response = await client.get(
-                    url=VALIDATION_URL,
-                    headers={"Authorization": f"Bearer {service_token}", "Accept": "application/json"}
-                )
-                if validity_response.status_code not in range(200, 205):
-                    if validity_response.status_code == 401:
-                        return False
-                    raise HTTPException(status_code=validity_response.status_code, detail=validity_response.text)
-
-                return True
-        except Exception:
-            return False
-
-    async def dispatch(self, request: Request, call_next):
-        if request.url.path not in PUBLIC:
-            if await self._is_service_token_valid(request):
-                pass
-            elif not await self._is_session_valid(request):
-                return RedirectResponse(url="/incident_agent/login")
-        response = await call_next(request)
-        response.headers['X-XSS-Protection'] = '1; mode=block'
-        response.headers['X-Frame-Options'] = 'DENY'
-        return response
-
-def verify_dummy_header(credentials: HTTPBasicCredentials = Depends(HTTPBasic())):
-    expected_username = os.getenv("INCIDENT_AUTH_USERNAME", "admin")
-    expected_password = os.getenv("INCIDENT_AUTH_TOKEN", "dummy-token-12345")
-
-    is_correct_username = secrets.compare_digest(
-        credentials.username.encode("utf8"),
-        expected_username.encode("utf8")
-    )
-    is_correct_password = secrets.compare_digest(
-        credentials.password.encode("utf8"),
-        expected_password.encode("utf8")
-    )
-
-    if not (is_correct_username and is_correct_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Basic"},
-        )
-    return credentials.username
-
-
-from contextlib import asynccontextmanager
-from llm import llm_config
-
-llm_config.set_llm_config()   # synchronous — guarantees a valid token before any request
-
-
-@asynccontextmanager
-async def lifespan(app:FastAPI):
-    asyncio.create_task(llm_config.refresh_loop())
-    yield
-app = FastAPI(lifespan=lifespan)
-
-from clean_extract_bot_data import router as export_router
-app.include_router(export_router)
-
-
-os.makedirs("static", exist_ok=True)
-os.makedirs("templates", exist_ok=True)
-
-app.mount("/incident_agent/static", StaticFiles(directory="static"), name="static")
-templates = Jinja2Templates(directory="templates")
-
-app.add_middleware(AuthMiddleware)
-app.add_middleware(SessionMiddleware, secret_key=SESSION_SECRET)
-
-logger.info("FastAPI app initialized")
-
-
-def get_kafka_producer():
-    return Producer({
-        'bootstrap.servers': os.getenv("KAFKA_BROKER_URL"),
-        'security.protocol': 'SASL_SSL',
-        'sasl.mechanism': 'SCRAM-SHA-512',
-        'sasl.username': os.getenv("KAFKA_USERNAME", "gen-ai-de_msk_uat"),
-        'sasl.password': os.getenv("KAFKA_PASSWORD"),
-    })
-
-
-def publish_to_kafka(incident_id: str, event_type: str, payload: dict):
-    tracer = get_tracer(__name__)
-    with tracer.start_as_current_span("publish_to_kafka") as span:
-        span.set_attribute("incident_id", incident_id)
-        span.set_attribute("event_type", event_type)
-        try:
-            producer = get_kafka_producer()
-            message = {
-                "incident_id": incident_id,
-                "event_type": event_type,
-                "payload": payload
-            }
-            producer.produce(
-                topic=os.getenv("KAFKA_TOPIC", "GEN-AI-DE-INCIDENT-EVENTS"),
-                key=incident_id.encode('utf-8'),
-                value=json.dumps(message).encode('utf-8')
-            )
-            producer.flush()
-            logger.info(f"✓ Kafka published | incident={incident_id} event={event_type}")
-        except Exception as e:
-            logger.error(f"✗ Kafka publish FAILED | incident={incident_id} error={e}")
-            raise
-
-
-
-
-def get_header_details():
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+    
+    logger.error(f"Failed to parse JSON from output: {output}...")
     return {
-        "Content-Type": "application/json",
-        "correlationId": str(uuid.uuid4()),
-        "source": "IncidentBot",
-        "transactionId": str(uuid.uuid4())
+        "diagnosis": "Unable to process incident response",
+        "solution": "Please try again later",
+        "questions": ["System encountered an issue processing the incident"],
+        "resolved": "no"
     }
 
 
-def handle_no_comments(incident_id: str):
+class IncidentState(BaseModel):
+    incident_id: str = ""
+    payload: dict = {}
+    incident_description: str = ""
+    incident_context: str = ""
+    user_qa_pairs: List[dict] = []
+    intent: str = ""
+    agent_output: dict = {}
+    snow_status: str = ""
+    ucic: str = ""
+    current_comment: Optional[str] = None
+    app: str = "" 
+    customer_identifiers: Dict[str, str] = {}
+    problem_category: str = "" 
+    plan_output: Optional[Dict] = None
+    execution_result: Optional[Dict] = None
+    summary_output: Optional[Dict] = None
+    enriched_prompt: str = ""
+    discovered_services: str = ""
+
+
+async def send_update_to_servicenow_async(payload: Dict, question: str, resolution: str):
     tracer = get_tracer(__name__)
-    with tracer.start_as_current_span("handle_no_comments") as span:
-        span.set_attribute("incident_id", incident_id)
-        logger.info(f"  No comments | incident={incident_id}")
+    with tracer.start_as_current_span("send_update_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("question_length", len(question) if question else 0)
+        span.set_attribute("resolution_length", len(resolution) if resolution else 0)
+        
+        url = os.environ['SNOW_ENDPOINT']
 
-from typing import List, Optional
-from pydantic import BaseModel
+        incident_id = payload.get("incidentId")
+        headers = payload.get("headers", {})
 
-class Attachment(BaseModel):
-    fileId: Optional[str] = None
-    fileName: str
-    fileType: str
-    fileSize: Optional[int] = None
-    contentEncoding: str
-    fileContent: str
+        request_payload = {
+            **payload,
+            "additionalComments": question,
+            "resolutionNotes": resolution,
+        }
 
-# ─────────────────────────────────────────
-# MODELS
-# ─────────────────────────────────────────
+        for key in EXEPEMPTED_PAYLOAD_KEYS:
+            del request_payload[key]
+       
+        request_payload = {k: v for k, v in request_payload.items() if v is not None}
 
-class ServiceNowIncidentCreateRequest(BaseModel):
-    callerId: Optional[str] = None
-    incidentType: Optional[str] = None
-    businessService: Optional[str] = None
-    tier1: Optional[str] = None
-    tier2: Optional[str] = None
-    tier3: Optional[str] = None
-    impact: Optional[str] = None
-    urgency: Optional[str] = None
-    shortDescription: Optional[str] = None
-    description: Optional[str] = None
-    contactType: Optional[str] = None
-    sourceIncidentNum: Optional[str] = None
-    sourceIncidentId: Optional[str] = None
-    assignmentGroup: Optional[str] = None
-    businessImpact: Optional[str] = None
-    cause: Optional[str] = None
-    businessCorrectiveAction: Optional[str] = None
-    techCorrectiveAction: Optional[str] = None
-    dataSource: Optional[str] = None
-    descriptionOfOutage: Optional[str] = None
-    emailId: Optional[str] = None
-    entityUCIC: Optional[str] = None
-    hashValues: Optional[str] = None
-    ipDetails: Optional[str] = None
-    ldwNotifyInformation: Optional[str] = None
-    loanAccountNumber: Optional[str] = None
-    loginId: Optional[str] = None
-    mobileNumber: Optional[str] = None
-    businessPreventiveAction: Optional[str] = None
-    techPreventiveAction: Optional[str] = None
-    resoultionTeam: Optional[str] = None
-    rootCause: Optional[str] = None
-    systemName: Optional[str] = None
-    urlOrDomain: Optional[str] = None
-    userDetail: Optional[str] = None
-    taskEffectiveNumber: Optional[str] = None
-    individualUCIC: Optional[str] = None
-    sourceIncCreateddttime: Optional[str] = None
-    incidentId: str = Field(..., min_length=1)
-    state: Optional[str] = None
-    causedByPatch: Optional[str] = None
-    resolutionCode: Optional[str] = None
-    solutionType: Optional[str] = None
-    outageType: Optional[str] = None
-    vendorGroup: Optional[str] = None
-    additionalComments: Optional[str] = None
-    onHoldReason: Optional[str] = None
-    resolutionNotes: Optional[str] = None
-    userLocation: Optional[str] = None
-    incidentNumber: str
-    assignedTo: Optional[str] = None
-    files: Optional[List[Attachment]] = None
-@field_validator('shortDescription', 'businessImpact',mode='before')
-@classmethod
-def sanitize_text_feilds(cls,value):
-    if value is None:
-        return value
-    return html.escape(str(value))
-class ServiceNowIncidentResponse(BaseModel):
-    code: str
-    details: str
+        headers.update({
+            "Authorization": f"Basic {os.environ['SNOW_TOKEN']}",
+        })
 
+        interaction_counter = payload.get("interaction_counter")
+        print(f"interaction_counter: {interaction_counter}")
 
-# ─────────────────────────────────────────
-# EXCEPTION HANDLER
-# ─────────────────────────────────────────
+        if interaction_counter is not None and interaction_counter <= 3:
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    print(f"Request - url:{url} json:{request_payload} headers:{headers}")
+                    response = await client.post(url, json=request_payload, headers=headers)
 
-@app.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    fields = ""
-    for err in exc.errors():
-        field = ".".join(str(x) for x in err["loc"] if x != "body")
-        fields += f", {field}" if fields else field
-    logger.warning(f"Validation error | fields={fields}")
-    return JSONResponse(
-        status_code=422,
-        content={"code": "422", "details": f"{fields} cannot be empty or absent"}
-    )
+                    if response.status_code == 200:
+                        print(f"Successfully updated incident {incident_id} in ServiceNow")
+                        print(f"Response: {response.json()}")
+                        return True,{"status_code":response.status_code,"response":response.json()}
+                    else:
+                        logger.warning(
+                            f"Failed to update incident {incident_id} in ServiceNow. "
+                            f"Status code: {response.status_code}, Response: {response.text}"
+                        )
+                        try:
+                            return False,{"status_code":response.status_code,"response":response.json()}
+                        except:
+                            return False,{"status_code":response.status_code,"response_text":response.text}
 
-
-@app.get("/incident_agent/results")
-def results_page(request: Request):
-    recent_incidents = get_last_25_incidents()
-    csp_headers = {
-        "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; style-src 'self' 'unsafe-inline' https://cdn.tailwindcss.com; img-src 'self' data:;"
-    }
-    return templates.TemplateResponse(
-        "results.html",
-        {"request": request, "results": recent_incidents},
-        headers=csp_headers
-    )
-
-@app.post("/incident_agent/ingest-incidents")
-async def ingest_incidents_proxy(
-    file: UploadFile = File(...),
-    application: str = Form("")
-):
-    logger.info(f"[ingest] Received file={file.filename} application={application}")
-    try:
-        file_contents = await file.read()
-        logger.info(f"[ingest] File size={len(file_contents)} bytes")
-
-        async with httpx.AsyncClient(timeout=600.0, verify=False) as client:
-            response = await client.post(
-                JIRA_RAG_INGEST_URL,
-                files={"file": (file.filename, file_contents, file.content_type or "text/csv")},
-                data={"application": application}
+            except Exception as e:
+                logger.error(f"Error calling ServiceNow API for incident {incident_id}: {str(e)}")
+                return False,{"status_code": 0 ,"response_text":"Exception : "+str(e)}
+        else:
+            # FIX: previously fell through with no return here, causing the
+            # caller to unpack None and crash with TypeError once
+            # interaction_counter exceeded 3 (which start_process's increment
+            # can push past 3 right as the limit check fires).
+            logger.warning(
+                f"interaction_counter={interaction_counter} exceeds limit or is missing — "
+                f"skipping ServiceNow send for incident {incident_id}"
             )
+            return False, {"status_code": 0, "response_text": "interaction_counter limit exceeded or missing"}
 
-        logger.info(f"[ingest] jira-rag responded status={response.status_code}")
+
+async def send_rejection_to_servicenow_async(payload, additonal_comment: str = 'BOT is unable to resolve, assign to an Engineer'):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_rejection_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        payload.update({"state": "On Hold","cause": "Bot is unable to resolve Assign to an Engineer."})
+        result = await send_update_to_servicenow_async(payload, additonal_comment, '')
+        return result, 'rejected'        
+
+
+async def send_question_to_servicenow_async(payload, question):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_question_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        payload.update({"state": "On Hold", "onHoldReason": "User Action Required"})
+        result = await send_update_to_servicenow_async(payload, question, '')
+        return result, 'on_hold'         
+
+
+async def send_resolution_to_servicenow_async(payload, resolution):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_resolution_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("resolution_length", len(resolution) if resolution else 0)
+        payload.update({
+            "state":"On Hold",
+            "onHoldReason": "User Action Required"
+        })
+        result = await send_update_to_servicenow_async(payload, resolution, None)
+        return result, 'on_hold'    
+
+
+def payload_to_incident_description(payload):
+    from new_flow.utils.files_processor import process_attachments 
+
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("payload_to_incident_description") as span:
+        span.set_attribute("short_description_length", len(payload.get('shortDescription','')))
+        span.set_attribute("description_length", len(payload.get('description','')))
+        span.set_attribute("individualUCIC", payload.get('individualUCIC','i'))
+        
+        short_description = payload.get('shortDescription','')
+        description = payload.get('description','')
+        individualUCIC = payload.get('individualUCIC','i')
+        result = f"Short Description: {short_description}\nDescription: {description}"
+
+        file_text = process_attachments(payload.get('files') or [])   
+        if file_text:                                                  
+            result = result + "\n\n" + file_text                       
+        print(f"Generated incident description for UCIC {individualUCIC}")
+        return result, individualUCIC
+
+
+
+class IncidentManagementFlow(Flow[IncidentState]):
+
+    @start()
+    async def initialize_and_classify(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("initialize_and_classify") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+
+            self.state.incident_description, self.state.ucic = payload_to_incident_description(self.state.payload)
+
+            if '__agent_data' not in self.state.payload:
+                self.state.payload['__agent_data'] = {
+                    'snow_logs': [], 'qa_pairs': [], 'comments': []
+                }
+
+            snow_logs = self.state.payload.get('__agent_data', {}).get('snow_logs', [])
+            if snow_logs and snow_logs[-1]['type'] == 'question' and self.state.current_comment:
+                 self.state.payload['__agent_data']['qa_pairs'].append({
+                     "question": snow_logs[-1]["question"],
+                     "answer": self.state.current_comment
+                 })
+
+            self.state.user_qa_pairs = self.state.payload['__agent_data'].get('qa_pairs', [])
+
+            comment = self.state.current_comment if self.state.current_comment else None
+
+            classifier_output = await run_crew_with_retry_async(
+                lambda: run_classifier_with_enrichment_async(
+                    payload=self.state.payload,
+                    incident_description=self.state.incident_description,
+                    user_qa_pairs=self.state.user_qa_pairs,
+                    comment=comment
+                )
+            )
+            self.state.intent = classifier_output.intent
+            self.state.customer_identifiers = classifier_output.customer_identifiers
+            self.state.problem_category = classifier_output.problem_category
+            self.state.app = classifier_output.app
+            self.state.enriched_prompt = classifier_output.enriched_prompt
+            
+            self.state.payload['__agent_data']['classifier_output'] = classifier_output.model_dump()
+            
+            print(f"Enhanced classifier | incident={self.state.incident_id} | app={self.state.app} | category={self.state.problem_category}")
+            
+            print(f"Initialized and classified incident {self.state.incident_id} with intent: {self.state.intent}")
+            return self.state.intent
+
+    @router(initialize_and_classify)
+    async def start_process(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("logic_router") as span:
+            span.set_attribute("intent", self.state.intent)
+            span.set_attribute("sop_exists", self.state.payload['__agent_data'].get('sop') is not None)
+            span.set_attribute("sop_value", self.state.payload['__agent_data'].get('sop'))
+
+            counter = self.state.payload.get("interaction_counter", 0)
+            self.state.payload["interaction_counter"] = counter + 1
+            if counter >= 3:
+                print(f"Interaction limit exceeded for incident {self.state.incident_id}")
+                return "limit_exceeded"
+
+            if self.state.intent == "closure": 
+                print(f"Closure intent for incident {self.state.incident_id}")
+                return "handle_closure"
+            if self.state.intent == "rebuttal": 
+                print(f"Rebuttal intent for incident {self.state.incident_id}")
+                return "handle_rebuttal"
+
+            classifier_data = self.state.payload.get('__agent_data', {}).get('classifier_output', {})
+            if classifier_data.get('needs_user_input'):
+                print(f"Need more info for incident {self.state.incident_id}")
+                self.state.agent_output = {
+                    "resolved": "no",
+                    "diagnosis": "Additional information needed",
+                    "solution": "Please provide more details",
+                    "questions": [classifier_data.get('clarification_question', 'Could you please provide more information? Please provide trace ID/ Correlation ID/ Customer Number/ Account Number if possible')]
+                }
+                return "update_servicenow"
+            
+            print(f"Fresh incident {self.state.incident_id}, gather context")
+            return "gather_context"
+
+
+    @listen('gather_context')
+    async def semantic_search(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("gather_context") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("incident_description_length", len(self.state.incident_description))
+
+            desc = self.state.enriched_prompt
+            app_raw = self.state.payload.get("businessService", "CBS")
+            app_key = app_raw.lower().strip()
+
+            if app_has_observability(app_key):
+                # existing behavior — unchanged for cbs/optimus/idp
+                incident_context = await run_crew_with_retry_async(
+                    lambda: run_incident_context_crew_async(desc, application=app_raw)
+                )
+            else:
+                # apps with no Jaeger/ELK fallback get the deterministic,
+                # non-tool-calling search path (no fallback investigation exists
+                # if search silently fails or a tool call leaks)
+                incident_context = await run_crew_with_retry_async(
+                    lambda: run_incident_context_deterministic_async(desc, application=app_raw)
+                )
+            self.state.incident_context = incident_context if incident_context else "No context found"
+
+            return 'run_resolver'
+
+
+    @listen(semantic_search)
+    async def run_resolver_crew(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("run_resolver") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("qa_pairs_count", len(self.state.user_qa_pairs))
+
+            app = self.state.payload.get("businessService", "cbs").lower().strip()
+            self.state.app = app
+            span.set_attribute("app", app)
+            logger.info(f"Resolver | incident={self.state.incident_id} app={app}")
+
+            return await self._run_agentic_resolver(app)
+
+    async def _run_agentic_resolver(self, app: str):
+        tracer = get_tracer(__name__)
+
+        customer_ids = self.state.customer_identifiers if hasattr(self.state, 'customer_identifiers') else {}
+        problem_cat = self.state.problem_category if hasattr(self.state, 'problem_category') else ""
+
+        if not app_has_observability(app):
+            logger.info(f"No Jaeger/ELK config for app={app} - resolving from similarity search context only")
+            with tracer.start_as_current_span("context_only_summary") as span:
+                span.set_attribute("app", app)
+                summary_output = await run_crew_with_retry_async(
+                    lambda: run_context_only_summary_async(
+                        incident_description=self.state.incident_description,
+                        historic_context=self.state.incident_context,
+                        user_qa_pairs=self.state.user_qa_pairs
+                    )
+                )
+            self.state.summary_output = summary_output.model_dump() if hasattr(summary_output, 'model_dump') else summary_output
+            self.state.agent_output = {
+                "resolved": summary_output.resolved,
+                "diagnosis": summary_output.diagnosis,
+                "solution": summary_output.solution,
+                "questions": summary_output.questions
+            }
+            print(f"Context-only resolution completed for incident {self.state.incident_id}")
+            return "update_servicenow"
 
         try:
-            response_json = response.json()
-        except Exception:
-            response_json = {"raw": response.text}
+            self.state.discovered_services = await discover_jaeger_services_impl(app)
+            logger.info(f"agents.plan_agent import PlanOutput={app}")
+        except Exception as e:
+            logger.warning(f"Failed to discover services: {e}")
+            self.state.discovered_services = "Service discovery unavailable"
 
-        return JSONResponse(content=response_json, status_code=response.status_code)
+        with tracer.start_as_current_span("plan_agent") as span:
+            span.set_attribute("app", app)
+            plan_output = await run_crew_with_retry_async(
+                lambda: run_plan_agent_async(
+                    enriched_prompt=self.state.enriched_prompt,
+                    app=app,
+                    customer_identifiers=customer_ids,
+                    problem_category=problem_cat,
+                    incident_context=self.state.incident_context,
+                    discovered_services=self.state.discovered_services
+                )
+            )
+            self.state.plan_output = plan_output.model_dump() if hasattr(plan_output, 'model_dump') else plan_output
+            print(f"Plan Agent completed for incident {self.state.incident_id}")
+        
+        if plan_output.needs_more_info:
+            self.state.agent_output = {
+                "resolved": "no",
+                "diagnosis": "Additional information needed",
+                "solution": plan_output.question_for_user or "Please provide more details",
+                "questions": [plan_output.question_for_user] if plan_output.question_for_user else []
+            }
+            return "update_servicenow"
+        
+        with tracer.start_as_current_span("execute_jaeger_agent") as span:
+            span.set_attribute("issue_summary", plan_output.issue_summary[:100] if plan_output.issue_summary else "")
+            execution_result = await run_crew_with_retry_async(
+                lambda: run_jaeger_only_async(
+                    plan_output=plan_output,
+                    incident_description=self.state.incident_description,
+                    app=app,
+                    customer_identifiers=customer_ids,
+                    problem_category=problem_cat,
+                    max_iterations=5,
+                    incident_id=self.state.incident_id,
+                    discovered_services=self.state.discovered_services
+                )
+            )
+            self.state.execution_result = execution_result.model_dump() if hasattr(execution_result, 'model_dump') else execution_result
+            print(f"Execute Agent completed for incident {self.state.incident_id}")
 
-    except Exception as e:
-        logger.error(f"[ingest] FAILED: {e}", exc_info=True)
-        return JSONResponse(
-            content={"status": "error", "message": str(e)},
-            status_code=500
-        )
+            if hasattr(execution_result, 'confidence') and execution_result.confidence < 0.3:
+                escalation_msg = execution_result.escalation_reason or "BOT unable to resolve - assigning to L2 Engineer"
+                (status, info), incident_status = await send_rejection_to_servicenow_async(
+                    self.state.payload, 
+                    escalation_msg
+                )
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "escalation", 
+                    "reason": escalation_msg,
+                    "confidence": execution_result.confidence,
+                    "status": status, 
+                    "response": info
+                })
+                print(f"Escalated incident {self.state.incident_id} due to low confidence: {execution_result.confidence}")
+        
+        with tracer.start_as_current_span("summary_agent") as span:
+            summary_output = await run_crew_with_retry_async(
+                lambda: run_summary_agent_async(
+                    incident_description=self.state.incident_description,
+                    execution_result=execution_result,
+                    historic_context=self.state.incident_context,
+                    user_qa_pairs=self.state.user_qa_pairs
+                )
+            )
+            self.state.summary_output = summary_output.model_dump() if hasattr(summary_output, 'model_dump') else summary_output
+            print(f"Summary Agent completed for incident {self.state.incident_id}")
+        
+        self.state.agent_output = {
+            "resolved": summary_output.resolved,
+            "diagnosis": summary_output.diagnosis,
+            "solution": summary_output.solution,
+            "questions": summary_output.questions
+        }
+        
+        return "update_servicenow"
 
+    # ── FIX: two listeners now cover both trigger paths ──
+    # start_process() (a @router) can return the bare string "update_servicenow"
+    # directly (e.g. needs_user_input case). CrewAI @listen('update_servicenow')
+    # only matches that string event — it does NOT match run_resolver_crew
+    # completing. Previously only @listen(run_resolver_crew) existed, so any
+    # router path returning the string went nowhere: agent_output was set but
+    # never sent to ServiceNow or persisted. Both listeners now call the same
+    # shared helper.
+    @listen('update_servicenow')
+    async def handle_needs_more_info(self):
+        await self._send_agent_output_to_servicenow()
 
-@app.get("/incident_agent", response_class=HTMLResponse)
-async def dashboard(request: Request):
-    return RedirectResponse(url="/incident_agent/login")
+    @listen(run_resolver_crew)
+    async def update_servicenow(self):
+        await self._send_agent_output_to_servicenow()
 
+    async def _send_agent_output_to_servicenow(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("update_servicenow") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("resolution_result", self.state.agent_output.get("resolved", "unknown"))
 
+            res = self.state.agent_output
+            incident_status = 'in_progress'
 
-@app.post("/incident_agent/incident/create")
-async def create_incident_from_servicenow(
-    request: Request,
-    incident_data: ServiceNowIncidentCreateRequest,
-    background_tasks: BackgroundTasks,
-    auth: bool = Depends(verify_dummy_header)
-):
-    tracer = get_tracer(__name__)
+            if res.get("resolved") == 'yes':
+                msg = f"Diagnosis:\n{res['diagnosis']}\n\nSolution:\n{res['solution']}"
+                (status, info), incident_status = await send_resolution_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "resolution", "resolution": msg, "status": status, "response": info
+                })
+                print(f"Resolution sent for incident {self.state.incident_id}")
 
-    with tracer.start_as_current_span("create_incident_from_servicenow") as span:
-        incident_id = incident_data.incidentId
-        span.set_attribute("incident_id", incident_id)
-        span.set_attribute("has_additional_comments", bool(incident_data.additionalComments))
-
-        logger.info(f"→ Incoming request | incident={incident_id} has_comments={bool(incident_data.additionalComments)}")
-
-        feature = os.getenv("INCIDENT_BOT_ENABLED", False)
-        logger.info(f"  INCIDENT_BOT_ENABLED={feature}")
-        if not feature:
-            logger.warning(f"  Bot disabled, returning 503 | incident={incident_id}")
-            return ServiceNowIncidentResponse(code="503", details="Service Unavailable.")
-
-        incident = get_incident(incident_id)
-        logger.info(f"  DB lookup | incident={incident_id} exists={bool(incident)}")
-
-        if not incident:
-            # NEW INCIDENT
-            file_description = ""
-            if incident_data.files:
-                file_dicts = [f.model_dump() for f in incident_data.files]
-                file_description = process_attachments(file_dicts)
-                logger.info(f"  Files processed | incident={incident_id} count={len(file_dicts)} has_description={bool(file_description)}")
-
-            incident_record = incident_data.model_dump()
-            incident_record.pop("files", None)   
-            incident_record["file_description"] = file_description
-            incident_record["created_at"] = datetime.now().isoformat()
-            incident_record["status"] = "created"
-            incident_record["interaction_counter"] = 0
-            incident_record["headers"] = get_header_details()
-
-            try:
-                await upsert_incident_payload_async(incident_id, json.dumps(incident_record))
-                logger.info(f"  DB saved | incident={incident_id}")
-            except Exception as e:
-                logger.error(f"✗ DB upsert FAILED | incident={incident_id} error={e}")
-                raise HTTPException(status_code=500, detail="Incident server error")
-
-            publish_to_kafka(incident_id, "new_incident", incident_record)
-            logger.info(f"✓ New incident done | incident={incident_id}")
-            return ServiceNowIncidentResponse(code="202", details="Accepted")
-
-
-        else:
-            # EXISTING INCIDENT
-            additional_comments = incident_data.additionalComments
-            payload = incident['payload']
-
-            if additional_comments:
-                current_status = get_incident_status(incident_id)
-                logger.info(f"  Existing incident | incident={incident_id} status={current_status}")
-                span.set_attribute("current_status", current_status or "unknown")
-
-                if current_status == 'on_hold':
-                    payload["additionalComments"] = additional_comments
-
-                    if incident_data.files:
-                        file_dicts = [f.model_dump() for f in incident_data.files]
-                        new_file_description = process_attachments(file_dicts)
-                        if new_file_description:
-                            payload["file_description"] = new_file_description
-                            logger.info(f"  Follow-up files processed | incident={incident_id}")
-
-                    set_incident_status(incident_id, 'in_progress')
-                    publish_to_kafka(incident_id, "additional_comments", payload)
-                    logger.info(f"✓ Additional comments published | incident={incident_id}")
-
-                elif current_status == 'in_progress':
-                    logger.info(f"  Ignored | incident={incident_id} reason=already_in_progress")
-
-                elif current_status in ['resolved', 'rejected']:
-                    logger.info(f"  Ignored | incident={incident_id} reason=final_status={current_status}")
-
-                else:
-                    logger.info(f"  Ignored | incident={incident_id} reason=unknown_status={current_status}")
+            elif res.get("questions"):
+                msg = "\n".join(res["questions"])
+                (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "question", "question": msg, "status": status, "response": info
+                })
+                print(f"Question sent for incident {self.state.incident_id}")
 
             else:
-                handle_no_comments(incident_id)
+                msg = f"Diagnosis:\n{res.get('diagnosis')}\n\nSolution:\n{res['solution']}"
+                (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "question", "question": msg, "status": status, "response": info
+                })
+                print(f"Question sent for incident {self.state.incident_id}")
 
-            return ServiceNowIncidentResponse(code="202", details="Accepted")
+            state = self.state.model_dump()
+            payload_copy = state['payload']
 
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"DB updated for incident {self.state.incident_id} status={incident_status}")
 
-@app.get("/incident_agent/incident/{incident_id}")
-async def get_incident_details(incident_id: str, auth: bool = Depends(verify_dummy_header)):
-    tracer = get_tracer(__name__)
-    with tracer.start_as_current_span("get_incident_details") as span:
-        span.set_attribute("incident_id", incident_id)
-        logger.info(f"→ Get incident details | incident={incident_id}")
-        incident = get_incident(incident_id)
-        if not incident:
-            logger.warning(f"  Not found | incident={incident_id}")
-            raise HTTPException(status_code=404, detail="Incident not found")
-        return incident['payload']
+    @listen('handle_rebuttal')
+    async def run_rebuttal_crew(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_rebuttal") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            msg = 'BOT is unable to resolve, assign to an Engineer'
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload, msg)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Rebuttal handled for incident {self.state.incident_id} status={incident_status}")
 
+    @listen('limit_exceeded')
+    async def handle_limit_exceeded(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_limit_exceeded") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Limit exceeded rejected incident {self.state.incident_id} status={incident_status}")
+            return
 
-@app.get("/incident_agent/health")
-async def health_check():
-    logger.info("Health check called")
-    return {"status": "healthy"}
+    @listen('closure')
+    async def handle_incident_closure(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_closure") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            print("No action for bot to take")
+            return
 
-
-@app.get("/incident_agent/health/oracle")
-async def oracle_health_check():
-    logger.info("Oracle health check called")
-    result = test_oracle_connection()
-    if result["connected"]:
-        logger.info(f"Oracle connected | sysdate={result['sysdate']}")
-        return {
-            "status": "healthy",
-            "connected": True,
-            "sysdate": result['sysdate'],
-            "message": "Successfully connected to Oracle database"
-        }
-    else:
-        logger.error(f"Oracle connection FAILED | error={result['error']}")
-        return {
-            "status": "unhealthy",
-            "connected": False,
-            "error": result['error'],
-            "message": "Failed to connect to Oracle database"
-        }
-
-@app.get("/incident_agent/login")
-async def login(request: Request):
-
-    from opentelemetry import trace
-    root_span = trace.get_current_span()
-    if root_span and root_span.is_recording():
-        root_span.update_name("GET /login [OAuth Init]")
-
-    code_verifier, code_challenge = pkce.generate_pkce_pair()
-
-    state = secrets.token_hex(16)
-
-    request.session["pkce_verifier"] = code_verifier
-    request.session["oauth_state"] = state
-
-    params = {
-        "client_id": CLIENT_ID,
-        "response_type": "code",
-        "redirect_uri": REDIRECT_URL,
-        "scope": "",
-        "code_challenge": code_challenge,
-        "code_challenge_method": "S256",
-        "state": state
-    }
-
-    url = f"{AUTHORIZE_URL}?{urllib.parse.urlencode(params)}"
-    print(f"Redirecting to: {url}")
-
-    return RedirectResponse(url)
-
-
-@app.get("/incident_agent/logout")
-async def logout(request: Request):
-    request.session.clear()
-    templates.env.globals["user"] = None
-    return RedirectResponse(url="/incident_agent/login")
-
-
-@app.get("/incident_agent/auth/oauth/ent_auth/callback")
-async def callback(request: Request):
-    code = request.query_params.get("code")
-    state = request.query_params.get("state")
-
-    if not code or not state:
-        logger.error("Missing code or state in OAuth callback")
-        return RedirectResponse("/incident_agent/login")
-
-    expected_state = request.session.pop("oauth_state", None)
-    if not expected_state or state != expected_state:
-        request.session.clear()
-        templates.env.globals["user"] = None
-        print("[ERROR] State mismatch — possible CSRF or session expiry")
-        return RedirectResponse(url="/incident_agent/login")
-
-    code_verifier = request.session.pop("pkce_verifier", None)
-    if not code_verifier:
-        request.session.clear()
-        templates.env.globals["user"] = None
-        print("[ERROR] PKCE verifier missing from session")
-        return RedirectResponse(url="/incident_agent/login")
-
-    payload = {
-        "code": code,
-        "redirect_uri": REDIRECT_URL,
-        "client_id": CLIENT_ID,
-        "code_verifier": code_verifier
-    }
-    
-    async with httpx.AsyncClient(verify=False) as client:
-        token_response = await client.post(
-            url=TOKEN_URL,
-            data=json.dumps(payload),
-            headers={"Content-Type": "application/x-www-form-urlencoded"}
-        )
-        logger.info("Token response %s %s", token_response.status_code, token_response.text)
-        if token_response.status_code != 200:
-            raise HTTPException(status_code=token_response.status_code, detail=token_response.text)
-
-        access_token = token_response.json().get("access_token")
-        expiry = token_response.json().get("expires_in")
-    
-    async with httpx.AsyncClient(verify=False) as client:
-        user_info_response = await client.post(
-            url=USER_INFO_URL,
-            headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
-        )
-        logger.info("User-info response %s %s", user_info_response.status_code, user_info_response.text)
-
-        if user_info_response.status_code != 200:
-            raise HTTPException(status_code=user_info_response.status_code, detail=user_info_response.text)
-
-        user_info = user_info_response.json()
-
-    user = {
-        "identifier": user_info.get("email"),
-        "display_name": f"{user_info.get('firstName', '')} {user_info.get('lastName', '')}".strip(),
-        "access_token": access_token,
-        "token_expiry": expiry
-    }
-    request.session["user"] = user
-    return RedirectResponse("/incident_agent/results")
-
-
-@app.post("/incident_agent/keepalive")
-async def keepalive(request: Request):
-    """Extends token validity"""
-    user = request.session.get("user", {})
-    access_token = user.get("access_token")
-    async with httpx.AsyncClient(verify=False) as client:
-        resp = await client.post(
-            url=EXTEND_URL,
-            headers={"Authorization": f"Bearer {access_token}", "Accept": "application/json"}
-        )
-        if resp.status_code not in range(200, 205):
-            if resp.status_code == 401:
-                return RedirectResponse(url="/incident_agent/login")
-    return JSONResponse({"status": 200, "message": "success"})
+    @listen("reject_incident")
+    async def handle_rejection(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_rejection") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Rejected incident {self.state.incident_id} status={incident_status}")
+            return
