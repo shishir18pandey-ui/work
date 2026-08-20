@@ -158,10 +158,6 @@ async def send_update_to_servicenow_async(payload: Dict, question: str, resoluti
                 logger.error(f"Error calling ServiceNow API for incident {incident_id}: {str(e)}")
                 return False,{"status_code": 0 ,"response_text":"Exception : "+str(e)}
         else:
-            # FIX: previously fell through with no return here, causing the
-            # caller to unpack None and crash with TypeError once
-            # interaction_counter exceeded 3 (which start_process's increment
-            # can push past 3 right as the limit check fires).
             logger.warning(
                 f"interaction_counter={interaction_counter} exceeds limit or is missing — "
                 f"skipping ServiceNow send for incident {incident_id}"
@@ -299,7 +295,10 @@ class IncidentManagementFlow(Flow[IncidentState]):
                     "solution": "Please provide more details",
                     "questions": [classifier_data.get('clarification_question', 'Could you please provide more information? Please provide trace ID/ Correlation ID/ Customer Number/ Account Number if possible')]
                 }
-                return "update_servicenow"
+                # FIX: unique event name — does NOT collide with the string
+                # "update_servicenow" that _run_agentic_resolver returns on
+                # the normal path, which would otherwise double-fire both listeners.
+                return "send_clarification"
             
             print(f"Fresh incident {self.state.incident_id}, gather context")
             return "gather_context"
@@ -317,14 +316,10 @@ class IncidentManagementFlow(Flow[IncidentState]):
             app_key = app_raw.lower().strip()
 
             if app_has_observability(app_key):
-                # existing behavior — unchanged for cbs/optimus/idp
                 incident_context = await run_crew_with_retry_async(
                     lambda: run_incident_context_crew_async(desc, application=app_raw)
                 )
             else:
-                # apps with no Jaeger/ELK fallback get the deterministic,
-                # non-tool-calling search path (no fallback investigation exists
-                # if search silently fails or a tool call leaks)
                 incident_context = await run_crew_with_retry_async(
                     lambda: run_incident_context_deterministic_async(desc, application=app_raw)
                 )
@@ -458,15 +453,13 @@ class IncidentManagementFlow(Flow[IncidentState]):
         
         return "update_servicenow"
 
-    # ── FIX: two listeners now cover both trigger paths ──
-    # start_process() (a @router) can return the bare string "update_servicenow"
-    # directly (e.g. needs_user_input case). CrewAI @listen('update_servicenow')
-    # only matches that string event — it does NOT match run_resolver_crew
-    # completing. Previously only @listen(run_resolver_crew) existed, so any
-    # router path returning the string went nowhere: agent_output was set but
-    # never sent to ServiceNow or persisted. Both listeners now call the same
-    # shared helper.
-    @listen('update_servicenow')
+    # ── FIX: distinct trigger names, no possible overlap ──
+    # start_process (router) emits "send_clarification" for the needs-user-input
+    # short-circuit. _run_agentic_resolver returns "update_servicenow" as an
+    # ordinary return value (only meaningful via @listen(run_resolver_crew)
+    # matching method completion). These two strings never collide, so exactly
+    # one listener fires per incident.
+    @listen('send_clarification')
     async def handle_needs_more_info(self):
         await self._send_agent_output_to_servicenow()
 
