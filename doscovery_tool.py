@@ -3,7 +3,7 @@ import httpx
 from pydantic import BaseModel, Field
 
 import logging
-
+from new_flow.tools.app_config import get_jager_auth_token , get_jaeger_endpoint
 logger = logging.getLogger(__name__)
 
 # Jaeger Configuration (same as in query_tools.py)
@@ -13,10 +13,10 @@ JAEGER_API_BASE = os.getenv("JAEGER_API_BASE", "https://tracing.uat-opt.idfcfirs
 JAEGER_AUTH_TOKEN = os.getenv("JAEGER_AUTH_TOKEN")
 
 
-def _jaeger_auth_headers():
-    if JAEGER_AUTH_TOKEN:
-        return {"Authorization": f"Basic {JAEGER_AUTH_TOKEN}"}
-    return {}
+def _jaeger_auth_headers(app: str):
+    token = get_jager_auth_token(app)
+    return {"Authorization": f"Basic {token}"} if token else {}
+
 
 # Import service metadata
 from new_flow.tools.service_metadata import (
@@ -25,6 +25,7 @@ from new_flow.tools.service_metadata import (
     get_service_purpose,
     get_app_config,
     get_elk_indexes,
+    get_jaeger_endpoint,
 )
 
 # ELK Configuration
@@ -253,7 +254,7 @@ async def discover_jaeger_services_impl(app: str = None) -> str:
     # Get Jaeger endpoint from app config or use default
     jaeger_endpoint = None
     if app:
-        config = get_app_config(app)
+        config = get_jaeger_endpoint(app)
         if config:
             jaeger_endpoint = config.get("jaeger_endpoint")
     
@@ -305,7 +306,7 @@ async def discover_jaeger_services_impl(app: str = None) -> str:
 async def discover_jaeger_tags_impl(service: str, app: str = None) -> str:
     jaeger_endpoint = None
     if app:
-        config = get_app_config(app)
+        config = get_jaeger_endpoint(app)
         if config:
             jaeger_endpoint = config.get("jaeger_endpoint")
     
