@@ -1,0 +1,195 @@
+# Service Metadata Configuration
+# This provides optional predefined tags for services (if available)
+# Discovery will work even without this - this is just for validation/guidance
+# Zero dependency on support teams for discovery - all discovered via APIs
+
+optimus:
+  jaeger_endpoint: "https://tracing.uat-opt.idfcfirstbank.com/api"
+  jaeger_prod_endpoint: "https://tracing.uat-opt.idfcfirstbank.com/api"
+  elk_trace_index: "prod-jaeger-span-*"
+  elk_log_index: "elk-opt-*"
+  
+  services:
+    idp-api:
+      tags: 
+        - j_id
+        - device_id
+        - session_tracking_id
+        - mobile_number
+        - username
+        - user_id
+        - customer_id
+      purpose: "Login/authentication/registration"
+    PAYMENTS-API:
+      tags:
+        - txn_id
+        - txn_request_id
+        - customer_id
+      purpose: "Fund transfer problems"
+    bulk-payments-api:
+      tags:
+        - bulk_ref_id
+        - customer_id
+      purpose: "Bulk transfer problems"
+    IPO-API:
+      tags:
+        - customer_id
+      purpose: "IPO-related issues"
+    deposits-api:
+      tags:
+        - customer_id
+        - txn_id
+      purpose: "Document download, deposit, FD issues"
+    CREDIT-CARD-API:
+      tags:
+        - customer_id
+        - user_id
+      purpose: "Credit card operations"
+    ecom-api:
+      tags:
+        - customer_id
+        - txn_id
+        - txn_request_id
+      purpose: "E-commerce transactions"
+    WEALTH-API:
+      tags:
+        - customer_id
+        - user_id
+        - session_tracking_id
+      purpose: "Mutual fund portfolio"
+    DEBITCARD-API:
+      tags:
+        - customer_id
+        - user_id
+      purpose: "Debit card operations"
+    upi-api:
+      tags:
+        - customer_id
+        - txn_id
+        - mobile_number
+      purpose: "UPI transactions"
+    FX-API:
+      tags:
+        - customer_id
+        - txn_id
+      purpose: "Pay Abroad transactions"
+    kyc-service:
+      tags:
+        - customer_id
+        - user_id
+      purpose: "KYC operations"
+    beneficiary-api:
+      tags:
+        - customer_id
+        - beneficiary_id
+      purpose: "Beneficiary management"
+    EMANDATE:
+      tags:
+        - customer_id
+        - mandate_id
+      purpose: "Aadhaar mandate operations"
+    CX-API:
+      tags:
+        - mobile_number
+        - customer_id
+        - user_id
+      purpose: "Mobile/email validation"
+    INSURANCE-API:
+      tags:
+        - customer_id
+        - policy_id
+      purpose: "Insurance operations"
+    LAS-API:
+      tags:
+        - customer_id
+        - lai_id
+      purpose: "LAS operations"
+    REMITTANCE-API:
+      tags:
+        - customer_id
+        - remittance_id
+      purpose: "Remittance operations"
+    CAS-API:
+      tags:
+        - customer_id
+        - mf_account_id
+      purpose: "Mutual fund linking"
+    E-CHEQUE-API:
+      tags:
+        - customer_id
+        - cheque_id
+      purpose: "Cheque operations"
+    LOANS-API:
+      tags:
+        - customer_id
+        - loan_id
+      purpose: "Loan operations"
+    billpay-api:
+      tags:
+        - customer_id
+        - user_id
+        - session_tracking_id
+        - txn_id
+        - mobile_number
+      purpose: "Bill payments"
+    APPLY-FM-API:
+      tags:
+        - applicationId
+        - ucic
+        - mobile_number
+        - customer_id
+        - user_id
+      purpose: "Loan applications"
+
+cbs:
+  jaeger_endpoint: "https://tracing.uat-cbs.idfcfirstbank.com/api"
+  jaeger_prod_endpoint: "https://tracing.prod-cbs.idfcfirstbank.com/api"
+  elk_trace_index: "prod-jaeger-span-cbs-*"
+  elk_log_index: "elk-cbs-prod*"
+  
+  services:
+    cbs-backend:
+      tags:
+        - account_number
+        - customer_id
+        - txn_id
+        - ucic
+      purpose: "Core banking backend"
+    cbs-api:
+      tags:
+        - account_number
+        - customer_id
+        - txn_id
+      purpose: "Core banking API"
+    cbs-core:
+      tags:
+        - account_number
+        - customer_id
+        - txn_id
+      purpose: "Core banking core processing"
+
+idp:
+  jaeger_endpoint: "https://tracing.uat-idp.idfcfirstbank.com/api"
+  elk_trace_index: "prod-jaeger-span-idp-*"
+  elk_log_index: "elk-idp-prod*"
+  
+  services:
+    idp-auth:
+      tags:
+        - j_id
+        - user_id
+        - session_tracking_id
+        - mobile_number
+      purpose: "Authentication service"
+    idp-oauth:
+      tags:
+        - user_id
+        - access_token
+        - client_id
+      purpose: "OAuth operations"
+    idp-mfa:
+      tags:
+        - user_id
+        - mobile_number
+        - otp
+      purpose: "MFA operations"
