@@ -20,6 +20,7 @@
         "elk_index": "elk-cbs-prod*",
         "jaeger_endpoint": "https://tracing.uat-cbs.idfcfirstbank.com/api",
         "jaeger_prod_endpoint": "https://tracing.prod-cbs.idfcfirstbank.com/api",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "cbs-backend",
         "problem_categories": [
             "account_freeze",
@@ -86,6 +87,7 @@
         "elk_index": "elk-optimus-prod*",
         "jaeger_endpoint": "https://tracing.uat-opt.idfcfirstbank.com/api;https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/search",
         "jaeger_prod_endpoint": "https://tracing.uat-opt.idfcfirstbank.com/api",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "optimus-api",
         "problem_categories": [
             "login_failure",
@@ -115,6 +117,7 @@
         "elk_index": "elk-idp-prod*",
         "jaeger_endpoint": "https://tracing.uat-idp.idfcfirstbank.com/api",
         "jaeger_prod_endpoint": "https://tracing.prod-idp.idfcfirstbank.com/api",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "idp-auth",
         "problem_categories": [
             "authentication_failure",
@@ -133,6 +136,8 @@
         "elk_index": "",
         "jaeger_endpoint": "",
         "jaeger_prod_endpoint": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
+        "env":"",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -145,6 +150,7 @@
         "elk_index": "",
         "jaeger_endpoint": "",
         "jaeger_prod_endpoint": "https://dcawsmonitelasticcoord0.logging.devops.idfcbank.com:9200;https://dcawsmonitelasticcoord1.logging.devops.idfcbank.com:9200;https://dcawsmonitelasticcoord2.logging.devops.idfcbank.com:9200",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -157,6 +163,7 @@
         "elk_index": "",
         "jaeger_endpoint": "https://tracing.prod-etollissuer.idfcfirstbank.com/api",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -193,6 +200,7 @@
         "elk_index": "",
         "jaeger_endpoint": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/search;https://prod-jaeger-2-ui.obs.idfcbank.com/jaeger/search",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -205,6 +213,7 @@
         "elk_index": "",
         "jaeger_endpoint": "https://tracing.cdp.idfcfirstbank.com/api",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN_CDP",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -217,6 +226,7 @@
         "elk_index": "",
         "jaeger_endpoint": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -241,6 +251,7 @@
         "elk_index": "",
         "jaeger_endpoint": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -277,6 +288,7 @@
         "elk_index": "",
         "jaeger_endpoint": "https://tracing.commhub.idfcbank.com/api",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -301,6 +313,7 @@
         "elk_index": "",
         "jaeger_endpoint": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -325,6 +338,7 @@
         "elk_index": "",
         "jaeger_endpoint": "ttps://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -337,6 +351,7 @@
         "elk_index": "",
         "jaeger_endpoint": "ttps://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     },
@@ -349,6 +364,7 @@
         "elk_index": "",
         "jaeger_endpoint": "ttps://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api",
         "jaeger_prod_endpoint": "",
+        "jaeger_auth_env": "JAEGER_AUTH_TOKEN",
         "default_jaeger_service": "",
         "problem_categories": []
     }
