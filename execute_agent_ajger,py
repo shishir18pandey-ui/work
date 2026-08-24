@@ -1,0 +1,741 @@
+import os
+import logging
+from typing import Dict, List, Optional, Any
+from pydantic import BaseModel, Field
+
+os.environ["OTEL_SDK_DISABLED"] = "true"
+
+logger = logging.getLogger(__name__)
+
+from crewai import Agent, Task, Crew
+from new_flow.utils.llm import llm_config
+from new_flow.tools.query_tools import JaegerTraceTool
+from new_flow.utils.audit_logger import audit_logger
+from new_flow.utils.llm_cache import create_cached_llm
+from crewai import LLM
+
+class JaegerExecutionResult(BaseModel):
+    resolved: bool = Field(description="Whether issue was found/resolved")
+    diagnosis: str = Field(description="Root cause or findings")
+    solution: str = Field(description="Steps to resolve")
+    questions: List[str] = Field(
+        default_factory=list,
+        description="Clarification questions if needed"
+    )
+    tool_calls: List[Dict] = Field(
+        default_factory=list,
+        description="All Jaeger calls made during execution"
+    )
+    final_state: str = Field(description="Final state description")
+    confidence: float = Field(default=0.5, description="Confidence score 0-1")
+    iterations_completed: int = Field(default=0, description="Number of iterations completed")
+    ranges_exhausted_per_iteration: List[int] = Field(
+        default_factory=list,
+        description="Number of time ranges tried in each iteration"
+    )
+
+
+class JaegerOnlyAgent:
+    def __init__(self, max_iterations: int = 5, customer_identifiers: Dict[str, str] = None):
+        self.max_iterations = max_iterations
+        self.jaeger_tool = JaegerTraceTool()
+        self.customer_identifiers = customer_identifiers or {}
+
+        # Evidence collected so far in this run - carried forward into every decision prompt
+        self.collected_evidence: List[str] = []
+
+        self.llm = LLM(
+            model="openai/"+llm_config.model_name,
+            temperature=0.0,
+            base_url=llm_config.url,
+            api_key=llm_config.token
+        )
+
+        # State tracking
+        self.incident_id = "unknown"
+        self.current_service = None
+        self.current_tag_name = None
+        self.current_tag_value = None
+
+    # ─────────────────────────────────────────────────────────────
+    # Evidence carry-forward helpers
+    # ─────────────────────────────────────────────────────────────
+
+    def _collect_evidence(self, service, tag_name, tag_value, time_range_index, result: str):
+        """Store the failed-trace text we already have so it isn't lost across iterations."""
+        if "FAILED TRACES" not in result:
+            return
+        idx = result.find("FAILED TRACES")
+        section = result[idx:] if idx != -1 else result
+        entry = (
+            f"[EVIDENCE service={service} tag={tag_name}={tag_value} range_idx={time_range_index}]\n"
+            f"{section[:2000]}"
+        )
+        self.collected_evidence.append(entry)
+        logger.info(
+            f"[JaegerOnlyAgent][EVIDENCE COLLECTED] service={service} tag={tag_name} "
+            f"range={time_range_index} chars={len(section)}"
+        )
+
+    def _evidence_summary(self) -> str:
+        if not self.collected_evidence:
+            return ""
+        return (
+            "\n*** EVIDENCE ALREADY GATHERED (use this - do not ask to fetch a specific trace ID, "
+            "that is not possible; decide RESOLVE or NEW_ITERATION using only the data below and "
+            "the tools you have) ***\n"
+            + "\n\n".join(self.collected_evidence[-3:])
+            + "\n"
+        )
+
+    def _extract_root_cause_text(self, result: str) -> str:
+        """Pull the clearest ERROR line(s) out of a result that has a confirmed root cause."""
+        import re
+        error_lines = re.findall(r'ERROR(?:\s*\[[^\]]+\])?:\s*(.+)', result)
+        if error_lines:
+            for line in error_lines:
+                if any(kw in line for kw in ["Error while", "Error occurred", "failed", "Failed"]):
+                    return line.strip()[:500]
+            return error_lines[0].strip()[:500]
+        return "Root cause identified in trace data, but could not extract a specific error message."
+
+    async def execute(
+        self,
+        app: str,
+        service: str,
+        tag_name: str,
+        tag_value: str,
+        incident_id: str = "unknown",
+        context: str = ""
+    ) -> JaegerExecutionResult:
+        self.incident_id = incident_id
+        tool_calls = []
+        ranges_exhausted_per_iteration = []
+
+        for iteration in range(1, self.max_iterations + 1):
+            logger.info(f"[JaegerOnlyAgent] === ITERATION {iteration} START ===")
+            logger.info(f"[JaegerOnlyAgent] Service: {service}, Tag: {tag_name}={tag_value}")
+
+            ranges_tried = 0
+
+            # Deterministic 7-call loop (time_range_index 0-6)
+            for time_range_index in range(7):
+                logger.info(f"[JaegerOnlyAgent] Calling Jaeger with time_range_index={time_range_index}")
+
+                result = await self._execute_jaeger(
+                    app=app,
+                    service=service,
+                    tag_name=tag_name,
+                    tag_value=tag_value,
+                    time_range_index=time_range_index
+                )
+
+                ranges_tried += 1
+
+                call_record = {
+                    "tool_name": "search_jaeger_traces",
+                    "input_params": {
+                        "app": app,
+                        "service": service,
+                        "tag_name": tag_name,
+                        "tag_value": tag_value,
+                        "time_range_index": time_range_index
+                    },
+                    "output": result,
+                    "iteration": iteration,
+                    "time_range_index": time_range_index
+                }
+                tool_calls.append(call_record)
+
+                break_reason = self._check_break_conditions(result)
+                logger.info(f"[JaegerOnlyAgent] break_reason={break_reason} for range={time_range_index}")
+
+                if break_reason == "invalid_service_tag":
+                    logger.warning(f"[JaegerOnlyAgent] Invalid service/tag detected - breaking to NEW ITERATION")
+                    ranges_exhausted_per_iteration.append(ranges_tried)
+
+                    service, tag_name, tag_value = await self._decide_next_service_tag(
+                        context=context,
+                        previous_results=tool_calls,
+                        iteration=iteration,
+                        reason="invalid_service_tag"
+                    )
+
+                    if not service or not tag_name:
+                        logger.warning(f"[JaegerOnlyAgent] LLM couldn't determine new service/tag - ending")
+                        return JaegerExecutionResult(
+                            resolved=False,
+                            diagnosis="Could not find valid service/tag combination",
+                            solution="Manual investigation required",
+                            tool_calls=tool_calls,
+                            final_state="Incomplete - no valid service/tag",
+                            confidence=0.3,
+                            iterations_completed=iteration,
+                            ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
+                        )
+
+                    break
+
+                elif break_reason == "no_traces_continue":
+                    logger.info(f"[JaegerOnlyAgent] No traces at range {time_range_index}, continuing...")
+                    continue
+
+                elif break_reason == "traces_found":
+                    logger.info(f"[JaegerOnlyAgent] Traces found at range {time_range_index}")
+                    self._collect_evidence(service, tag_name, tag_value, time_range_index, result)
+                    ranges_exhausted_per_iteration.append(ranges_tried)
+
+                    root_cause_confirmed = "[ROOT CAUSE IDENTIFIED" in result
+
+                    decision = await self._decide_after_traces(
+                        context=context,
+                        jaeger_result=result,
+                        tool_calls=tool_calls,
+                        iteration=iteration,
+                        root_cause_confirmed=root_cause_confirmed
+                    )
+
+                    if decision.get("action") == "resolve":
+                        logger.info(
+                            f"[JaegerOnlyAgent] RESOLVING at range={time_range_index} | "
+                            f"diagnosis={decision.get('diagnosis', '')[:300]}"
+                        )
+                        return JaegerExecutionResult(
+                            resolved=True,
+                            diagnosis=decision.get("diagnosis", "Issue identified in traces"),
+                            solution=decision.get("solution", "See trace analysis"),
+                            tool_calls=tool_calls,
+                            final_state="Resolved",
+                            confidence=0.8,
+                            iterations_completed=iteration,
+                            ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
+                        )
+
+                    # Safety net: never silently discard a confirmed root cause
+                    if root_cause_confirmed and decision.get("action") != "resolve":
+                        logger.warning(
+                            f"[JaegerOnlyAgent] LLM chose '{decision.get('action')}' despite a confirmed "
+                            f"root cause at range {time_range_index} - overriding to RESOLVE"
+                        )
+                        return JaegerExecutionResult(
+                            resolved=True,
+                            diagnosis=self._extract_root_cause_text(result),
+                            solution="Root cause identified from failed transaction trace. Escalate for confirmation if needed.",
+                            tool_calls=tool_calls,
+                            final_state="Resolved (auto-confirmed root cause)",
+                            confidence=0.7,
+                            iterations_completed=iteration,
+                            ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
+                        )
+
+                    if decision.get("action") == "new_iteration":
+                        new_service = decision.get("new_service")
+                        new_tag_name = decision.get("new_tag_name")
+                        new_tag_value = decision.get("new_tag_value")
+
+                        if new_service and new_tag_name:
+                            # Auto-resolve tag value from known identifiers if LLM left it blank
+                            if not new_tag_value and new_tag_name in self.customer_identifiers:
+                                new_tag_value = self.customer_identifiers[new_tag_name]
+                            service = new_service
+                            tag_name = new_tag_name
+                            tag_value = new_tag_value
+                            logger.info(f"[JaegerOnlyAgent] LLM decided to try new service={service}, tag={tag_name}")
+                            break
+                        else:
+                            pass
+
+                    continue
+
+            # End of inner loop - check if all 7 ranges exhausted
+            if ranges_tried >= 7:
+                logger.info(f"[JaegerOnlyAgent] All 7 time ranges exhausted for iteration {iteration}")
+                ranges_exhausted_per_iteration.append(ranges_tried)
+
+                decision = await self._decide_after_all_ranges(
+                    context=context,
+                    tool_calls=tool_calls,
+                    iteration=iteration
+                )
+
+                if decision.get("action") == "new_iteration":
+                    new_service = decision.get("new_service")
+                    new_tag_name = decision.get("new_tag_name")
+                    new_tag_value = decision.get("new_tag_value")
+
+                    if new_service and new_tag_name:
+                        if not new_tag_value and new_tag_name in self.customer_identifiers:
+                            new_tag_value = self.customer_identifiers[new_tag_name]
+                        service = new_service
+                        tag_name = new_tag_name
+                        tag_value = new_tag_value
+                        logger.info(f"[JaegerOnlyAgent] Starting new iteration with service={service}, tag={tag_name}")
+                        continue
+                    else:
+                        return JaegerExecutionResult(
+                            resolved=False,
+                            diagnosis="All time ranges exhausted - no traces found",
+                            solution="Manual investigation required",
+                            tool_calls=tool_calls,
+                            final_state="Incomplete - no traces found",
+                            confidence=0.4,
+                            iterations_completed=iteration,
+                            ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
+                        )
+                elif decision.get("action") == "resolve":
+                    logger.info(
+                        f"[JaegerOnlyAgent] RESOLVING after all ranges exhausted | "
+                        f"diagnosis={decision.get('diagnosis', '')[:300]}"
+                    )
+                    return JaegerExecutionResult(
+                        resolved=True,
+                        diagnosis=decision.get("diagnosis", "Investigation complete"),
+                        solution=decision.get("solution", "No action needed"),
+                        tool_calls=tool_calls,
+                        final_state="Resolved",
+                        confidence=0.6,
+                        iterations_completed=iteration,
+                        ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
+                    )
+                else:
+                    return JaegerExecutionResult(
+                        resolved=False,
+                        diagnosis="Investigation ended by LLM",
+                        solution="See tool calls for details",
+                        tool_calls=tool_calls,
+                        final_state="Stopped",
+                        confidence=0.5,
+                        iterations_completed=iteration,
+                        ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
+                    )
+
+        # Max iterations reached - if we have evidence, resolve from it instead of giving up
+        if self.collected_evidence:
+            logger.warning(
+                f"[JaegerOnlyAgent] Max {self.max_iterations} iterations reached, "
+                f"but evidence was collected - resolving from best available evidence"
+            )
+            last_evidence = self.collected_evidence[-1]
+            return JaegerExecutionResult(
+                resolved=True,
+                diagnosis=self._extract_root_cause_text(last_evidence),
+                solution="Root cause identified from collected trace evidence. Escalate for confirmation if needed.",
+                tool_calls=tool_calls,
+                final_state="Resolved (from evidence at max iterations)",
+                confidence=0.6,
+                iterations_completed=self.max_iterations,
+                ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
+            )
+
+        logger.warning(f"[JaegerOnlyAgent] Max {self.max_iterations} iterations reached")
+        return JaegerExecutionResult(
+            resolved=False,
+            diagnosis="Max iterations reached - investigation incomplete",
+            solution="Manual investigation required",
+            tool_calls=tool_calls,
+            final_state="Incomplete - max iterations",
+            confidence=0.3,
+            iterations_completed=self.max_iterations,
+            ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
+        )
+
+    async def _execute_jaeger(
+        self,
+        app: str,
+        service: str,
+        tag_name: str,
+        tag_value: str,
+        time_range_index: int
+    ) -> str:
+        """Execute a single Jaeger trace query."""
+        try:
+            result = await self.jaeger_tool._arun(
+                app=app,
+                service=service,
+                tag_name=tag_name,
+                tag_value=tag_value,
+                time_range_index=time_range_index
+            )
+
+            await audit_logger.log_tool_execution(
+                incident_id=self.incident_id,
+                tool_name="search_jaeger_traces",
+                input_params={
+                    "app": app,
+                    "service": service,
+                    "tag_name": tag_name,
+                    "tag_value": tag_value,
+                    "time_range_index": time_range_index
+                },
+                output=result
+            )
+            return result
+
+        except Exception as e:
+            error_msg = f"Jaeger execution error: {str(e)}"
+            logger.error(f"[JaegerOnlyAgent] {error_msg}")
+            return error_msg
+
+    def _check_break_conditions(self, result: str) -> str:
+        result_lower = result.lower()
+
+        warning_indicators = [
+            "warning",
+            "not in known tags",
+            "not a valid service",
+            "unknown tag",
+            "unknown service"
+        ]
+        has_warning = "warning" in result_lower
+        has_invalid = any(indicator in result_lower for indicator in warning_indicators[1:])
+
+        if has_warning and has_invalid:
+            return "invalid_service_tag"
+
+        no_trace_indicators = [
+            "no traces found",
+            "no traces in time range",
+            "0 traces",
+            "traces found: 0"
+        ]
+        if any(indicator in result_lower for indicator in no_trace_indicators):
+            return "no_traces_continue"
+
+        return "traces_found"
+
+    async def _decide_next_service_tag(
+        self,
+        context: str,
+        previous_results: List[Dict],
+        iteration: int,
+        reason: str
+    ) -> tuple:
+        history_text = self._format_tool_calls(previous_results)
+
+        prompt = f"""
+{context}
+{self._evidence_summary()}
+=== CURRENT STATE ===
+Iteration: {iteration} of {self.max_iterations}
+Reason for new service/tag: {reason}
+
+=== PREVIOUS JAEGER CALLS ===
+{history_text}
+
+=== TASK ===
+The previous service and/or tag combination was invalid (warning/error from Jaeger).
+You need to decide a NEW service and tag combination to try.
+
+IMPORTANT: Only use "customer_id" or "mobile_number" as TAG_NAME. Do NOT use "ucic", "txn_id", or any other tag.
+
+Output in this format:
+SERVICE: [new service name]
+TAG_NAME: [new tag name]
+REASONING: [why you chose this combination]
+"""
+
+        decision_agent = Agent(
+            role="Service/Tag Selector",
+            goal="Select valid service and tag for Jaeger search",
+            backstory=(
+                "You are a Jaeger search expert. Your job is to select "
+                "valid service and tag combinations based on previous errors."
+            ),
+            verbose=False,
+            allow_delegation=False,
+            llm=self.llm,
+            temperature=0
+        )
+
+        decision_task = Task(
+            description=prompt,
+            agent=decision_agent,
+            expected_output="SERVICE, TAG_NAME, TAG_VALUE, REASONING"
+        )
+
+        crew = Crew(agents=[decision_agent], tasks=[decision_task], verbose=False)
+        result = await crew.akickoff()
+        result_text = str(result)
+
+        return self._parse_service_tag_decision(result_text)
+
+    async def _decide_after_traces(
+        self,
+        context: str,
+        jaeger_result: str,
+        tool_calls: List[Dict],
+        iteration: int,
+        root_cause_confirmed: bool = False
+    ) -> Dict:
+        history_text = self._format_tool_calls(tool_calls)
+
+        root_cause_notice = ""
+        if root_cause_confirmed:
+            root_cause_notice = (
+                "\n*** A CONFIRMED ROOT CAUSE HAS ALREADY BEEN IDENTIFIED IN THE TRACE BELOW "
+                "(marked [ROOT CAUSE IDENTIFIED]). You MUST choose ACTION: resolve using this data, "
+                "unless the error is clearly unrelated to the customer's reported issue. "
+                "Do not discard a confirmed failure to search elsewhere. ***\n"
+            )
+
+        prompt = f"""
+{context}
+{self._evidence_summary()}
+{root_cause_notice}
+=== CURRENT STATE ===
+Iteration: {iteration} of {self.max_iterations}
+
+=== LATEST JAEGER RESULT ===
+{jaeger_result[:1500]}
+
+=== TASK ===
+You already have the failed trace evidence above (and in EVIDENCE ALREADY GATHERED if present).
+Decide what to do next:
+
+Options:
+1. RESOLVE: Use the evidence above to state the root cause and solution - you do NOT need more detail than what's shown
+2. NEW_ITERATION: Try a different service/tag combination
+3. CONTINUE: Continue searching more time ranges
+
+Do NOT choose a NEW_TAG_NAME that isn't "customer_id" or "mobile_number" (e.g. never "trace_id" -
+individual traces cannot be re-fetched by ID with this tool).
+
+Output in this format:
+ACTION: [resolve|new_iteration|continue]
+DIAGNOSIS: [if resolving, what's the root cause]
+SOLUTION: [if resolving, how to fix it]
+NEW_SERVICE: [if new_iteration, new service name]
+NEW_TAG_NAME: [if new_iteration, new tag name]
+NEW_TAG_VALUE: [if new_iteration, new tag value]
+REASONING: [why you chose this action]
+"""
+
+        decision_agent = Agent(
+            role="Trace Analyzer",
+            goal="Analyze Jaeger traces and decide next action",
+            backstory=(
+                "You are a debugging expert. Analyze Jaeger traces to "
+                "identify root causes and decide next steps. You never discard "
+                "a confirmed failure to keep searching without good reason."
+            ),
+            verbose=False,
+            allow_delegation=False,
+            llm=self.llm,
+            temperature=0
+        )
+
+        decision_task = Task(
+            description=prompt,
+            agent=decision_agent,
+            expected_output="ACTION, DIAGNOSIS, SOLUTION, NEW_SERVICE, NEW_TAG_NAME, NEW_TAG_VALUE, REASONING"
+        )
+
+        crew = Crew(agents=[decision_agent], tasks=[decision_task], verbose=False)
+        result = await crew.akickoff()
+        result_text = str(result)
+
+        parsed = self._parse_action_decision(result_text)
+        logger.info(
+            f"[JaegerOnlyAgent][DECISION after_traces] action={parsed.get('action')} "
+            f"root_cause_confirmed={root_cause_confirmed} "
+            f"diagnosis={parsed.get('diagnosis', '')[:200]}"
+        )
+        return parsed
+
+    async def _decide_after_all_ranges(
+        self,
+        context: str,
+        tool_calls: List[Dict],
+        iteration: int
+    ) -> Dict:
+        history_text = self._format_tool_calls(tool_calls)
+
+        prompt = f"""
+{context}
+{self._evidence_summary()}
+=== CURRENT STATE ===
+Iteration: {iteration} of {self.max_iterations}
+
+All 7 time ranges (0-6) have been exhausted with NO NEW TRACES FOUND in this service/tag combination.
+
+=== TASK ===
+Decide what to do next. If EVIDENCE ALREADY GATHERED above shows a clear failure, prefer RESOLVE.
+
+Options:
+1. NEW_ITERATION: Try a different service/tag combination
+2. RESOLVE: Conclude using evidence already gathered, or that there's no runtime error (data issue)
+3. STOP: End investigation
+
+IMPORTANT: Only use "customer_id" or "mobile_number" as NEW_TAG_NAME. Do NOT use "ucic", "txn_id", or any other tag.
+
+Output in this format:
+ACTION: [new_iteration|resolve|stop]
+NEW_SERVICE: [if new_iteration, new service name]
+NEW_TAG_NAME: [if new_iteration, new tag name]
+NEW_TAG_VALUE: [if new_iteration, new tag value]
+DIAGNOSIS: [if resolving, what's the conclusion]
+REASONING: [why you chose this action]
+"""
+
+        decision_agent = Agent(
+            role="Iteration Planner",
+            goal="Decide next action after exhausting time ranges",
+            backstory=(
+                "You are a debugging orchestrator. After exhausting all time ranges, "
+                "decide whether to try new service/tag or conclude investigation."
+            ),
+            verbose=False,
+            allow_delegation=False,
+            llm=self.llm,
+            temperature=0
+        )
+
+        decision_task = Task(
+            description=prompt,
+            agent=decision_agent,
+            expected_output="ACTION, NEW_SERVICE, NEW_TAG_NAME, NEW_TAG_VALUE, DIAGNOSIS, REASONING"
+        )
+
+        crew = Crew(agents=[decision_agent], tasks=[decision_task], verbose=False)
+        result = await crew.akickoff()
+        result_text = str(result)
+
+        parsed = self._parse_action_decision(result_text)
+        logger.info(
+            f"[JaegerOnlyAgent][DECISION after_all_ranges] action={parsed.get('action')} "
+            f"diagnosis={parsed.get('diagnosis', '')[:200]}"
+        )
+        return parsed
+
+    def _format_tool_calls(self, tool_calls: List[Dict]) -> str:
+        if not tool_calls:
+            return "No previous calls"
+
+        lines = []
+        for call in tool_calls[-10:]:
+            params = call.get("input_params", {})
+            output = call.get("output", "")[:300]
+            iteration = call.get("iteration", "?")
+            range_idx = call.get("time_range_index", "?")
+            lines.append(
+                f"- Iteration {iteration}, Range {range_idx}: "
+                f"service={params.get('service')}, tag={params.get('tag_name')}={params.get('tag_value')}"
+            )
+            lines.append(f"  Output: {output}...")
+
+        return "\n".join(lines)
+
+    def _parse_service_tag_decision(self, response: str) -> tuple:
+        import re
+
+        service_match = re.search(r"SERVICE:\s*(.+?)(?:TAG_NAME:|$)", response, re.DOTALL)
+        tag_name_match = re.search(r"TAG_NAME:\s*(.+?)(?:REASONING:|$)", response, re.DOTALL)
+
+        service = service_match.group(1).strip().split('\n')[0] if service_match else None
+        tag_name = tag_name_match.group(1).strip().split('\n')[0] if tag_name_match else None
+
+        if tag_name in self.customer_identifiers:
+            tag_value = self.customer_identifiers.get(tag_name, "")
+        elif tag_name == "customer_id" and self.customer_identifiers:
+            tag_value = self.customer_identifiers.get("customer_id", "")
+        else:
+            tag_value = ""
+
+        logger.info(f"[JaegerOnlyAgent] LLM chose: service={service}, tag={tag_name}={tag_value}")
+
+        return (service, tag_name, tag_value)
+
+    def _parse_action_decision(self, response: str) -> Dict:
+        """Parse LLM response for action decision. Order-agnostic: finds each field marker's
+        position first, then reads up to the next field marker, so this works regardless of
+        which order the calling prompt listed the fields in."""
+        import re
+
+        field_names = ["ACTION", "DIAGNOSIS", "SOLUTION", "NEW_SERVICE", "NEW_TAG_NAME", "NEW_TAG_VALUE", "REASONING"]
+        positions = []
+        for name in field_names:
+            for m in re.finditer(rf"\b{name}:", response):
+                positions.append((m.start(), m.end(), name))
+        positions.sort(key=lambda x: x[0])
+
+        values = {}
+        for i, (start, end, name) in enumerate(positions):
+            value_end = positions[i + 1][0] if i + 1 < len(positions) else len(response)
+            values[name] = response[end:value_end].strip()
+
+        def clean(v):
+            if not v:
+                return None
+            v = v.split('\n')[0].strip()
+            return v if v else None
+
+        action_raw = values.get("ACTION", "")
+        action = action_raw.split()[0].lower() if action_raw.split() else "continue"
+
+        return {
+            "action": action,
+            "diagnosis": clean(values.get("DIAGNOSIS", "")) or "",
+            "solution": clean(values.get("SOLUTION", "")) or "",
+            "new_service": clean(values.get("NEW_SERVICE", "")),
+            "new_tag_name": clean(values.get("NEW_TAG_NAME", "")),
+            "new_tag_value": clean(values.get("NEW_TAG_VALUE", "")),
+        }
+
+
+async def run_jaeger_only_async(
+    plan_output,
+    incident_description: str,
+    app: str,
+    customer_identifiers: Dict[str, str],
+    problem_category: str,
+    max_iterations: int = 5,
+    incident_id: str = "unknown",
+    discovered_services: str = ""
+) -> JaegerExecutionResult:
+    """
+    Convenience function to run Jaeger-only execution.
+    """
+    from new_flow.agents.plan_agents import PlanOutput
+
+    service = ""
+    tag_name = ""
+    tag_value = ""
+
+    if plan_output and isinstance(plan_output, PlanOutput):
+        service = plan_output.suggested_service or ""
+
+        if customer_identifiers:
+            if customer_identifiers and "customer_id" in customer_identifiers:
+                tag_name = "customer_id"
+                tag_value = customer_identifiers["customer_id"]
+            else:
+                tag_name = ""
+                tag_value = ""
+
+    context = f"""
+=== INCIDENT CONTEXT ===
+Application: {app}
+Problem Category: {problem_category}
+Incident Description: {incident_description}
+
+Customer Identifiers:
+{chr(10).join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"}
+
+Available Services:
+{discovered_services}
+
+=== PLAN AGENT FINDINGS ===
+Issue Summary: {plan_output.issue_summary if plan_output else 'N/A'}
+Suggested Service: {service}
+"""
+
+    agent = JaegerOnlyAgent(max_iterations=max_iterations, customer_identifiers=customer_identifiers)
+
+    return await agent.execute(
+        app=app,
+        service=service,
+        tag_name=tag_name,
+        tag_value=tag_value,
+        incident_id=incident_id,
+        context=context
+    )
