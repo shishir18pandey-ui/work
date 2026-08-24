@@ -1,0 +1,608 @@
+
+╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
+│                                                                              │
+│  Task Completed                                                              │
+│  Name: Find similar incidents                                                │
+│  Agent: Historic Incident Analyst                                            │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-24 19:29:18,760 - new_flow.agents.context_builder - INFO - [ContextBuilder] CREW KICKOFF DONE | application=Optimus elapsed=36.91s output_len=6818
+2026-08-24 19:29:18,760 - new_flow.agents.execute_agent_elk - INFO - Skipping ELK Context Crew - NO ELK Auth Headers
+2026-08-24 19:29:18,761 - new_flow.flow - INFO - ELK Context -
+
+No context found
+2026-08-24 19:29:18,761 - new_flow.flow - INFO - Resolver | incident=968752132bb24b10ea06f771fe91bf45 app=optimus
+2026-08-24 19:29:18,761 - new_flow.flow - WARNING - Failed to discover services: 'str' object has no attribute 'get'
+╭────────────────────────────── Crew Completion ───────────────────────────────╮
+│                                                                              │
+│  Crew Execution Completed                                                    │
+│  Name: crew                                                                  │
+│  ID: ea37a11d-640a-45c6-b483-380dfb69c05a                                    │
+│  Final Output: # Similar Historic Incidents Analysis - Debit Card            │
+│  Transaction Failure                                                         │
+│                                                                              │
+│  ## Incident Summary                                                         │
+│  - **Current Incident**: Unable to do debit card transaction                 │
+│  - **Application**: Mobile/Net Banking                                       │
+│  - **Problem Category**: transaction_failure                                 │
+│  - **Customer ID/UCIC**: 1802261509                                          │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## Top 5 Similar Historic Incidents Found                                   │
+│                                                                              │
+│  ### 1. INC000005155316 (Similarity: 74.41%)                                 │
+│  **Assignment Group**: Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description**: Customer can't able to transactions from debit card  │
+│  showing transaction declined. N can't able to login into net banking.       │
+│                                                                              │
+│  **Description**: Customer can't able to transactions from debit card        │
+│  showing transaction declined. N can't able to login into net banking.       │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - Netbanking issue - As checked customer not activated netbanking. Please   │
+│  ask customer to activate net banking by using below link by clicking        │
+│  activate now -> enter registered mobile number & individual UCIC -> enter   │
+│  account number -> create username & password.                               │
+│  - If still issue persist share the exact date and time with error           │
+│  screen-shot for further analysis                                            │
+│  - Debit card transaction declined please connect with debit card team.      │
+│                                                                              │
+│  **Resolution Code**: Provided Workaround                                    │
+│                                                                              │
+│  **Resolution**: Netbanking issue - As checked customer not activated        │
+│  nebanking. Please ask customer to activate net banking by using below link  │
+│  by clicking activate now ->enter registered mobile number & individual      │
+│  UCIC -> enter account number -> create username & password.                 │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### 2. INC000008026736 (Similarity: 72.64%)                                 │
+│  **Assignment Group**: N/A                                                   │
+│                                                                              │
+│  **Short Description**: The customer is not able to use their mobile         │
+│  banking & Net banking.                                                      │
+│                                                                              │
+│  **Description**: So, we had checked the account in the system & there is    │
+│  no freeze marked in the account from bank side but still customer is        │
+│  facing the issue in net banking & mobile banking, he is not able to do any  │
+│  Debit transection. please check why the customer is not able to do any      │
+│  transection from their account. Error sreenshot attached.                   │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - Issue - The customer is not able to use their mobile banking & Net        │
+│  banking                                                                     │
+│  - As checked, Debit freeze marked to account hence customer is unbale to    │
+│  perform the transaction.                                                    │
+│                                                                              │
+│  **Resolution Code**: Solved (Permanently)                                   │
+│                                                                              │
+│  **Resolution**: Issue - The customer is not able to use their mobile        │
+│  banking & Net banking,                                                      │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### 3. INC000005666207 (Similarity: 71.79%)                                 │
+│  **Assignment Group**: Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description**: Customer is not able to do the transaction as debit  │
+│  Card is not reflected in the mobile application.                            │
+│                                                                              │
+│  **Description**: Customer is not able to do the transaction as debit Card   │
+│  is not reflected in the mobile application.                                 │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - As per logs, debit card details are fetched for the customer 5555588719.  │
+│  Please ask customer to re-check.                                            │
+│                                                                              │
+│  **Resolution Code**: Solved (Permanently)                                   │
+│                                                                              │
+│  **Resolution**: As per logs, debit card details are fetched for the         │
+│  customer 5555588719. Please ask customer to re-check.                       │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### 4. INC000004905245 (Similarity: 71.16%)                                 │
+│  **Assignment Group**: Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description**: Customer is not able to make the transaction using   │
+│  his Debit Card. He is getting error "the transaction is decline by the      │
+│  bank side"                                                                  │
+│                                                                              │
+│  **Description**: Customer is not able to make the transaction using his     │
+│  Debit Card. He is getting error "the transaction is decline by the bank     │
+│  side"                                                                       │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - As checked, we did not find any error logs. Can you please ask customer   │
+│  to recheck now and confirm.                                                 │
+│  - If still issue is persisted kindly share latest error screenshot with     │
+│  date and time.                                                              │
+│                                                                              │
+│  **Resolution Code**: Solved (Permanently)                                   │
+│                                                                              │
+│  **Resolution**: As checked, we did not find any error logs. Can you please  │
+│  ask customer to recheck now and confirm.                                    │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### 5. INC000004109773 (Similarity: 70.93%)                                 │
+│  **Assignment Group**: Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description**: USING DEBIT CARD NOT ABLE TO DO FACEBOOK             │
+│  TRANSACTIONS ALSO OTHER ONLINE TRASACTIONS                                  │
+│                                                                              │
+│  **Description**: USING DEBIT CARD NOT ABLE TO DO FACEBOOK TRANSACTIONS      │
+│  ALSO OTHER ONLINE TRASACTIONS ALL ONLINE TABS ARE ACTIVE FROM MOBILE        │
+│  BANKING                                                                     │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - As checked this issue is not pertained at Optimus end as per screenshot.  │
+│  Kindly get in touch with concern team.                                      │
+│                                                                              │
+│  **Resolution Code**: Provided Workaround                                    │
+│                                                                              │
+│  **Resolution**: As checked this issue is not pertained at Optimus end as    │
+│  per screenshot. Kindly get in touch with concern team.                      │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## Key Troubleshooting Steps from Similar Incidents                         │
+│                                                                              │
+│  1. **Check Net Banking Activation Status**: Verify if the customer has      │
+│  activated net banking. If not activated, guide them to activate it using    │
+│  the official link (https://my.idfcfirstbank.com/login) by entering          │
+│  registered mobile number, UCIC, and account number to create username and   │
+│  password.                                                                   │
+│                                                                              │
+│  2. **Check for Account Freezes**: Verify if there is any debit freeze       │
+│  marked on the customer's account that might be preventing transactions.     │
+│                                                                              │
+│  3. **Verify Debit Card Details in System**: Check if debit card details     │
+│  are properly fetched for the customer in the system logs.                   │
+│                                                                              │
+│  4. **Request Error Screenshots**: Ask customer to provide error             │
+│  screenshots with date and time for further analysis if the issue persists.  │
+│                                                                              │
+│  5. **Check for Error Logs**: Review system logs to identify any errors or   │
+│  issues.                                                                     │
+│                                                                              │
+│  6. **Escalate to Debit Card Team**: If the issue is related to debit card   │
+│  transaction decline, connect the customer with the debit card team.         │
+│                                                                              │
+│  7. **Customer Recheck**: In some cases, asking the customer to recheck      │
+│  their transaction after some time has resolved the issue.                   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## Common Resolution Patterns                                               │
+│                                                                              │
+│  1. **Net Banking Not Activated**: Many debit card transaction issues are    │
+│  resolved by activating net banking first.                                   │
+│                                                                              │
+│  2. **Account Freeze**: Debit freeze on account is a common cause - needs    │
+│  to be removed by the bank.                                                  │
+│                                                                              │
+│  3. **Card Not Reflected in App**: Sometimes the debit card just needs to    │
+│  be re-checked or re-added in the mobile application.                        │
+│                                                                              │
+│  4. **Bank Side Decline**: Some transactions are declined at the bank level  │
+│  - may require intervention from debit card team.                            │
+│                                                                              │
+│  5. **No Error Logs Found**: When no error logs are found, the issue may be  │
+│  temporary or on the customer side - recommend rechecking.                   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## Recommended Actions for Current Incident (UCIC: 1802261509)              │
+│                                                                              │
+│  Based on the similar incidents found, the following steps should be taken:  │
+│                                                                              │
+│  1. **First**: Check if net banking is activated for customer 1802261509     │
+│  2. **Second**: Check for any debit freeze on the account                    │
+│  3. **Third**: Verify debit card details are properly registered in the      │
+│  system                                                                      │
+│  4. **Fourth**: Request error screenshot with date and time if issue         │
+│  persists                                                                    │
+│  5. **Fifth**: If transaction is declined by bank, escalate to debit card    │
+│  team                                                                        │
+│                                                                              │
+│  This structured approach follows the resolution patterns from the most      │
+│  similar historic incidents and should help resolve the current debit card   │
+│  transaction failure issue.                                                  │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
+│                                                                              │
+│  Method: semantic_search                                                     │
+│  Status: Completed                                                           │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
+│                                                                              │
+│  Method: run_resolver_crew                                                   │
+│  Status: Running                                                             │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+
+
+19:29:18 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-24 19:29:18,781 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:29:22 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-24 19:29:22,057 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+19:29:22 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-24 19:29:22,060 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:29:24 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-24 19:29:24,476 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+19:29:24 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-24 19:29:24,479 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:29:27 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
+2026-08-24 19:29:27,606 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
+2026-08-24 19:29:27,607 - crewai.utilities.reasoning_handler - WARNING - Agent planning reached maximum attempts (3) without being ready. Proceeding with current plan.
+19:29:27 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-24 19:29:27,618 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
+│                                                                              │
+│  Agent: Triage Analyst                                                       │
+│                                                                              │
+│  Task: Analyze the following investigation results and create a plan:        │
+│                                                                              │
+│  === INCIDENT ANALYSIS (from Intent Classifier) ===                          │
+│                                                                              │
+│  Incident Summary:                                                           │
+│  - Application: Mobile/Net Banking                                           │
+│  - Problem Category: transaction_failure                                     │
+│                                                                              │
+│  Customer Identifiers:                                                       │
+│  - ucic: 1802261509                                                          │
+│  - customer_id: 1802261509                                                   │
+│                                                                              │
+│  LLM Analysis:                                                               │
+│  - User Goal: Unable to do debit card transaction                            │
+│  - Issue Description: Unable to do debit card transactionUnable to do debit  │
+│  card transaction                                                            │
+│  - Problem Summary: The user is reporting an issue with being unable to      │
+│  perform a debit card transaction.                                           │
+│                                                                              │
+│  Original Description:                                                       │
+│  Short Description: Unable to do debit card transaction                      │
+│  Description: Unable to do debit card transactionUnable to do debit card     │
+│  transaction                                                                 │
+│                                                                              │
+│  Please investigate this issue starting with Similarity Search               │
+│  for similar historic incidents, then check Jaeger traces to                 │
+│  understand the current error context.                                       │
+│                                                                              │
+│                                                                              │
+│  === SIMILARITY SEARCH RESULTS ===                                           │
+│  # Similar Historic Incidents Analysis - Debit Card Transaction Failure      │
+│                                                                              │
+│  ## Incident Summary                                                         │
+│  - **Current Incident**: Unable to do debit card transaction                 │
+│  - **Application**: Mobile/Net Banking                                       │
+│  - **Problem Category**: transaction_failure                                 │
+│  - **Customer ID/UCIC**: 1802261509                                          │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## Top 5 Similar Historic Incidents Found                                   │
+│                                                                              │
+│  ### 1. INC000005155316 (Similarity: 74.41%)                                 │
+│  **Assignment Group**: Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description**: Customer can't able to transactions from debit card  │
+│  showing transaction declined. N can't able to login into net banking.       │
+│                                                                              │
+│  **Description**: Customer can't able to transactions from debit card        │
+│  showing transaction declined. N can't able to login into net banking.       │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - Netbanking issue - As checked customer not activated netbanking. Please   │
+│  ask customer to activate net banking by using below link by clicking        │
+│  activate now -> enter registered mobile number & individual UCIC -> enter   │
+│  account number -> create username & password.                               │
+│  - If still issue persist share the exact date and time with error           │
+│  screen-shot for further analysis                                            │
+│  - Debit card transaction declined please connect with debit card team.      │
+│                                                                              │
+│  **Resolution Code**: Provided Workaround                                    │
+│                                                                              │
+│  **Resolution**: Netbanking issue - As checked customer not activated        │
+│  nebanking. Please ask customer to activate net banking by using below link  │
+│  by clicking activate now ->enter registered mobile number & individual      │
+│  UCIC -> enter account number -> create username & password.                 │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### 2. INC000008026736 (Similarity: 72.64%)                                 │
+│  **Assignment Group**: N/A                                                   │
+│                                                                              │
+│  **Short Description**: The customer is not able to use their mobile         │
+│  banking & Net banking.                                                      │
+│                                                                              │
+│  **Description**: So, we had checked the account in the system & there is    │
+│  no freeze marked in the account from bank side but still customer is        │
+│  facing the issue in net banking & mobile banking, he is not able to do any  │
+│  Debit transection. please check why the customer is not able to do any      │
+│  transection from their account. Error sreenshot attached.                   │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - Issue - The customer is not able to use their mobile banking & Net        │
+│  banking                                                                     │
+│  - As checked, Debit freeze marked to account hence customer is unbale to    │
+│  perform the transaction.                                                    │
+│                                                                              │
+│  **Resolution Code**: Solved (Permanently)                                   │
+│                                                                              │
+│  **Resolution**: Issue - The customer is not able to use their mobile        │
+│  banking & Net banking,                                                      │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### 3. INC000005666207 (Similarity: 71.79%)                                 │
+│  **Assignment Group**: Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description**: Customer is not able to do the transaction as debit  │
+│  Card is not reflected in the mobile application.                            │
+│                                                                              │
+│  **Description**: Customer is not able to do the transaction as debit Card   │
+│  is not reflected in the mobile application.                                 │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - As per logs, debit card details are fetched for the customer 5555588719.  │
+│  Please ask customer to re-check.                                            │
+│                                                                              │
+│  **Resolution Code**: Solved (Permanently)                                   │
+│                                                                              │
+│  **Resolution**: As per logs, debit card details are fetched for the         │
+│  customer 5555588719. Please ask customer to re-check.                       │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### 4. INC000004905245 (Similarity: 71.16%)                                 │
+│  **Assignment Group**: Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description**: Customer is not able to make the transaction using   │
+│  his Debit Card. He is getting error "the transaction is decline by the      │
+│  bank side"                                                                  │
+│                                                                              │
+│  **Description**: Customer is not able to make the transaction using his     │
+│  Debit Card. He is getting error "the transaction is decline by the bank     │
+│  side"                                                                       │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - As checked, we did not find any error logs. Can you please ask customer   │
+│  to recheck now and confirm.                                                 │
+│  - If still issue is persisted kindly share latest error screenshot with     │
+│  date and time.                                                              │
+│                                                                              │
+│  **Resolution Code**: Solved (Permanently)                                   │
+│                                                                              │
+│  **Resolution**: As checked, we did not find any error logs. Can you please  │
+│  ask customer to recheck now and confirm.                                    │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ### 5. INC000004109773 (Similarity: 70.93%)                                 │
+│  **Assignment Group**: Optimus BTO Support                                   │
+│                                                                              │
+│  **Short Description**: USING DEBIT CARD NOT ABLE TO DO FACEBOOK             │
+│  TRANSACTIONS ALSO OTHER ONLINE TRASACTIONS                                  │
+│                                                                              │
+│  **Description**: USING DEBIT CARD NOT ABLE TO DO FACEBOOK TRANSACTIONS      │
+│  ALSO OTHER ONLINE TRASACTIONS ALL ONLINE TABS ARE ACTIVE FROM MOBILE        │
+│  BANKING                                                                     │
+│                                                                              │
+│  **Resolution Notes**:                                                       │
+│  - As checked this issue is not pertained at Optimus end as per screenshot.  │
+│  Kindly get in touch with concern team.                                      │
+│                                                                              │
+│  **Resolution Code**: Provided Workaround                                    │
+│                                                                              │
+│  **Resolution**: As checked this issue is not pertained at Optimus end as    │
+│  per screenshot. Kindly get in touch with concern team.                      │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## Key Troubleshooting Steps from Similar Incidents                         │
+│                                                                              │
+│  1. **Check Net Banking Activation Status**: Verify if the customer has      │
+│  activated net banking. If not activated, guide them to activate it using    │
+│  the official link (https://my.idfcfirstbank.com/login) by entering          │
+│  registered mobile number, UCIC, and account number to create username and   │
+│  password.                                                                   │
+│                                                                              │
+│  2. **Check for Account Freezes**: Verify if there is any debit freeze       │
+│  marked on the customer's account that might be preventing transactions.     │
+│                                                                              │
+│  3. **Verify Debit Card Details in System**: Check if debit card details     │
+│  are properly fetched for the customer in the system logs.                   │
+│                                                                              │
+│  4. **Request Error Screenshots**: Ask customer to provide error             │
+│  screenshots with date and time for further analysis if the issue persists.  │
+│                                                                              │
+│  5. **Check for Error Logs**: Review system logs to identify any errors or   │
+│  issues.                                                                     │
+│                                                                              │
+│  6. **Escalate to Debit Card Team**: If the issue is related to debit card   │
+│  transaction decline, connect the customer with the debit card team.         │
+│                                                                              │
+│  7. **Customer Recheck**: In some cases, asking the customer to recheck      │
+│  their transaction after some time has resolved the issue.                   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## Common Resolution Patterns                                               │
+│                                                                              │
+│  1. **Net Banking Not Activated**: Many debit card transaction issues are    │
+│  resolved by activating net banking first.                                   │
+│                                                                              │
+│  2. **Account Freeze**: Debit freeze on account is a common cause - needs    │
+│  to be removed by the bank.                                                  │
+│                                                                              │
+│  3. **Card Not Reflected in App**: Sometimes the debit card just needs to    │
+│  be re-checked or re-added in the mobile application.                        │
+│                                                                              │
+│  4. **Bank Side Decline**: Some transactions are declined at the bank level  │
+│  - may require intervention from debit card team.                            │
+│                                                                              │
+│  5. **No Error Logs Found**: When no error logs are found, the issue may be  │
+│  temporary or on the customer side - recommend rechecking.                   │
+│                                                                              │
+│  ---                                                                         │
+│                                                                              │
+│  ## Recommended Actions for Current Incident (UCIC: 1802261509)              │
+│                                                                              │
+│  Based on the similar incidents found, the following steps should be taken:  │
+│                                                                              │
+│  1. **First**: Check if net banking is activated for customer 1802261509     │
+│  2. **Second**: Check for any debit freeze on the account                    │
+│  3. **Third**: Verify debit card details are properly registered in the      │
+│  system                                                                      │
+│  4. **Fourth**: Request error screenshot with date and time if issue         │
+│  persists                                                                    │
+│  5. **Fifth**: If transaction is declined by bank, escalate to debit card    │
+│  team                                                                        │
+│                                                                              │
+│  This structured approach follows the resolution patterns from the most      │
+│  similar historic incidents and should help resolve the current debit card   │
+│  transaction failure issue.                                                  │
+│                                                                              │
+│  === CONTEXT ===                                                             │
+│  Application: optimus                                                        │
+│  Problem Category: transaction_failure                                       │
+│  Customer Identifiers:                                                       │
+│    - ucic: 1802261509                                                        │
+│    - customer_id: 1802261509                                                 │
+│                                                                              │
+│  === AVAILABLE JAEGER SERVICES ===                                           │
+│  Service discovery unavailable                                               │
+│                                                                              │
+│  Do NOT call any tools. Do not attempt a tool call of any kind. Based only   │
+│  on the text above, output your analysis in this exact format:               │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes/no                                                    │
+│  ISSUE_SUMMARY: [brief description of what the issue likely is, based on     │
+│  similarity search]                                                          │
+│  SERVICE: [pick the single most relevant service name, copied EXACTLY as     │
+│  written from the AVAILABLE JAEGER SERVICES list above. If the list is       │
+│  empty or none apply, write NONE]                                            │
+│  NEXT_STEPS: [what Execute Agent should investigate]                         │
+│  NEEDS_MORE_INFO: yes/no                                                     │
+│  QUESTION_FOR_USER: [if needs more info, what to ask]                        │
+│                                                                              │
+│                                                                              │
+│  Planning:                                                                   │
+│                                                                              │
+│                                                                              │
+│  REFINED_PLAN:                                                               │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes                                                       │
+│  ISSUE_SUMMARY: Customer unable to perform debit card transactions on        │
+│  Mobile/Net Banking. Based on 5 similar historic incidents (70-74%           │
+│  similarity), likely causes: (1) Net banking not activated, (2) Debit        │
+│  freeze on account, or (3) Debit card not properly reflected.                │
+│  SERVICE: NONE                                                               │
+│  NEXT_STEPS:                                                                 │
+│  1. Obtain exact error message or screenshot from customer showing           │
+│  transaction failure                                                         │
+│  2. Confirm if Net Banking is already activated or first-time activation     │
+│  attempt                                                                     │
+│  3. If Net Banking not activated → guide customer through activation         │
+│  process                                                                     │
+│  4. If Net Banking already activated → check core banking system for         │
+│  account 1802261509: verify UCIC, check for debit freeze, verify card        │
+│  association                                                                 │
+│  5. If checks pass and issue persists → escalate to Debit Card Team          │
+│                                                                              │
+│  NEEDS_MORE_INFO: yes                                                        │
+│  QUESTION_FOR_USER: What is the exact error message or screenshot the        │
+│  customer is seeing? Has the customer previously activated Net Banking or    │
+│  is this a first-time activation?                                            │
+│                                                                              │
+│  READY                                                                       │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Triage Analyst                                                       │
+│                                                                              │
+│  Final Answer:                                                               │
+│                                                                              │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes                                                       │
+│  ISSUE_SUMMARY: Customer unable to perform debit card transactions on        │
+│  Mobile/Net Banking. Based on 5 similar historic incidents (70-74%           │
+│  similarity), likely causes: (1) Net banking not activated, (2) Debit        │
+│  freeze on account, or (3) Debit card not properly reflected in the system.  │
+│  SERVICE: NONE                                                               │
+│  NEXT_STEPS:                                                                 │
+│  1. Obtain exact error message or screenshot from customer showing           │
+│  transaction failure                                                         │
+│  2. Confirm if Net Banking is already activated or first-time activation     │
+│  attempt                                                                     │
+│  3. If Net Banking not activated → guide customer through activation         │
+│  process using official link                                                 │
+│  4. If Net Banking already activated → check core banking system for         │
+│  account 1802261509: verify UCIC, check for debit freeze, verify card        │
+│  association                                                                 │
+│  5. If checks pass and issue persists → escalate to Debit Card Team          │
+│                                                                              │
+│  NEEDS_MORE_INFO: yes                                                        │
+│  QUESTION_FOR_USER: What is the exact error message or screenshot the        │
+│  customer is seeing? Has the customer previously activated Net Banking or    │
+│  is this a first-time activation attempt?                                    │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-08-24 19:29:32,109 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-08-24 19:29:32,109 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: optimus-api, Tag: customer_id=1802261509
+2026-08-24 19:29:32,109 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-24 19:29:32,109 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=optimus-api, tag=customer_id=1802261509
+2026-08-24 19:29:32,109 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1802261509 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1787513372109155, 'end': 1787599772109155, 'limit': 100, 'tags': '{"customer_id": "1802261509"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-24 19:29:35,577 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
+2026-08-24 19:29:35,577 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=optimus-api customer_id=1802261509 range=24h
+2026-08-24 19:29:35,577 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=optimus-api tag=customer_id=1802261509 range=0-24h ago total_scanned=0 failed_traces_count=0 happy_hits={} sessions=0 success_sessions=0 error=None
+2026-08-24 19:29:35,578 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][NO FAILED TRACES] All 0 scanned traces were successful/non-error
+2026-08-24 19:29:35,578 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=0
+2026-08-24 19:29:35,578 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
+2026-08-24 19:29:35,578 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
+2026-08-24 19:29:35,578 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=optimus-api, tag=customer_id=1802261509
+2026-08-24 19:29:35,578 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1802261509 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1787426975578217, 'end': 1787513375578217, 'limit': 100, 'tags': '{"customer_id": "1802261509"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-24 19:29:42,958 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
+2026-08-24 19:29:42,958 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=optimus-api customer_id=1802261509 range=24h
+2026-08-24 19:29:42,959 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=optimus-api tag=customer_id=1802261509 range=24-48h ago total_scanned=0 failed_traces_count=0 happy_hits={} sessions=0 success_sessions=0 error=None
+2026-08-24 19:29:42,959 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][NO FAILED TRACES] All 0 scanned traces were successful/non-error
+2026-08-24 19:29:42,959 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=1
+2026-08-24 19:29:42,959 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
+2026-08-24 19:29:42,959 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
+2026-08-24 19:29:42,959 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=optimus-api, tag=customer_id=1802261509
+2026-08-24 19:29:42,959 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1802261509 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1787340582959242, 'end': 1787426982959242, 'limit': 100, 'tags': '{"customer_id": "1802261509"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-24 19:29:50,606 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
+2026-08-24 19:29:50,607 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=optimus-api customer_id=1802261509 range=24h
+2026-08-24 19:29:50,607 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=optimus-api tag=customer_id=1802261509 range=48-72h ago total_scanned=0 failed_traces_count=0 happy_hits={} sessions=0 success_sessions=0 error=None
+2026-08-24 19:29:50,607 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][NO FAILED TRACES] All 0 scanned traces were successful/non-error
+2026-08-24 19:29:50,607 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=2
+2026-08-24 19:29:50,607 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
+2026-08-24 19:29:50,607 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
+2026-08-24 19:29:50,607 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=optimus-api, tag=customer_id=1802261509
+2026-08-24 19:29:50,607 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=optimus-api customer_id=1802261509 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'optimus-api', 'start': 1787254190607443, 'end': 1787340590607443, 'limit': 100, 'tags': '{"customer_id": "1802261509"}'} headers={'Authorization': 'Basic c2hpc2hpci5wYW5kZXlfdGhvQGlkZmNiYW5rLmNvbTpTYXR0eUA4NjEyMDA='}
+2026-08-24 19:29:50,649 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
+2026-08-24 19:29:50,649 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=optimus-api customer_id=1802261509 range=24h
+2026-08-24 19:29:50,650 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=optimus-api tag=customer_id=1802261509 range=72-96h ago total_scanned=0 failed_traces_count=0 happy_hits={} sessions=0 success_sessions=0 error=None
