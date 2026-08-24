@@ -1,511 +1,575 @@
-import os
+from pydantic import BaseModel
+from typing import List, Optional, Dict
 import httpx
-from pydantic import BaseModel, Field
+import os
+import json
+import re
+from dotenv import load_dotenv
+from crewai.flow.flow import Flow, start, listen, router
+from new_flow.utils.incident_db_async import upsert_incident_payload_async
+from new_flow.agents.context_builder import run_incident_context_crew_async, run_incident_context_deterministic_async
+from new_flow.agents.intent_classifier import run_classifier_with_enrichment_async
+from new_flow.agents.plan_agents import run_plan_agent_async
+from new_flow.agents.execute_agent_jaeger import run_jaeger_only_async
+from new_flow.agents.summary_agent import run_summary_agent_async, run_context_only_summary_async
+from new_flow.agents.self_critique import run_self_critique_async, should_escalate
+from new_flow.utils.llm import run_crew_with_retry_async
+from new_flow.tools.discovery_tools import discover_jaeger_services_impl
+from new_flow.tools.app_config import app_has_observability
+
+
+load_dotenv()
+
+CA_CERT_FILE = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE")
+OPENAI_MODEL_NAME = os.getenv("OPENAI_MODEL_NAME", "/app/models/MiniMax-M2.5")
+CHAT_COMPLETIONS_URL = f"{OPENAI_API_BASE}/chat/completions"
+
+EXEPEMPTED_PAYLOAD_KEYS = [
+    "__agent_data",
+    "created_at",
+    "headers",
+    "file_description",
+    "interaction_counter",
+    "incidentNumber",
+    "status"
+]
 
 import logging
+from utils.observability import get_tracer
 
 logger = logging.getLogger(__name__)
 
-# Jaeger Configuration (same as in query_tools.py)
-# For local testing, use PROD endpoint
-# In K8s, these will be overridden by environment variables
-JAEGER_API_BASE = os.getenv("JAEGER_API_BASE", "https://tracing.uat-opt.idfcfirstbank.com/api")
-JAEGER_AUTH_TOKEN = os.getenv("JAEGER_AUTH_TOKEN")
 
-
-def _jaeger_auth_headers():
-    if JAEGER_AUTH_TOKEN:
-        return {"Authorization": f"Basic {JAEGER_AUTH_TOKEN}"}
-    return {}
-
-# Import service metadata
-from new_flow.tools.service_metadata import (
-    get_services,
-    get_service_tags,
-    get_service_purpose,
-    get_app_config,
-    get_elk_indexes,
-)
-
-# ELK Configuration
-ELK_BASE_URL = os.getenv("ELK_BASE_URL", "https://DCELASDBSPRR07-prod.logging.devops.idfcbank.com:9200")
-ELK_AUTH_HEADER = os.getenv("ELK_AUTH_HEADER")
-CA_CERT_PATH = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
-
-ELK_HEADERS = {
-    "Authorization": ELK_AUTH_HEADER,
-    "Content-Type": "application/json"
-}
-
-
-class GetServicesInput(BaseModel):
-    app: str = Field(description="Application name (e.g., optimus, cbs, idp)")
-
-
-class GetServiceTagsInput(BaseModel):
-    app: str = Field(description="Application name (e.g., optimus, cbs, idp)")
-    service: str = Field(description="Service name (e.g., upi-api, idp-api)")
-
-
-class GetELKFieldsInput(BaseModel):
-    app: str = Field(description="Application name (e.g., optimus, cbs, idp)")
-    index_type: str = Field(
-        default="log",
-        description="Index type: 'log' for application logs, 'trace' for Jaeger spans"
-    )
-
-
-class GetAppConfigInput(BaseModel):
-    app: str = Field(description="Application name (e.g., optimus, cbs, idp)")
-
-
-def get_services_impl(app: str) -> str:
-    app = app.strip().lower()
+def extract_json_from_output(output: str) -> dict:
+    if not output or not output.strip():
+        logger.warning("Empty output received, returning fallback response")
+        return {"diagnosis": "Unable to process incident", "solution": "Please try again later", "questions": [], "resolved": "no"}
     
-    services = get_services(app)
+    try:
+        return json.loads(output.strip())
+    except json.JSONDecodeError:
+        pass
     
-    if not services:
-        # Try to get from config if available
-        config = get_app_config(app)
-        if config:
-            services = list(config.get("services", {}).keys())
+    json_patterns = [
+        r'```json\s*([\s\S]*?)\s*```',
+        r'```\s*([\s\S]*?)\s*```',
+    ]
     
-    if not services:
-        return (
-            f"No predefined services found for app '{app}'. "
-            f"You can try querying any service directly - discovery is flexible. "
-            f"Available apps in metadata: optimus, cbs, idp"
-        )
+    for pattern in json_patterns:
+        match = re.search(pattern, output)
+        if match:
+            json_str = match.group(1).strip()
+            try:
+                return json.loads(json_str)
+            except json.JSONDecodeError:
+                pass
     
-    purposes = []
-    for svc in services:
-        purpose = get_service_purpose(app, svc)
-        if purpose:
-            purposes.append(f"  - {svc}: {purpose}")
+    json_like_pattern = r'\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}'
+    match = re.search(json_like_pattern, output)
+    if match:
+        try:
+            return json.loads(match.group(0))
+        except json.JSONDecodeError:
+            pass
+    
+    logger.error(f"Failed to parse JSON from output: {output}...")
+    return {
+        "diagnosis": "Unable to process incident response",
+        "solution": "Please try again later",
+        "questions": ["System encountered an issue processing the incident"],
+        "resolved": "no"
+    }
+
+
+class IncidentState(BaseModel):
+    incident_id: str = ""
+    payload: dict = {}
+    incident_description: str = ""
+    incident_context: str = ""
+    user_qa_pairs: List[dict] = []
+    intent: str = ""
+    agent_output: dict = {}
+    snow_status: str = ""
+    ucic: str = ""
+    current_comment: Optional[str] = None
+    app: str = "" 
+    customer_identifiers: Dict[str, str] = {}
+    problem_category: str = "" 
+    plan_output: Optional[Dict] = None
+    execution_result: Optional[Dict] = None
+    summary_output: Optional[Dict] = None
+    enriched_prompt: str = ""
+    discovered_services: str = ""
+
+
+async def send_update_to_servicenow_async(payload: Dict, question: str, resolution: str):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_update_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("question_length", len(question) if question else 0)
+        span.set_attribute("resolution_length", len(resolution) if resolution else 0)
+        
+        url = os.environ['SNOW_ENDPOINT']
+
+        incident_id = payload.get("incidentId")
+        headers = payload.get("headers", {})
+
+        request_payload = {
+            **payload,
+            "additionalComments": question,
+            "resolutionNotes": resolution,
+        }
+
+        for key in EXEPEMPTED_PAYLOAD_KEYS:
+            del request_payload[key]
+       
+        request_payload = {k: v for k, v in request_payload.items() if v is not None}
+
+        headers.update({
+            "Authorization": f"Basic {os.environ['SNOW_TOKEN']}",
+        })
+
+        interaction_counter = payload.get("interaction_counter")
+        print(f"interaction_counter: {interaction_counter}")
+
+        if interaction_counter is not None and interaction_counter <= 3:
+            try:
+                async with httpx.AsyncClient(timeout=60.0) as client:
+                    print(f"Request - url:{url} json:{request_payload} headers:{headers}")
+                    response = await client.post(url, json=request_payload, headers=headers)
+
+                    if response.status_code == 200:
+                        print(f"Successfully updated incident {incident_id} in ServiceNow")
+                        print(f"Response: {response.json()}")
+                        return True,{"status_code":response.status_code,"response":response.json()}
+                    else:
+                        logger.warning(
+                            f"Failed to update incident {incident_id} in ServiceNow. "
+                            f"Status code: {response.status_code}, Response: {response.text}"
+                        )
+                        try:
+                            return False,{"status_code":response.status_code,"response":response.json()}
+                        except:
+                            return False,{"status_code":response.status_code,"response_text":response.text}
+
+            except Exception as e:
+                logger.error(f"Error calling ServiceNow API for incident {incident_id}: {str(e)}")
+                return False,{"status_code": 0 ,"response_text":"Exception : "+str(e)}
         else:
-            purposes.append(f"  - {svc}")
-    
-    output = [
-        f"Found {len(services)} services for app '{app}':",
-        "",
-    ]
-    output.extend(purposes)
-    
-    output.extend([
-        "",
-        "To get tags for a specific service, use GetServiceTagsTool.",
-        "To search traces, use fetch_jaeger_traces with any service name.",
-    ])
-    
-    return "\n".join(output)
-
-
-def get_service_tags_impl(app: str, service: str) -> str:
-    app = app.strip().lower()
-    service = service.strip().lower()
-    
-    tags = get_service_tags(app, service)
-    
-    if tags is None:
-        # No metadata - suggest common tags
-        return (
-            f"No predefined tags found for {app}/{service}. "
-            f"You can try any of these common tags: "
-            f"customer_id, txn_id, mobile_number, ucic, user_id, session_tracking_id, "
-            f"username, device_id, account_number, transaction_id "
-            f"The query will proceed with your chosen tag."
-        )
-    
-    if not tags:
-        return f"No tags configured for {app}/{service}. Try any common tag."
-    
-    return (
-        f"Valid tags for {app}/{service}: {tags}\n\n"
-        f"Use one of these tags with fetch_jaeger_traces tool. "
-        f"If you use a different tag, a warning will be shown but the query will proceed."
-    )
-
-
-async def get_elk_fields_impl(app: str, index_type: str = "log") -> str:
-    app = app.strip().lower()
-    index_type = index_type.strip().lower()
-    
-    # Get index pattern based on app and type
-    elk_indexes = get_elk_indexes(app)
-    
-    if index_type == "trace":
-        index_pattern = elk_indexes.get("elk_trace_index", "prod-jaeger-span-*")
-    else:
-        index_pattern = elk_indexes.get("elk_log_index", "elk-*")
-    
-    # If no config, use defaults
-    if not index_pattern or index_pattern == "elk-*":
-        if app == "optimus":
-            index_pattern = "prod-jaeger-span-*" if index_type == "trace" else "elk-opt-*"
-        elif app == "cbs":
-            index_pattern = "prod-jaeger-span-cbs-*" if index_type == "trace" else "elk-cbs-prod*"
-        elif app == "idp":
-            index_pattern = "prod-jaeger-span-idp-*" if index_type == "trace" else "elk-idp-prod*"
-        else:
-            index_pattern = "prod-jaeger-span-*" if index_type == "trace" else "elk-*-prod*"
-    
-    try:
-        # Fetch mapping to get all fields
-        mapping_url = f"{ELK_BASE_URL}/{index_pattern}/_mapping"
-        
-        async with httpx.AsyncClient(timeout=30.0, verify=CA_CERT_PATH) as client:
-            response = await client.get(mapping_url, headers=ELK_HEADERS)
-            
-            if response.status_code != 200:
-                return f"Error fetching ELK mapping: HTTP {response.status_code}"
-            
-            mapping = response.json()
-            
-            # Extract fields from mapping
-            fields = set()
-            
-            # Parse the mapping response
-            for index_name, index_data in mapping.items():
-                properties = index_data.get("mappings", {}).get("properties", {})
-                
-                def extract_fields(props, prefix=""):
-                    for field_name, field_def in props.items():
-                        full_name = f"{prefix}{field_name}" if prefix else field_name
-                        fields.add(full_name)
-                        # Handle nested objects
-                        if "properties" in field_def:
-                            extract_fields(field_def["properties"], f"{full_name}.")
-                
-                extract_fields(properties)
-            
-            if not fields:
-                return f"No fields found in index pattern {index_pattern}"
-            
-            # Group fields by common prefixes
-            field_list = sorted(fields)
-            
-            output = [
-                f"Found {len(field_list)} fields in index pattern '{index_pattern}' for app '{app}':",
-                "",
-            ]
-            
-            # Show common fields first
-            important_fields = ["customer_id", "txn_id", "ucic", "mobile_number", "user_id", 
-                              "account_number", "message", "logtype", "@timestamp", "serviceName",
-                              "traceId", "spanId", "error", "http.status_code"]
-            
-            output.append("Common fields:")
-            for field in important_fields:
-                if field in fields:
-                    output.append(f"  - {field}")
-            
-            output.append("")
-            output.append(f"All fields ({len(field_list)} total):")
-            # Show first 50 fields
-            for field in field_list[:50]:
-                output.append(f"  - {field}")
-            
-            if len(field_list) > 50:
-                output.append(f"  ... and {len(field_list) - 50} more fields")
-            
-            return "\n".join(output)
-    
-    except Exception as e:
-        return f"Error fetching ELK fields: {str(e)}\n\nYou can still query with any field name - this is just for discovery."
-
-
-def get_app_config_impl(app: str) -> str:
-    app = app.strip().lower()
-    
-    config = get_app_config(app)
-    
-    if not config:
-        return (
-            f"No configuration found for app '{app}'. "
-            f"Available apps: optimus, cbs, idp. "
-            f"Using default endpoints."
-        )
-    
-    output = [
-        f"Configuration for app '{app}':",
-        "",
-    ]
-    
-    if config.get("jaeger_endpoint"):
-        output.append(f"Jaeger Endpoint: {config.get('jaeger_endpoint')}")
-    
-    if config.get("elk_trace_index"):
-        output.append(f"ELK Trace Index: {config.get('elk_trace_index')}")
-    
-    if config.get("elk_log_index"):
-        output.append(f"ELK Log Index: {config.get('elk_log_index')}")
-    
-    services = config.get("services", {})
-    if services:
-        output.append(f"Services configured: {len(services)}")
-    
-    return "\n".join(output)
-
-
-async def discover_jaeger_services_impl(app: str = None) -> str:
-    import time as _time
-    
-    # Get Jaeger endpoint from app config or use default
-    jaeger_endpoint = None
-    if app:
-        config = get_app_config(app)
-        if config:
-            jaeger_endpoint = config.get("jaeger_endpoint")
-    
-    if not jaeger_endpoint:
-        jaeger_endpoint = JAEGER_API_BASE
-
-    headers = _jaeger_auth_headers()
-
-    params = {"lookback": "1h"}
-    
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(
-                f"{jaeger_endpoint}/services", 
-                params=params,
-                headers=headers
+            logger.warning(
+                f"interaction_counter={interaction_counter} exceeds limit or is missing — "
+                f"skipping ServiceNow send for incident {incident_id}"
             )
-            
-            if response.status_code != 200:
-                return f"Error fetching services from Jaeger: HTTP {response.status_code}"
-            
-            data = response.json()
-            services = data.get("data", [])
-            
-            if not services:
-                return f"No services found in Jaeger. Try increasing time range."
-            
-            output = [
-                f"Discovered {len(services)} services from Jaeger:",
-                "",
-            ]
-            
-            # Show all services
-            for svc in sorted(services):
-                output.append(f"  - {svc}")
-            
-            output.extend([
-                "",
-                "Note: These are ALL services that have sent traces in the last 1 hour.",
-                "Use any service name directly with fetch_jaeger_traces tool.",
-            ])
-            
-            return "\n".join(output)
-    
-    except Exception as e:
-        return f"Error connecting to Jaeger: {str(e)}\n\nYou can still query any service directly."
+            return False, {"status_code": 0, "response_text": "interaction_counter limit exceeded or missing"}
 
 
-async def discover_jaeger_tags_impl(service: str, app: str = None) -> str:
-    jaeger_endpoint = None
-    if app:
-        config = get_app_config(app)
-        if config:
-            jaeger_endpoint = config.get("jaeger_endpoint")
-    
-    if not jaeger_endpoint:
-        jaeger_endpoint = JAEGER_API_BASE
+async def send_rejection_to_servicenow_async(payload, additonal_comment: str = 'BOT is unable to resolve, assign to an Engineer'):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_rejection_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        payload.update({"state": "On Hold","cause": "Bot is unable to resolve Assign to an Engineer."})
+        result = await send_update_to_servicenow_async(payload, additonal_comment, '')
+        return result, 'rejected'        
 
-    headers = _jaeger_auth_headers()
-    
-    # Use a reasonable lookback window (1 hour)
-    params = {"service": service, "lookback": "1h"}
-    
-    try:
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.get(
-                f"{jaeger_endpoint}/tags", 
-                params=params,
-                headers=headers
+
+async def send_question_to_servicenow_async(payload, question):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_question_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        payload.update({"state": "On Hold", "onHoldReason": "User Action Required"})
+        result = await send_update_to_servicenow_async(payload, question, '')
+        return result, 'on_hold'         
+
+
+async def send_resolution_to_servicenow_async(payload, resolution):
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("send_resolution_to_servicenow_async") as span:
+        span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("resolution_length", len(resolution) if resolution else 0)
+        payload.update({
+            "state":"On Hold",
+            "onHoldReason": "User Action Required"
+        })
+        result = await send_update_to_servicenow_async(payload, resolution, None)
+        return result, 'on_hold'    
+
+
+def payload_to_incident_description(payload):
+    from new_flow.utils.files_processor import process_attachments 
+
+    tracer = get_tracer(__name__)
+    with tracer.start_as_current_span("payload_to_incident_description") as span:
+        span.set_attribute("short_description_length", len(payload.get('shortDescription','')))
+        span.set_attribute("description_length", len(payload.get('description','')))
+        span.set_attribute("individualUCIC", payload.get('individualUCIC','i'))
+        
+        short_description = payload.get('shortDescription','')
+        description = payload.get('description','')
+        individualUCIC = payload.get('individualUCIC','i')
+        result = f"Short Description: {short_description}\nDescription: {description}"
+
+        file_text = process_attachments(payload.get('files') or [])   
+        if file_text:                                                  
+            result = result + "\n\n" + file_text                       
+        print(f"Generated incident description for UCIC {individualUCIC}")
+        return result, individualUCIC
+
+
+
+class IncidentManagementFlow(Flow[IncidentState]):
+
+    @start()
+    async def initialize_and_classify(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("initialize_and_classify") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+
+            self.state.incident_description, self.state.ucic = payload_to_incident_description(self.state.payload)
+
+            if '__agent_data' not in self.state.payload:
+                self.state.payload['__agent_data'] = {
+                    'snow_logs': [], 'qa_pairs': [], 'comments': []
+                }
+
+            snow_logs = self.state.payload.get('__agent_data', {}).get('snow_logs', [])
+            if snow_logs and snow_logs[-1]['type'] == 'question' and self.state.current_comment:
+                 self.state.payload['__agent_data']['qa_pairs'].append({
+                     "question": snow_logs[-1]["question"],
+                     "answer": self.state.current_comment
+                 })
+
+            self.state.user_qa_pairs = self.state.payload['__agent_data'].get('qa_pairs', [])
+
+            comment = self.state.current_comment if self.state.current_comment else None
+
+            # Get previous classifier output for context continuity
+            previous_classifier_output = self.state.payload.get('__agent_data', {}).get('classifier_output')
+
+            classifier_output = await run_crew_with_retry_async(
+                lambda: run_classifier_with_enrichment_async(
+                    payload=self.state.payload,
+                    incident_description=self.state.incident_description,
+                    user_qa_pairs=self.state.user_qa_pairs,
+                    comment=comment,
+                    previous_classifier_output=previous_classifier_output
+                )
             )
+            self.state.intent = classifier_output.intent
+            self.state.customer_identifiers = classifier_output.customer_identifiers
+            self.state.problem_category = classifier_output.problem_category
+            self.state.app = classifier_output.app
+            self.state.enriched_prompt = classifier_output.enriched_prompt
             
-            if response.status_code != 200:
-                return f"Error fetching tags from Jaeger: HTTP {response.status_code}"
+            self.state.payload['__agent_data']['classifier_output'] = classifier_output.model_dump()
             
-            data = response.json()
-            tag_data = data.get("data", [])
+            print(f"Enhanced classifier | incident={self.state.incident_id} | app={self.state.app} | category={self.state.problem_category}")
             
-            if not tag_data:
-                return (
-                    f"No tags found for service '{service}'. "
-                    f"Try common tags: customer_id, txn_id, mobile_number, ucic, "
-                    f"user_id, session_tracking_id, username, device_id, account_number"
+            print(f"Initialized and classified incident {self.state.incident_id} with intent: {self.state.intent}")
+            return self.state.intent
+
+    @router(initialize_and_classify)
+    async def start_process(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("logic_router") as span:
+            span.set_attribute("intent", self.state.intent)
+            span.set_attribute("sop_exists", self.state.payload['__agent_data'].get('sop') is not None)
+            span.set_attribute("sop_value", self.state.payload['__agent_data'].get('sop'))
+
+            counter = self.state.payload.get("interaction_counter", 0)
+            self.state.payload["interaction_counter"] = counter + 1
+            if counter >= 3:
+                print(f"Interaction limit exceeded for incident {self.state.incident_id}")
+                return "limit_exceeded"
+
+            if self.state.intent == "closure": 
+                print(f"Closure intent for incident {self.state.incident_id}")
+                return "handle_closure"
+            if self.state.intent == "rebuttal": 
+                print(f"Rebuttal intent for incident {self.state.incident_id}")
+                return "handle_rebuttal"
+
+            classifier_data = self.state.payload.get('__agent_data', {}).get('classifier_output', {})
+            if classifier_data.get('needs_user_input'):
+                print(f"Need more info for incident {self.state.incident_id}")
+                self.state.agent_output = {
+                    "resolved": "no",
+                    "diagnosis": "Additional information needed",
+                    "solution": "Please provide more details",
+                    "questions": [classifier_data.get('clarification_question', 'Could you please provide more information? Please provide trace ID/ Correlation ID/ Customer Number/ Account Number if possible')]
+                }
+                # FIX: unique event name — does NOT collide with the string
+                # "update_servicenow" that _run_agentic_resolver returns on
+                # the normal path, which would otherwise double-fire both listeners.
+                return "send_clarification"
+            
+            print(f"Fresh incident {self.state.incident_id}, gather context")
+            return "gather_context"
+
+
+    @listen('gather_context')
+    async def semantic_search(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("gather_context") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("incident_description_length", len(self.state.incident_description))
+
+            desc = self.state.enriched_prompt
+            app_raw = self.state.payload.get("businessService", "CBS")
+            app_key = app_raw.lower().strip()
+
+            if app_has_observability(app_key):
+                incident_context = await run_crew_with_retry_async(
+                    lambda: run_incident_context_crew_async(desc, application=app_raw)
                 )
-            
-            # Extract tag keys from the response
-            # Jaeger returns tags as a list of {key: "tagName", values: [...]} objects
-            tags = []
-            for item in tag_data:
-                if isinstance(item, dict):
-                    key = item.get("key")
-                    if key:
-                        tags.append(key)
-                elif isinstance(item, str):
-                    tags.append(item)
-            
-            if not tags:
-                return (
-                    f"No tags found for service '{service}'. "
-                    f"Try common tags: customer_id, txn_id, mobile_number, ucic, "
-                    f"user_id, session_tracking_id, username, device_id, account_number"
+            else:
+                incident_context = await run_crew_with_retry_async(
+                    lambda: run_incident_context_deterministic_async(desc, application=app_raw)
                 )
-            
-            # Sort tags - put common ones first
-            common_tags = ["customer_id", "txn_id", "mobile_number", "ucic", "user_id", 
-                          "session_tracking_id", "username", "device_id", "account_number", 
-                          "transaction_id", "error", "http.status_code"]
-            
-            sorted_tags = []
-            remaining_tags = []
-            
-            for tag in tags:
-                if tag in common_tags:
-                    sorted_tags.append(tag)
-                else:
-                    remaining_tags.append(tag)
-            
-            # Add common tags first, then the rest
-            final_tags = sorted_tags + sorted(remaining_tags)
-            
-            output = [
-                f"Discovered {len(final_tags)} tags for service '{service}':",
-                "",
-            ]
-            
-            # Show common tags first
-            if sorted_tags:
-                output.append("Common tags:")
-                for tag in sorted_tags:
-                    output.append(f"  - {tag}")
-                output.append("")
-            
-            # Show all tags (limit to 50)
-            if remaining_tags:
-                output.append(f"All tags ({len(final_tags)} total):")
-                for tag in final_tags[:50]:
-                    output.append(f"  - {tag}")
-                if len(final_tags) > 50:
-                    output.append(f"  ... and {len(final_tags) - 50} more tags")
-            
-            output.extend([
-                "",
-                "Note: These are ALL tags found in traces for this service in the last 1 hour.",
-                "Use any of these tags with fetch_jaeger_traces tool.",
-            ])
-            
-            return "\n".join(output)
-    
-    except Exception as e:
-        return (
-            f"Error connecting to Jaeger: {str(e)}\n\n"
-            f"Try common tags: customer_id, txn_id, mobile_number, ucic, "
-            f"user_id, session_tracking_id, username, device_id, account_number"
-        )
+            self.state.incident_context = incident_context if incident_context else "No context found"
+
+            return 'run_resolver'
 
 
-try:
-    from crewai.tools import BaseTool
-    
-    class GetServicesTool(BaseTool):
-        name: str = "discover_services"
-        description: str = (
-            "List all available services for an application. "
-            "Use this before querying Jaeger traces to discover valid service names. "
-            "Returns service names and their purposes (if available)."
-        )
-        args_schema: type = GetServicesInput
+    @listen(semantic_search)
+    async def run_resolver_crew(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("run_resolver") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("qa_pairs_count", len(self.state.user_qa_pairs))
+
+            app = self.state.payload.get("businessService", "cbs").lower().strip()
+            self.state.app = app
+            span.set_attribute("app", app)
+            logger.info(f"Resolver | incident={self.state.incident_id} app={app}")
+
+            return await self._run_agentic_resolver(app)
+
+    async def _run_agentic_resolver(self, app: str):
+        tracer = get_tracer(__name__)
+
+        customer_ids = self.state.customer_identifiers if hasattr(self.state, 'customer_identifiers') else {}
+        problem_cat = self.state.problem_category if hasattr(self.state, 'problem_category') else ""
         
-        def _run(self, app: str) -> str:
-            return get_services_impl(app)
-    
-    class GetServiceTagsTool(BaseTool):
-        name: str = "discover_service_tags"
-        description: str = (
-            "Get valid query tags for a specific service. "
-            "Use this before querying Jaeger to know which tag names are valid. "
-            "Returns list of tag names like customer_id, txn_id, mobile_number, etc."
-        )
-        args_schema: type = GetServiceTagsInput
+        if not app_has_observability(app):
+            logger.info(f"No Jaeger/ELK config for app={app} - resolving from similarity search context only")
+            with tracer.start_as_current_span("context_only_summary") as span:
+                span.set_attribute("app", app)
+                summary_output = await run_crew_with_retry_async(
+                    lambda: run_context_only_summary_async(
+                        incident_description=self.state.incident_description,
+                        historic_context=self.state.incident_context,
+                        user_qa_pairs=self.state.user_qa_pairs
+                    )
+                )
+            self.state.summary_output = summary_output.model_dump() if hasattr(summary_output, 'model_dump') else summary_output
+            self.state.agent_output = {
+                "resolved": summary_output.resolved,
+                "diagnosis": summary_output.diagnosis,
+                "solution": summary_output.solution,
+                "questions": summary_output.questions
+            }
+            print(f"Context-only resolution completed for incident {self.state.incident_id}")
+            return "update_servicenow"
+
+        try:
+            self.state.discovered_services = await discover_jaeger_services_impl(app)
+            logger.info(f"agents.plan_agent import PlanOutput={app}")
+        except Exception as e:
+            logger.warning(f"Failed to discover services: {e}")
+            self.state.discovered_services = "Service discovery unavailable"
+
+        with tracer.start_as_current_span("plan_agent") as span:
+            span.set_attribute("app", app)
+            plan_output = await run_crew_with_retry_async(
+                lambda: run_plan_agent_async(
+                    enriched_prompt=self.state.enriched_prompt,
+                    app=app,
+                    customer_identifiers=customer_ids,
+                    problem_category=problem_cat,
+                    incident_context=self.state.incident_context,
+                    discovered_services=self.state.discovered_services
+                )
+            )
+            self.state.plan_output = plan_output.model_dump() if hasattr(plan_output, 'model_dump') else plan_output
+            print(f"Plan Agent completed for incident {self.state.incident_id}")
         
-        def _run(self, app: str, service: str) -> str:
-            return get_service_tags_impl(app, service)
-    
-    class GetELKFieldsTool(BaseTool):
-        name: str = "discover_elk_fields"
-        description: str = (
-            "Discover all available fields in ELK index by fetching mapping. "
-            "Use this to understand what fields can be queried. "
-            "Returns common fields first, then full list."
-        )
-        args_schema: type = GetELKFieldsInput
+        if plan_output.needs_more_info:
+            self.state.agent_output = {
+                "resolved": "no",
+                "diagnosis": "Additional information needed",
+                "solution": plan_output.question_for_user or "Please provide more details",
+                "questions": [plan_output.question_for_user] if plan_output.question_for_user else []
+            }
+            return "update_servicenow"
         
-        def _run(self, app: str, index_type: str = "log") -> str:
-            import asyncio
-            return asyncio.run(get_elk_fields_impl(app, index_type))
+        with tracer.start_as_current_span("execute_jaeger_agent") as span:
+            span.set_attribute("issue_summary", plan_output.issue_summary[:100] if plan_output.issue_summary else "")
+            execution_result = await run_crew_with_retry_async(
+                lambda: run_jaeger_only_async(
+                    plan_output=plan_output,
+                    incident_description=self.state.incident_description,
+                    app=app,
+                    customer_identifiers=customer_ids,
+                    problem_category=problem_cat,
+                    max_iterations=5,
+                    incident_id=self.state.incident_id,
+                    discovered_services=self.state.discovered_services
+                )
+            )
+            self.state.execution_result = execution_result.model_dump() if hasattr(execution_result, 'model_dump') else execution_result
+            print(f"Execute Agent completed for incident {self.state.incident_id}")
 
-    class GetAppConfigTool(BaseTool):
-        name: str = "get_app_config"
-        description: str = (
-            "Get configuration for an application including Jaeger endpoint, "
-            "ELK index patterns, and service count."
-        )
-        args_schema: type = GetAppConfigInput
-
-        def _run(self, app: str) -> str:
-            return get_app_config_impl(app)
-
-    class DiscoverJaegerServicesTool(BaseTool):
-        name: str = "discover_jaeger_services"
-        description: str = (
-            "Dynamically discover all available services from Jaeger. "
-            "No preconfiguration needed - queries Jaeger API directly. "
-            "Returns list of all services with recent traces."
-        )
+            if hasattr(execution_result, 'confidence') and execution_result.confidence < 0.3:
+                escalation_msg = execution_result.escalation_reason or "BOT unable to resolve - assigning to L2 Engineer"
+                (status, info), incident_status = await send_rejection_to_servicenow_async(
+                    self.state.payload, 
+                    escalation_msg
+                )
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "escalation", 
+                    "reason": escalation_msg,
+                    "confidence": execution_result.confidence,
+                    "status": status, 
+                    "response": info
+                })
+                print(f"Escalated incident {self.state.incident_id} due to low confidence: {execution_result.confidence}")
         
-        def _run(self, app: str = None) -> str:
-            import asyncio
-            return asyncio.run(discover_jaeger_services_impl(app))
-
-    class DiscoverJaegerTagsTool(BaseTool):
-        name: str = "discover_jaeger_tags"
-        description: str = (
-            "Dynamically discover all available tags for a specific service from Jaeger. "
-            "Queries Jaeger's /tags endpoint to get all tags used in recent traces. "
-            "Returns list of tags like customer_id, txn_id, mobile_number, etc."
-        )
+        with tracer.start_as_current_span("summary_agent") as span:
+            summary_output = await run_crew_with_retry_async(
+                lambda: run_summary_agent_async(
+                    incident_description=self.state.incident_description,
+                    execution_result=execution_result,
+                    historic_context=self.state.incident_context,
+                    user_qa_pairs=self.state.user_qa_pairs
+                )
+            )
+            self.state.summary_output = summary_output.model_dump() if hasattr(summary_output, 'model_dump') else summary_output
+            print(f"Summary Agent completed for incident {self.state.incident_id}")
         
-        def _run(self, service: str, app: str = None) -> str:
-            import asyncio
-            return asyncio.run(discover_jaeger_tags_impl(service, app))
+        self.state.agent_output = {
+            "resolved": summary_output.resolved,
+            "diagnosis": summary_output.diagnosis,
+            "solution": summary_output.solution,
+            "questions": summary_output.questions
+        }
+        
+        return "update_servicenow"
 
-    __all__ = [
-        "GetServicesTool",
-        "GetServiceTagsTool", 
-        "GetELKFieldsTool",
-        "GetAppConfigTool",
-        "DiscoverJaegerServicesTool",
-        "DiscoverJaegerTagsTool",
-        "get_services_impl",
-        "get_service_tags_impl",
-        "get_elk_fields_impl",
-        "get_app_config_impl",
-        "discover_jaeger_services_impl",
-        "discover_jaeger_tags_impl",
-    ]
+   
+    @listen('send_clarification')
+    async def handle_needs_more_info(self):
+        await self._send_agent_output_to_servicenow()
 
-except ImportError:
-    # CrewAI not available - provide standalone functions
-    logger.warning("crewai not installed - discovery tools will be functions only")
-    
-    __all__ = [
-        "get_services_impl",
-        "get_service_tags_impl",
-        "get_elk_fields_impl",
-        "get_app_config_impl",
-    ]
+    @listen(run_resolver_crew)
+    async def update_servicenow(self):
+        await self._send_agent_output_to_servicenow()
+
+    async def _send_agent_output_to_servicenow(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("update_servicenow") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("resolution_result", self.state.agent_output.get("resolved", "unknown"))
+
+            res = self.state.agent_output
+            incident_status = 'in_progress'
+
+            if res.get("resolved") == 'yes':
+                msg = f"Diagnosis:\n{res['diagnosis']}\n\nSolution:\n{res['solution']}"
+                (status, info), incident_status = await send_resolution_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "resolution", "resolution": msg, "status": status, "response": info
+                })
+                print(f"Resolution sent for incident {self.state.incident_id}")
+
+            elif res.get("questions"):
+                msg = "\n".join(res["questions"])
+                (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "question", "question": msg, "status": status, "response": info
+                })
+                print(f"Question sent for incident {self.state.incident_id}")
+
+            else:
+                msg = f"Diagnosis:\n{res.get('diagnosis')}\n\nSolution:\n{res['solution']}"
+                (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
+                self.state.payload['__agent_data']['snow_logs'].append({
+                    "type": "question", "question": msg, "status": status, "response": info
+                })
+                print(f"Question sent for incident {self.state.incident_id}")
+
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"DB updated for incident {self.state.incident_id} status={incident_status}")
+
+    @listen('handle_rebuttal')
+    async def run_rebuttal_crew(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_rebuttal") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            msg = 'BOT is unable to resolve, assign to an Engineer'
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload, msg)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Rebuttal handled for incident {self.state.incident_id} status={incident_status}")
+
+    @listen('limit_exceeded')
+    async def handle_limit_exceeded(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_limit_exceeded") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Limit exceeded rejected incident {self.state.incident_id} status={incident_status}")
+            return
+
+    @listen('closure')
+    async def handle_incident_closure(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_closure") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            print("No action for bot to take")
+            return
+
+    @listen("reject_incident")
+    async def handle_rejection(self):
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("handle_rejection") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            (status, info), incident_status = await send_rejection_to_servicenow_async(self.state.payload)
+            self.state.payload['__agent_data']['snow_logs'].append({
+                "type": "rejection", "status": status, "response": info
+            })
+            state = self.state.model_dump()
+            payload_copy = state['payload']
+            await upsert_incident_payload_async(
+                self.state.incident_id,
+                json.dumps(payload_copy),
+                incident_status
+            )
+            print(f"Rejected incident {self.state.incident_id} status={incident_status}")
+            return
