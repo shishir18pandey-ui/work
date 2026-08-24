@@ -2,7 +2,7 @@ from typing import Dict, List, Optional
 from pydantic import BaseModel
 from pathlib import Path
 import json
-
+import os
 
 class AppConfig(BaseModel):
     name: str
@@ -13,6 +13,7 @@ class AppConfig(BaseModel):
     elk_endpoint: Optional[str] = None
     jaeger_endpoint: Optional[str] = None
     jaeger_prod_endpoint: Optional[str] = None
+    jaeger_auth_env: Optional[str] = None
     default_jaeger_service: Optional[str] = None
     problem_categories: List[str]
 
@@ -65,8 +66,16 @@ def get_jaeger_endpoint(app: str) -> Optional[str]:
         return config.jaeger_prod_endpoint
     except ValueError:
         return None
-
-
+def get_jager_auth_token(app:str)->str:
+    if not app:
+        return ""
+    try:
+        config=get_app_config(app)
+    except ValueError:
+        return ""
+    if not config.jaeger_auth_env:
+        return ""
+    return os.getenv(config.jaeger_auth_env,"")
 def app_has_observability(app: str) -> bool:
     """True if this app has any Jaeger or ELK config to run live investigation against."""
     try:
