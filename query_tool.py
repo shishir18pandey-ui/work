@@ -29,7 +29,7 @@ from new_flow.tools.service_metadata import (
 )
 
 # Import jaeger_endpoint from app_config (single source of truth)
-from new_flow.tools.app_config import get_jaeger_endpoint
+from new_flow.tools.app_config import get_jaeger_endpoint,get_jager_auth_token
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -115,11 +115,9 @@ _JAEGER_EXCLUDED_SERVICES = {
 _JAEGER_MAX_PAYLOAD_CHARS = 450
 
 
-def _jaeger_auth_headers():
-    if JAEGER_AUTH_TOKEN:
-        return {"Authorization": f"Basic {JAEGER_AUTH_TOKEN}"}
-    return {}
-
+def _jaeger_auth_headers(app: str):
+    token = get_jager_auth_token(app)
+    return {"Authorization": f"Basic {token}"} if token else {}
 def _jaeger_us_to_ist(microseconds_ts):
     from datetime import timezone, timedelta
     import datetime as _datetime
@@ -267,7 +265,7 @@ async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, s
             tag_value = f"+91{tag_value}"
     
     # Build query params - use exact service name (Jaeger service names are case-sensitive)
-    headers = _jaeger_auth_headers()
+    headers = _jaeger_auth_headers(app)
     params = {"service": service, "start": start_us, "end": end_us, "limit": 100}
     
     # Only add tags filter if both tag_name and tag_value are provided and non-empty
