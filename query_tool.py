@@ -273,7 +273,7 @@ async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, s
         tags = _json.dumps({tag_name: tag_value})
         params["tags"] = tags
     
-    logger.info(f"[JAEGER] app={app} service={service} {tag_name}={tag_value} range={hours_label} endpoint={api_base} params={params} headers={headers}")
+    logger.info(f"[JAEGER] app={app} service={service} {tag_name}={tag_value} range={hours_label} endpoint={api_base} params={params}")
     
     try:
         async with httpx.AsyncClient(timeout=45) as client:
