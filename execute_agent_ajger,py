@@ -1,7 +1,6 @@
 import os
 import logging
 from typing import Dict, List, Optional, Any
-from pydantic import BaseModel, Field
 
 os.environ["OTEL_SDK_DISABLED"] = "true"
 
@@ -13,6 +12,24 @@ from new_flow.tools.query_tools import JaegerTraceTool
 from new_flow.utils.audit_logger import audit_logger
 from new_flow.utils.llm_cache import create_cached_llm
 from crewai import LLM
+from pydantic import BaseModel, Field
+
+
+# ─────────────────────────────────────────────────────────────
+# Prompt safety net — only trims when a prompt piece is already
+# oversized enough to risk blowing the model's context window.
+# No effect on normal-sized incidents.
+# ─────────────────────────────────────────────────────────────
+_PROMPT_SAFETY_CHAR_LIMIT = 80000   # ~20k tokens, generous headroom under MiniMax's 150k limit
+
+
+def _safety_trim(text: str, label: str = "content") -> str:
+    """No-op for normal incidents. Only trims if text is already too large to safely send."""
+    if len(text) <= _PROMPT_SAFETY_CHAR_LIMIT:
+        return text
+    logger.warning(f"[JaegerOnlyAgent] {label} exceeded safety limit ({len(text)} chars) — trimming")
+    return text[:_PROMPT_SAFETY_CHAR_LIMIT] + f"\n\n[... trimmed, original was {len(text)} chars]"
+
 
 class JaegerExecutionResult(BaseModel):
     resolved: bool = Field(description="Whether issue was found/resolved")
@@ -69,7 +86,7 @@ class JaegerOnlyAgent:
         section = result[idx:] if idx != -1 else result
         entry = (
             f"[EVIDENCE service={service} tag={tag_name}={tag_value} range_idx={time_range_index}]\n"
-            f"{section[:2000]}"
+            f"{section}"
         )
         self.collected_evidence.append(entry)
         logger.info(
@@ -80,11 +97,13 @@ class JaegerOnlyAgent:
     def _evidence_summary(self) -> str:
         if not self.collected_evidence:
             return ""
+        combined = "\n\n".join(self.collected_evidence)
+        combined = _safety_trim(combined, "collected_evidence")
         return (
             "\n*** EVIDENCE ALREADY GATHERED (use this - do not ask to fetch a specific trace ID, "
             "that is not possible; decide RESOLVE or NEW_ITERATION using only the data below and "
             "the tools you have) ***\n"
-            + "\n\n".join(self.collected_evidence[-3:])
+            + combined
             + "\n"
         )
 
@@ -185,6 +204,10 @@ class JaegerOnlyAgent:
                     self._collect_evidence(service, tag_name, tag_value, time_range_index, result)
                     ranges_exhausted_per_iteration.append(ranges_tried)
 
+                    # ── Any failure present at all -> stop searching further ranges for this
+                    #    service. We no longer wait for the stronger "[ROOT CAUSE IDENTIFIED]"
+                    #    marker specifically — any FAILED TRACES section is enough to stop and report.
+                    has_any_failure = "FAILED TRACES" in result
                     root_cause_confirmed = "[ROOT CAUSE IDENTIFIED" in result
 
                     decision = await self._decide_after_traces(
@@ -211,11 +234,12 @@ class JaegerOnlyAgent:
                             ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
                         )
 
-                    # Safety net: never silently discard a confirmed root cause
-                    if root_cause_confirmed and decision.get("action") != "resolve":
+                    # Safety net: never silently discard or keep searching past a failure that
+                    # was already found — whether or not it hit the stronger root-cause marker.
+                    if has_any_failure and decision.get("action") != "resolve":
                         logger.warning(
-                            f"[JaegerOnlyAgent] LLM chose '{decision.get('action')}' despite a confirmed "
-                            f"root cause at range {time_range_index} - overriding to RESOLVE"
+                            f"[JaegerOnlyAgent] LLM chose '{decision.get('action')}' despite a failure "
+                            f"already found at range {time_range_index} - overriding to RESOLVE"
                         )
                         return JaegerExecutionResult(
                             resolved=True,
@@ -227,23 +251,6 @@ class JaegerOnlyAgent:
                             iterations_completed=iteration,
                             ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
                         )
-
-                    if decision.get("action") == "new_iteration":
-                        new_service = decision.get("new_service")
-                        new_tag_name = decision.get("new_tag_name")
-                        new_tag_value = decision.get("new_tag_value")
-
-                        if new_service and new_tag_name:
-                            # Auto-resolve tag value from known identifiers if LLM left it blank
-                            if not new_tag_value and new_tag_name in self.customer_identifiers:
-                                new_tag_value = self.customer_identifiers[new_tag_name]
-                            service = new_service
-                            tag_name = new_tag_name
-                            tag_value = new_tag_value
-                            logger.info(f"[JaegerOnlyAgent] LLM decided to try new service={service}, tag={tag_name}")
-                            break
-                        else:
-                            pass
 
                     continue
 
@@ -486,7 +493,7 @@ REASONING: [why you chose this combination]
 Iteration: {iteration} of {self.max_iterations}
 
 === LATEST JAEGER RESULT ===
-{jaeger_result[:1500]}
+{_safety_trim(jaeger_result, "jaeger_result")}
 
 === TASK ===
 You already have the failed trace evidence above (and in EVIDENCE ALREADY GATHERED if present).
@@ -612,18 +619,19 @@ REASONING: [why you chose this action]
             return "No previous calls"
 
         lines = []
-        for call in tool_calls[-10:]:
+        for call in tool_calls:
             params = call.get("input_params", {})
-            output = call.get("output", "")[:300]
+            output = call.get("output", "")
             iteration = call.get("iteration", "?")
             range_idx = call.get("time_range_index", "?")
             lines.append(
                 f"- Iteration {iteration}, Range {range_idx}: "
                 f"service={params.get('service')}, tag={params.get('tag_name')}={params.get('tag_value')}"
             )
-            lines.append(f"  Output: {output}...")
+            lines.append(f"  Output: {output}")
 
-        return "\n".join(lines)
+        combined = "\n".join(lines)
+        return _safety_trim(combined, "tool_calls_history")
 
     def _parse_service_tag_decision(self, response: str) -> tuple:
         import re
