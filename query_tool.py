@@ -7,6 +7,7 @@ for SQL, ELK, Jaeger, and schema discovery without predefined JSON definitions.
 
 import os
 import json
+import base64
 import httpx
 import asyncio
 from typing import Dict, Any, Optional, List
@@ -29,7 +30,7 @@ from new_flow.tools.service_metadata import (
 )
 
 # Import jaeger_endpoint from app_config (single source of truth)
-from new_flow.tools.app_config import get_jaeger_endpoint,get_jager_auth_token
+from new_flow.tools.app_config import get_jaeger_endpoint, get_jager_auth_token
 
 logger = __import__('logging').getLogger(__name__)
 
@@ -95,8 +96,8 @@ class SimilaritySearchInput(BaseModel):
 JAEGER_API_BASE = os.getenv("JAEGER_API_BASE", "https://tracing.uat-opt.idfcfirstbank.com/api")
 JAEGER_AUTH_TOKEN = os.getenv("JAEGER_AUTH_TOKEN")
 
-MAX_ERROR_TRACES = 10
-MAX_LINES_PER_ERROR_TRACE = 50
+# Count-based cap only — keep failed trace COUNT bounded, but never slice trace CONTENT.
+MAX_ERROR_TRACES = 20
 
 _JAEGER_EXCLUDED_OPS = {
     'get', 'set', 'sql:prepare', 'sql:query', 'sql-conn-query', 'sql-rows-next',
@@ -112,12 +113,15 @@ _JAEGER_EXCLUDED_SERVICES = {
     'RISK-CONTROL-USER-METADATA-PROCESSOR',
     'OAUTH-SERVER',
 }
-_JAEGER_MAX_PAYLOAD_CHARS = 450
+# Generous guard on a single request/response field only — not a per-trace/per-line cap.
+_JAEGER_MAX_PAYLOAD_CHARS = 5000
 
 
 def _jaeger_auth_headers(app: str):
     token = get_jager_auth_token(app)
     return {"Authorization": f"Basic {token}"} if token else {}
+
+
 def _jaeger_us_to_ist(microseconds_ts):
     from datetime import timezone, timedelta
     import datetime as _datetime
@@ -125,6 +129,24 @@ def _jaeger_us_to_ist(microseconds_ts):
     dt_utc = _datetime.datetime.fromtimestamp(seconds, tz=timezone.utc)
     ist_tz = timezone(timedelta(hours=5, minutes=30))
     return dt_utc.astimezone(ist_tz).strftime('%Y-%m-%d %H:%M:%S IST')
+
+
+def _try_decode_base64(value: str) -> str:
+    """If value looks like base64-encoded text, decode it; otherwise return unchanged.
+    Best-effort only — falls back to the original string on any failure or ambiguity."""
+    if not value or not isinstance(value, str):
+        return value
+    stripped = value.strip()
+    if len(stripped) < 8 or len(stripped) % 4 != 0:
+        return value
+    try:
+        decoded_bytes = base64.b64decode(stripped, validate=True)
+        decoded_str = decoded_bytes.decode('utf-8')
+        if decoded_str.isprintable() or decoded_str.strip().startswith(("{", "[")):
+            return decoded_str
+    except Exception:
+        pass
+    return value
 
 
 def _jaeger_trace_has_error(trace) -> bool:
@@ -145,7 +167,17 @@ def _jaeger_trace_has_error(trace) -> bool:
 
 def _jaeger_process_trace(trace):
     """Process a Jaeger trace and return output lines and status info.
-    
+
+    Root-cause-aware pruning: when a trace contains any error span, only the
+    error span(s) plus their FULL descendant subtree get full detail (tags,
+    logs, request/response) — because the actual root cause is usually deeper
+    in the tree than where the error status was first reported. Ancestor spans
+    up to root are shown as lightweight breadcrumbs only (service - operation
+    name, no tag/log dump), so you still see which flow the error occurred in.
+    Unrelated branches with no connection to any error are dropped entirely.
+
+    Traces with no error at all are processed in full as before (happy path).
+
     Returns a tuple: (output_lines, session_id, status_info)
     status_info = {
         "http_codes": set of HTTP status codes,
@@ -160,6 +192,7 @@ def _jaeger_process_trace(trace):
     id_to_span = {s["spanID"]: s for s in spans}
     pid_to_service = {pid: p["serviceName"] for pid, p in processes.items()}
     children_map = defaultdict(list)
+    parent_map = {}
     
     all_ids = set(id_to_span.keys())
     child_ids = set()
@@ -170,10 +203,46 @@ def _jaeger_process_trace(trace):
             if parent_id in id_to_span:
                 children_map[parent_id].append(span["spanID"])
                 child_ids.add(span["spanID"])
+                parent_map[span["spanID"]] = parent_id
     
     roots = all_ids - child_ids
     if not roots:
         return [], None, {"http_codes": set(), "error_logs": [], "error_flag": False}
+
+    def has_error_signal(span):
+        for tag in span.get("tags", []):
+            if tag.get("key") == "http.status_code" and str(tag.get("value", "")).startswith(("4", "5")):
+                return True
+            if tag.get("key") == "error" and tag.get("value") in (True, "true", "True"):
+                return True
+        for log in span.get("logs", []):
+            for f in log.get("fields", []):
+                if f.get("key") == "level" and str(f.get("value", "")).lower() in ("error", "fatal", "critical"):
+                    return True
+        return False
+
+    # Pass 1: which spans carry an error signal themselves
+    error_span_ids = {sid for sid, s in id_to_span.items() if has_error_signal(s)}
+    only_prune = bool(error_span_ids)   # if no error anywhere, process everything (happy path)
+
+    # Pass 2: FULL detail = error span + its entire descendant subtree
+    keep_full = set()
+    def collect_descendants(span_id):
+        keep_full.add(span_id)
+        for child_id in children_map.get(span_id, []):
+            collect_descendants(child_id)
+
+    for eid in error_span_ids:
+        collect_descendants(eid)
+
+    # Pass 3: lightweight breadcrumb = ancestor chain up to root
+    keep_context = set()
+    for eid in error_span_ids:
+        cur = parent_map.get(eid)
+        while cur:
+            if cur not in keep_full:
+                keep_context.add(cur)
+            cur = parent_map.get(cur)
     
     import datetime as _datetime
     import time as _time
@@ -193,9 +262,23 @@ def _jaeger_process_trace(trace):
             result.append("Time: " + _jaeger_us_to_ist(span["startTime"]))
         
         is_noise = op_name in _JAEGER_EXCLUDED_OPS or service_name in _JAEGER_EXCLUDED_SERVICES
+
+        # Unrelated branch (no connection to any error) — skip entirely, but still
+        # recurse through it in case a descendant needs visiting (safety net).
+        if only_prune and span_id not in keep_full and span_id not in keep_context:
+            for child_id in children_map.get(span_id, []):
+                process_span(child_id, depth + 1)
+            return
         
         if not is_noise:
             result.append(f"{indent}{span_id} - {service_name} - {op_name}")
+
+            # Breadcrumb-only span: name shown, no tag/log/payload dump.
+            if only_prune and span_id in keep_context:
+                for child_id in children_map.get(span_id, []):
+                    process_span(child_id, depth + 1)
+                return
+
             for tag in span.get("tags", []):
                 key = tag.get("key")
                 val = tag.get("value")
@@ -226,7 +309,9 @@ def _jaeger_process_trace(trace):
                 
                 for payload_key in ("request", "response"):
                     if fields.get(payload_key):
-                        result.append(f"{indent}  {payload_key}: {str(fields[payload_key])[:_JAEGER_MAX_PAYLOAD_CHARS]}")
+                        raw_val = str(fields[payload_key])
+                        decoded_val = _try_decode_base64(raw_val)
+                        result.append(f"{indent}  {payload_key}: {decoded_val[:_JAEGER_MAX_PAYLOAD_CHARS]}")
         
         for child_id in children_map.get(span_id, []):
             process_span(child_id, depth + 1)
@@ -325,11 +410,9 @@ async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, s
                     continue
                 
                 if is_error and output_lines:
-                    # Truncate to MAX_LINES_PER_ERROR_TRACE
-                    truncated_lines = output_lines[:MAX_LINES_PER_ERROR_TRACE]
-                    if len(output_lines) > MAX_LINES_PER_ERROR_TRACE:
-                        truncated_lines.append(f"... ({len(output_lines) - MAX_LINES_PER_ERROR_TRACE} lines truncated)")
-                    failed.append("\n".join(truncated_lines))
+                    # Pruning already happened at the span level in _jaeger_process_trace —
+                    # keep the trace's full (already-pruned) text, no further line-count cap.
+                    failed.append("\n".join(output_lines))
             
             logger.info(
                 f"[JAEGER][FETCH] Classification summary | total={len(traces)} "
@@ -339,7 +422,7 @@ async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, s
             
             return {
                 "total_traces_scanned": len(traces),
-                "failed_traces": failed[:MAX_ERROR_TRACES],  # Limit to MAX_ERROR_TRACES
+                "failed_traces": failed[:MAX_ERROR_TRACES],  # count cap only, content is full
                 "happy_hits": happy_hits,
                 "sessions": list(sessions),
                 "success_sessions": list(success_sessions),
