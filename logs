@@ -1,856 +1,4 @@
- Liability Support Desk team for fund status verification        │
-│                                                                              │
-│  4. **Check Account Volume:** For loading/pagination issues, check if        │
-│  customer has 300+ FD/RD accounts - may need to enable                       │
-│  RAS_DEPOSITS_PAGINATION toggle                                              │
-│                                                                              │
-│  5. **KARZA Verification Issues:** For FD liquidation failures with "Max     │
-│  retries exceeded" - customer must wait 30 days or try with matching bank    │
-│  account name                                                                │
-│                                                                              │
-│  6. **Request Complete Details:** Always request error occurrence date/time  │
-│  and error description to check backend logs                                 │
-│                                                                              │
-│  7. **Timeline Expectation:** Inform customer that some fund transfers may   │
-│  take 3-5 working days to reflect                                            │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## PATTERNS & COMMON SOLUTIONS:                                             │
-│                                                                              │
-│  - **FD Not Visible:** Signatory relationship not maintained → Liaise with   │
-│  Liability Support Desk                                                      │
-│  - **Transaction Pending:** Check backend status → Liaise with Liability     │
-│  Support Desk → May take 3-5 working days                                    │
-│  - **FD Not Loading:** Large number of accounts → Enable                     │
-│  RAS_DEPOSITS_PAGINATION toggle                                              │
-│  - **FD Liquidation Failed:** KARZA verification failed → Wait 30 days or    │
-│  use matching bank account name                                              │
-│  - **Insufficient Info:** Request date/time and error description to         │
-│  investigate in logs                                                         │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-╭───────────────────────────── 📋 Task Completion ─────────────────────────────╮
-│                                                                              │
-│  Task Completed                                                              │
-│  Name: Find similar incidents                                                │
-│  Agent: Historic Incident Analyst                                            │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-2026-08-27 14:40:37,003 - new_flow.agents.context_builder - INFO - [ContextBuilder] CREW KICKOFF DONE | application=Optimus elapsed=36.90s output_len=7484
-2026-08-27 14:40:37,004 - new_flow.flow - INFO - Resolver | incident=ab22b4583bc78710b6986f34c3e45a2d app=optimus
-╭────────────────────────────── Crew Completion ───────────────────────────────╮
-│                                                                              │
-│  Crew Execution Completed                                                    │
-│  Name: crew                                                                  │
-│  ID: 6978b2ab-9d65-4cc7-a086-5ee56aa38fab                                    │
-│  Final Output: # HISTORIC INCIDENT SEARCH RESULTS - FD Transactions Pending  │
-│                                                                              │
-│  ## Current Incident Analysis:                                               │
-│  - **Application:** Mobile/Net Banking                                       │
-│  - **Problem Category:** transaction_failure                                 │
-│  - **Customer UCIC:** 1040594758                                             │
-│  - **Issue:** Customer facing issue with FD transactions as pending          │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 1 (Similarity: 69.61%)                                  │
-│  **Incident ID:** INC000003578336                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer not able to see the FDs in the account in   │
-│  mobile app or netbanking both, customer is having 2crore of FDs and afraid  │
-│  of this issue.                                                              │
-│                                                                              │
-│  **Description:** Customer is not able to see the FDs in the account in      │
-│  mobile app or netbanking both, customer is having 2crore of FDs and afraid  │
-│  of this issue. kindly resolve asap                                          │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Signatory relationship is not maintained for FD accounts  │
-│  - **Resolution Code:** Solved (Permanently)                                 │
-│  - **Resolution Notes:** "Hi Mayank, As checked the signatory relationship   │
-│  is not maintained for FD accounts. Please liaise up liability support desk  │
-│  team for the same. UCIC ID - 6266176864 ++Liability support desk team."     │
-│                                                                              │
-│  **Key Action Required:** Liaise with Liability Support Desk team to         │
-│  maintain signatory relationship for FD accounts                             │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 2 (Similarity: 68.63%)                                  │
-│  **Incident ID:** INC000003663579                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer Mutual fund amount is not debited from a/c  │
-│  and on application customer is getting error of request pending.            │
-│                                                                              │
-│  **Description:** Customer Mutual fund amount is not debited from a/c and    │
-│  on application customer is getting error of request pending. and customer   │
-│  is not able to track the MF. Error:- technology can be difficult some time  │
-│  unable to process you request tried the movement try again after some       │
-│  time.                                                                       │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Transaction pending at backend, fund status showing       │
-│  accepted                                                                    │
-│  - **Resolution Code:** Solved (Permanently)                                 │
-│  - **Resolution Notes:** "Hi Riya, The fund will reflect in 3 to 5 working   │
-│  days. Also, we checked, the fund status is showing accepted at our end,     │
-│  please liaise up with @LiabilitySupportDsk for the fund status. We have     │
-│  dropped mail to them. Please take follow up with them."                     │
-│                                                                              │
-│  **Key Action Required:**                                                    │
-│  1. Check if fund status is showing as accepted at backend                   │
-│  2. Liaise with Liability Support Desk for fund status                       │
-│  3. Inform customer that fund will reflect in 3-5 working days               │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 3 (Similarity: 67.75%)                                  │
-│  **Incident ID:** INC000005198562                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer is unable to create transactions from his   │
-│  account and sweep active FD                                                 │
-│                                                                              │
-│  **Description:** Customer is unable to do payment from her sweep FD.        │
-│  Details are mentioned below. Customer Name: Rina Kundu, UCIC Id:            │
-│  6488877448, A/c No: 10193408048                                             │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Insufficient information from customer to investigate     │
-│  - **Resolution Code:** Solved (Permanently) - Ticket closed due to no       │
-│  response                                                                    │
-│  - **Resolution Notes:** "As we haven't received any update from your end.   │
-│  We can't keep the ticket long pending. Without complete details we are      │
-│  unable to check the exact issue Hence we are closing the ticket. Kindly     │
-│  raise new ticket with complete details."                                    │
-│                                                                              │
-│  **Key Action Required:**                                                    │
-│  1. Request customer to provide error occurrence date and time               │
-│  2. Request error description/message to check backend logs                  │
-│  3. Check if sweep-in facility is getting initiated                          │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 4 (Similarity: 68.26%)                                  │
-│  **Incident ID:** INC000007784459                                            │
-│  **Assignment Group:** N/A                                                   │
-│                                                                              │
-│  **Short Description:** Customer not able to closed FD and also FD amount    │
-│  not reflecting in MB. When customer trying to close on deposit option       │
-│  after that customer not getting FD account details and MB continuously      │
-│  loads from last 5 days                                                      │
-│                                                                              │
-│  **Description:** Customer not able to closed FD and also FD amount not      │
-│  reflecting in MB. When customer trying to close on deposit option after     │
-│  that customer not getting FD account details and MB continuesely load from  │
-│  last 5 days                                                                 │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Customer having 325+ FD/RD accounts (ACTIVE and CLOSED)   │
-│  - pagination issue                                                          │
-│  - **Resolution Code:** Solved (Permanently)                                 │
-│  - **Resolution Notes:** "We did the detailed analysis of the issue below    │
-│  are the findings. Issue description: -customer is facing issue to check     │
-│  FD's from MB/NB. Corrective Action: - Mentioned customer is having 325+     │
-│  FD/RD accounts (ACTIVE and CLOSED) so such type of issue required           │
-│  pagination. As checked, customer having 325 FD/RD (Active/close) accounts.  │
-│  We have added UCIC (1049563845) in toggle - RAS_DEPOSITS_PAGINATION.        │
-│  Please ask user to recheck now & confirm the same."                         │
-│                                                                              │
-│  **Key Action Required:**                                                    │
-│  1. Check if customer has large number of FD/RD accounts                     │
-│  2. Add UCIC in toggle RAS_DEPOSITS_PAGINATION                               │
-│  3. Ask customer to recheck after toggle is enabled                          │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 5 (Similarity: 0.25%)                                   │
-│  **Incident ID:** INC000005593917                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer facing issue for liquidating FD - FD        │
-│  closing issue with "Max retries exceeded" error                             │
-│                                                                              │
-│  **Description:** Customer facing issue for liquidating FD. Bank             │
-│  verification got failed for liquidating the FD and the customer has tried   │
-│  many times due to which getting error as "Max retries exceeded". Karza      │
-│  Service Error: ErrorCode: ERR_BANK_ACCOUNT_VERIFICATION_FAILED,             │
-│  ErrorMessage: Failed Bank Account Details Verification                      │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Bank account verification failed due to KARZA service -   │
-│  Max retries exceeded                                                        │
-│  - **Resolution Code:** successful                                           │
-│  - **Resolution Notes:** "Resolution: Customer can try after 30 days as the  │
-│  look in period is set 30 days by the KARZA. Customer can try with any       │
-│  other bank account where the bank account name is similar to the FD         │
-│  account name."                                                              │
-│                                                                              │
-│  **Key Action Required:**                                                    │
-│  1. Check KARZA bank account verification status                             │
-│  2. If "Max retries exceeded" - customer must wait 30 days (KARZA look-in    │
-│  period)                                                                     │
-│  3. Suggest customer try with bank account where name matches FD account     │
-│  name                                                                        │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SUMMARY OF KEY TROUBLESHOOTING STEPS:                                    │
-│                                                                              │
-│  1. **Check Backend Status:** Verify FD status in backend system - check if  │
-│  transaction is showing as accepted/pending                                  │
-│                                                                              │
-│  2. **Verify Signatory Relationship:** For FD visibility issues, check if    │
-│  signatory relationship is maintained for FD accounts                        │
-│                                                                              │
-│  3. **Liaise with Liability Support Desk:** For pending transactions,        │
-│  escalate to Liability Support Desk team for fund status verification        │
-│                                                                              │
-│  4. **Check Account Volume:** For loading/pagination issues, check if        │
-│  customer has 300+ FD/RD accounts - may need to enable                       │
-│  RAS_DEPOSITS_PAGINATION toggle                                              │
-│                                                                              │
-│  5. **KARZA Verification Issues:** For FD liquidation failures with "Max     │
-│  retries exceeded" - customer must wait 30 days or try with matching bank    │
-│  account name                                                                │
-│                                                                              │
-│  6. **Request Complete Details:** Always request error occurrence date/time  │
-│  and error description to check backend logs                                 │
-│                                                                              │
-│  7. **Timeline Expectation:** Inform customer that some fund transfers may   │
-│  take 3-5 working days to reflect                                            │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## PATTERNS & COMMON SOLUTIONS:                                             │
-│                                                                              │
-│  - **FD Not Visible:** Signatory relationship not maintained → Liaise with   │
-│  Liability Support Desk                                                      │
-│  - **Transaction Pending:** Check backend status → Liaise with Liability     │
-│  Support Desk → May take 3-5 working days                                    │
-│  - **FD Not Loading:** Large number of accounts → Enable                     │
-│  RAS_DEPOSITS_PAGINATION toggle                                              │
-│  - **FD Liquidation Failed:** KARZA verification failed → Wait 30 days or    │
-│  use matching bank account name                                              │
-│  - **Insufficient Info:** Request date/time and error description to         │
-│  investigate in logs                                                         │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭────────────────────────── ✅ Flow Method Completed ──────────────────────────╮
-│                                                                              │
-│  Method: semantic_search                                                     │
-│  Status: Completed                                                           │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────── 🔄 Flow Method Running ───────────────────────────╮
-│                                                                              │
-│  Method: run_resolver_crew                                                   │
-│  Status: Running                                                             │
-│                                                                              │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-
-
-2026-08-27 14:40:37,139 - new_flow.flow - INFO - agents.plan_agent import PlanOutput=optimus
-14:40:37 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:40:37,147 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:40:41 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-27 14:40:41,952 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-14:40:41 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:40:41,953 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:40:44 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-27 14:40:44,588 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-14:40:44 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:40:44,589 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:40:48 - LiteLLM:INFO: utils.py:1307 - Wrapper: Completed Call, calling success_handler
-2026-08-27 14:40:48,088 - LiteLLM - INFO - Wrapper: Completed Call, calling success_handler
-2026-08-27 14:40:48,088 - crewai.utilities.reasoning_handler - WARNING - Agent planning reached maximum attempts (3) without being ready. Proceeding with current plan.
-14:40:48 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:40:48,092 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-╭────────────────────────────── 🤖 Agent Started ──────────────────────────────╮
-│                                                                              │
-│  Agent: Triage Analyst                                                       │
-│                                                                              │
-│  Task: Analyze the following investigation results and create a plan:        │
-│                                                                              │
-│  === INCIDENT ANALYSIS (from Intent Classifier) ===                          │
-│                                                                              │
-│  Incident Summary:                                                           │
-│  - Application: Mobile/Net Banking                                           │
-│  - Problem Category: transaction_failure                                     │
-│                                                                              │
-│  Customer Identifiers:                                                       │
-│  - ucic: 1040594758                                                          │
-│  - customer_id: 1040594758                                                   │
-│                                                                              │
-│  LLM Analysis:                                                               │
-│  - User Goal: Customer is facing issue with his FD transactions as pending   │
-│  - Issue Description: Customer is facing issue with his FD transactions as   │
-│  pending                                                                     │
-│  - Problem Summary: Customer is facing issue with his FD transactions as     │
-│  pending                                                                     │
-│                                                                              │
-│  Original Description:                                                       │
-│  Short Description: Customer is facing issue with his FD transactions as     │
-│  pending                                                                     │
-│  Description: Customer is facing issue with his FD transactions as pending   │
-│                                                                              │
-│  Please investigate this issue starting with Similarity Search               │
-│  for similar historic incidents, then check Jaeger traces to                 │
-│  understand the current error context.                                       │
-│                                                                              │
-│                                                                              │
-│  === SIMILARITY SEARCH RESULTS ===                                           │
-│  # HISTORIC INCIDENT SEARCH RESULTS - FD Transactions Pending                │
-│                                                                              │
-│  ## Current Incident Analysis:                                               │
-│  - **Application:** Mobile/Net Banking                                       │
-│  - **Problem Category:** transaction_failure                                 │
-│  - **Customer UCIC:** 1040594758                                             │
-│  - **Issue:** Customer facing issue with FD transactions as pending          │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 1 (Similarity: 69.61%)                                  │
-│  **Incident ID:** INC000003578336                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer not able to see the FDs in the account in   │
-│  mobile app or netbanking both, customer is having 2crore of FDs and afraid  │
-│  of this issue.                                                              │
-│                                                                              │
-│  **Description:** Customer is not able to see the FDs in the account in      │
-│  mobile app or netbanking both, customer is having 2crore of FDs and afraid  │
-│  of this issue. kindly resolve asap                                          │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Signatory relationship is not maintained for FD accounts  │
-│  - **Resolution Code:** Solved (Permanently)                                 │
-│  - **Resolution Notes:** "Hi Mayank, As checked the signatory relationship   │
-│  is not maintained for FD accounts. Please liaise up liability support desk  │
-│  team for the same. UCIC ID - 6266176864 ++Liability support desk team."     │
-│                                                                              │
-│  **Key Action Required:** Liaise with Liability Support Desk team to         │
-│  maintain signatory relationship for FD accounts                             │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 2 (Similarity: 68.63%)                                  │
-│  **Incident ID:** INC000003663579                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer Mutual fund amount is not debited from a/c  │
-│  and on application customer is getting error of request pending.            │
-│                                                                              │
-│  **Description:** Customer Mutual fund amount is not debited from a/c and    │
-│  on application customer is getting error of request pending. and customer   │
-│  is not able to track the MF. Error:- technology can be difficult some time  │
-│  unable to process you request tried the movement try again after some       │
-│  time.                                                                       │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Transaction pending at backend, fund status showing       │
-│  accepted                                                                    │
-│  - **Resolution Code:** Solved (Permanently)                                 │
-│  - **Resolution Notes:** "Hi Riya, The fund will reflect in 3 to 5 working   │
-│  days. Also, we checked, the fund status is showing accepted at our end,     │
-│  please liaise up with @LiabilitySupportDsk for the fund status. We have     │
-│  dropped mail to them. Please take follow up with them."                     │
-│                                                                              │
-│  **Key Action Required:**                                                    │
-│  1. Check if fund status is showing as accepted at backend                   │
-│  2. Liaise with Liability Support Desk for fund status                       │
-│  3. Inform customer that fund will reflect in 3-5 working days               │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 3 (Similarity: 67.75%)                                  │
-│  **Incident ID:** INC000005198562                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer is unable to create transactions from his   │
-│  account and sweep active FD                                                 │
-│                                                                              │
-│  **Description:** Customer is unable to do payment from her sweep FD.        │
-│  Details are mentioned below. Customer Name: Rina Kundu, UCIC Id:            │
-│  6488877448, A/c No: 10193408048                                             │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Insufficient information from customer to investigate     │
-│  - **Resolution Code:** Solved (Permanently) - Ticket closed due to no       │
-│  response                                                                    │
-│  - **Resolution Notes:** "As we haven't received any update from your end.   │
-│  We can't keep the ticket long pending. Without complete details we are      │
-│  unable to check the exact issue Hence we are closing the ticket. Kindly     │
-│  raise new ticket with complete details."                                    │
-│                                                                              │
-│  **Key Action Required:**                                                    │
-│  1. Request customer to provide error occurrence date and time               │
-│  2. Request error description/message to check backend logs                  │
-│  3. Check if sweep-in facility is getting initiated                          │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 4 (Similarity: 68.26%)                                  │
-│  **Incident ID:** INC000007784459                                            │
-│  **Assignment Group:** N/A                                                   │
-│                                                                              │
-│  **Short Description:** Customer not able to closed FD and also FD amount    │
-│  not reflecting in MB. When customer trying to close on deposit option       │
-│  after that customer not getting FD account details and MB continuously      │
-│  loads from last 5 days                                                      │
-│                                                                              │
-│  **Description:** Customer not able to closed FD and also FD amount not      │
-│  reflecting in MB. When customer trying to close on deposit option after     │
-│  that customer not getting FD account details and MB continuesely load from  │
-│  last 5 days                                                                 │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Customer having 325+ FD/RD accounts (ACTIVE and CLOSED)   │
-│  - pagination issue                                                          │
-│  - **Resolution Code:** Solved (Permanently)                                 │
-│  - **Resolution Notes:** "We did the detailed analysis of the issue below    │
-│  are the findings. Issue description: -customer is facing issue to check     │
-│  FD's from MB/NB. Corrective Action: - Mentioned customer is having 325+     │
-│  FD/RD accounts (ACTIVE and CLOSED) so such type of issue required           │
-│  pagination. As checked, customer having 325 FD/RD (Active/close) accounts.  │
-│  We have added UCIC (1049563845) in toggle - RAS_DEPOSITS_PAGINATION.        │
-│  Please ask user to recheck now & confirm the same."                         │
-│                                                                              │
-│  **Key Action Required:**                                                    │
-│  1. Check if customer has large number of FD/RD accounts                     │
-│  2. Add UCIC in toggle RAS_DEPOSITS_PAGINATION                               │
-│  3. Ask customer to recheck after toggle is enabled                          │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SIMILAR INCIDENT 5 (Similarity: 0.25%)                                   │
-│  **Incident ID:** INC000005593917                                            │
-│  **Assignment Group:** Optimus BTO Support                                   │
-│                                                                              │
-│  **Short Description:** Customer facing issue for liquidating FD - FD        │
-│  closing issue with "Max retries exceeded" error                             │
-│                                                                              │
-│  **Description:** Customer facing issue for liquidating FD. Bank             │
-│  verification got failed for liquidating the FD and the customer has tried   │
-│  many times due to which getting error as "Max retries exceeded". Karza      │
-│  Service Error: ErrorCode: ERR_BANK_ACCOUNT_VERIFICATION_FAILED,             │
-│  ErrorMessage: Failed Bank Account Details Verification                      │
-│                                                                              │
-│  **Resolution:**                                                             │
-│  - **Root Cause:** Bank account verification failed due to KARZA service -   │
-│  Max retries exceeded                                                        │
-│  - **Resolution Code:** successful                                           │
-│  - **Resolution Notes:** "Resolution: Customer can try after 30 days as the  │
-│  look in period is set 30 days by the KARZA. Customer can try with any       │
-│  other bank account where the bank account name is similar to the FD         │
-│  account name."                                                              │
-│                                                                              │
-│  **Key Action Required:**                                                    │
-│  1. Check KARZA bank account verification status                             │
-│  2. If "Max retries exceeded" - customer must wait 30 days (KARZA look-in    │
-│  period)                                                                     │
-│  3. Suggest customer try with bank account where name matches FD account     │
-│  name                                                                        │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## SUMMARY OF KEY TROUBLESHOOTING STEPS:                                    │
-│                                                                              │
-│  1. **Check Backend Status:** Verify FD status in backend system - check if  │
-│  transaction is showing as accepted/pending                                  │
-│                                                                              │
-│  2. **Verify Signatory Relationship:** For FD visibility issues, check if    │
-│  signatory relationship is maintained for FD accounts                        │
-│                                                                              │
-│  3. **Liaise with Liability Support Desk:** For pending transactions,        │
-│  escalate to Liability Support Desk team for fund status verification        │
-│                                                                              │
-│  4. **Check Account Volume:** For loading/pagination issues, check if        │
-│  customer has 300+ FD/RD accounts - may need to enable                       │
-│  RAS_DEPOSITS_PAGINATION toggle                                              │
-│                                                                              │
-│  5. **KARZA Verification Issues:** For FD liquidation failures with "Max     │
-│  retries exceeded" - customer must wait 30 days or try with matching bank    │
-│  account name                                                                │
-│                                                                              │
-│  6. **Request Complete Details:** Always request error occurrence date/time  │
-│  and error description to check backend logs                                 │
-│                                                                              │
-│  7. **Timeline Expectation:** Inform customer that some fund transfers may   │
-│  take 3-5 working days to reflect                                            │
-│                                                                              │
-│  ---                                                                         │
-│                                                                              │
-│  ## PATTERNS & COMMON SOLUTIONS:                                             │
-│                                                                              │
-│  - **FD Not Visible:** Signatory relationship not maintained → Liaise with   │
-│  Liability Support Desk                                                      │
-│  - **Transaction Pending:** Check backend status → Liaise with Liability     │
-│  Support Desk → May take 3-5 working days                                    │
-│  - **FD Not Loading:** Large number of accounts → Enable                     │
-│  RAS_DEPOSITS_PAGINATION toggle                                              │
-│  - **FD Liquidation Failed:** KARZA verification failed → Wait 30 days or    │
-│  use matching bank account name                                              │
-│  - **Insufficient Info:** Request date/time and error description to         │
-│  investigate in logs                                                         │
-│                                                                              │
-│  === CONTEXT ===                                                             │
-│  Application: optimus                                                        │
-│  Problem Category: transaction_failure                                       │
-│  Customer Identifiers:                                                       │
-│    - ucic: 1040594758                                                        │
-│    - customer_id: 1040594758                                                 │
-│                                                                              │
-│  === SERVICE SELECTION GUIDE ===                                             │
-│                                                                              │
-│  Service names have to be filled as per the following rules:                 │
-│       idp-api -> Login/authentication/registration/ OTP related issues       │
-│       PAYMENTS-API -> Fund transfer problems                                 │
-│       bulk-payments-api -> Bulk transfer problems, bulk_ref_id has to be     │
-│  used here, this has to be referred here                                     │
-│       IPO-API -> Problems related to initial public offerings or IPOs, can   │
-│  only be queried using customer_id                                           │
-│       deposits-api -> Document download, deposit-related issues, FD related  │
-│  issue as well                                                               │
-│       CREDIT-CARD-API -> Credit card eligibility, statements, payments, and  │
-│  credit related issue/operations                                             │
-│       ecom-api -> ECOM transaction or ECOM payment and checkout issues, can  │
-│  only be queried using customer_id, txn_id, and txn_request_id               │
-│       WEALTH-API -> Issues related to mutual funds such as: View portfolio,  │
-│  Buy/purchase, Redeem mutual funds (Supports tags like customer_id,          │
-│  user_id, or session_tracing_id)                                             │
-│       DEBITCARD-API -> Issues related to debit cards such as: Viewing debit  │
-│  card details, Changing debit card limit, Other debit card related issues    │
-│  (Supports tags like customer_id, user_id)                                   │
-│       upi-api -> Issues related to UPI such as: Transaction, Payment, UPI    │
-│  ID, Link UPI Account                                                        │
-│       FX-API -> Issue related to Pay Abroad such as Transaction, payment,    │
-│  link account                                                                │
-│       kyc-service -> Issue related to PAN CARD or KYC such as Update,        │
-│  delete, Add Pan Card                                                        │
-│       beneficiary-api -> Issues related to adding or verifying               │
-│  beneficiaries or payees, such as: checking if a payee exists, verifying     │
-│  VPA, or failure to add a beneficiary                                        │
-│       EMANDATE -> Issues related to Aadhaar or mandate Create/Delete/Update  │
-│  operations                                                                  │
-│       CX-API -> Issue related to mobile, mobile number, email, email         │
-│  validation or email related issue                                           │
-│       INSURANCE-API -> Issues related to insurance such as: Unable to view   │
-│  insurance details                                                           │
-│       LAS-API -> Issues using LAS-API only (not Loan-API or Wealth-API),     │
-│  covering unclutch/withdraw units, delete sweep, view LAI details, and       │
-│  download LAI statements                                                     │
-│       REMITTANCE-API -> Issue related to remittance, invalid remittance or   │
-│  anything related to this keyword                                            │
-│       CAS-API -> Issues related to external mutual fund linking such as:     │
-│  Unable to link external mutual fund, Unable to get OTP while linking        │
-│  external mutual fund, Unable to complete OTP verification while linking     │
-│  external mutual fund, CAS related issues                                    │
-│       E-CHEQUE-API -> Issues related to cheque operations such as getting    │
-│  cheque details or status, placing checkbook requests, stopping or revoking  │
-│  cheques, and updating cheque information                                    │
-│       LOANS-API -> Issues related to loans such as: fetching loan details,   │
-│  downloading loan interest certificates, downloading provisional             │
-│  certificates, downloading welcome letters, downloading repayment schedules  │
-│       billpay-api -> Issues related to bill payments such as: Unable to      │
-│  fetch bill details, Unable to do bill payment, Unable to get biller         │
-│  categories, Unable to delete biller, Unable to raise bill disputes, Unable  │
-│  to fetch recharge plans, Bill payment failures, Biller management issues    │
-│  (Supports tags like customer_id, user_id, session_tracing_id, txn_id,       │
-│  mobile_number)                                                              │
-│       APPLY-FM-API -> Issues related to new loan applications such as:       │
-│  Unable to apply for loan, Unable to create loan, Unable to create loan      │
-│  lead, NTB (New to Bank) loan application issues, loan application failures  │
-│  (Supports tags like applicationId, ucic, mobile_number, customer_id,        │
-│  user_id)                                                                    │
-│                                                                              │
-│                                                                              │
-│                                                                              │
-│  === AVAILABLE JAEGER SERVICES ===                                           │
-│  Discovered 214 services from Jaeger:                                        │
-│                                                                              │
-│    - APPLY-FM-API                                                            │
-│    - APPLY-HL-API                                                            │
-│    - APPLY-LOAN-API                                                          │
-│    - APPLY-LOAN-API-MESSAGE-HANDLER                                          │
-│    - APPROVAL-API                                                            │
-│    - AUDITLOG-EVENT-CONSUMER                                                 │
-│    - AUTH-ADMIN-API                                                          │
-│    - AUTH-SERVICE                                                            │
-│    - AUTHZ-ADMIN-API                                                         │
-│    - AVC-API                                                                 │
-│    - BAS-API                                                                 │
-│    - BAS-API-MESSAGE-HANDLER                                                 │
-│    - BXP-LOGIN-PROVIDER                                                      │
-│    - CA-BO-MobileApp                                                         │
-│    - CARDLESS-CASH-WITHDRAWAL-API-MESSAGE-HANDLER                            │
-│    - CAS-API                                                                 │
-│    - CAS-API-MESSAGE-HANDLER                                                 │
-│    - CBS-DORMANCY                                                            │
-│    - CEL-UI                                                                  │
-│    - CHEQUE-CONSENT-SERVICE                                                  │
-│    - COVENANT-API                                                            │
-│    - CREDIT-CARD-ACQUISITION-OFFERS-MESSAGE-HANDLER                          │
-│    - CREDIT-CARD-API                                                         │
-│    - CREDIT-CARD-API-MESSAGE-HANDLER                                         │
-│    - CRON-JOBS                                                               │
-│    - CUSTOMER-ACQUISITION-SERVICE-MESSAGE-HANDLER                            │
-│    - CUSTOMER-FEEDBACK-SERVICE                                               │
-│    - CUSTOMER-LOGIN-PROVIDER                                                 │
-│    - CX-API                                                                  │
-│    - DEAF-API                                                                │
-│    - DEBITCARD-API                                                           │
-│    - DEMAT-API                                                               │
-│    - DEPOSITS-API-MESSAGE-HANDLER                                            │
-│    - DEVICE-FINGERPRINT-SERVICE                                              │
-│    - DEVICE-MANAGEMENT-SERVICE                                               │
-│    - DEVICE-MANAGEMENT-SERVICE-CS-MESSAGE-HANDLER                            │
-│    - DOCUMENT-MANAGEMENT-SERVICE                                             │
-│    - DSB-API                                                                 │
-│    - E-CHEQUE-API                                                            │
-│    - ECOM-MERCHANT-LOGIN-PROVIDER                                            │
-│    - ECOM-UI-WEB                                                             │
-│    - EMANDATE                                                                │
-│    - EMPLOYEE-LOGIN-PROVIDER                                                 │
-│    - ENTERPRISE-AUTHORIZATION-SERVICE                                        │
-│    - ESIGN-API                                                               │
-│    - EXTERNAL-LOGIN-PROVIDER                                                 │
-│    - FAQ-API                                                                 │
-│    - FEATURE-TOGGLE-API                                                      │
-│    - FEATURE-TOGGLE-API-MESSAGE-HANDLER                                      │
-│    - FRAUD-MONITORING-SERVICE                                                │
-│    - FX-API                                                                  │
-│    - FX-API-MESSAGE-HANDLER                                                  │
-│    - GRADE-API                                                               │
-│    - GRADE_API_APPLAUNCH_MESSAGE_HANDLER                                     │
-│    - GRADE_API_MESSAGE_HANDLER                                               │
-│    - GST-API                                                                 │
-│    - HYDRA-MANAGER-API                                                       │
-│    - INSURANCE-API                                                           │
-│    - IPO-API                                                                 │
-│    - KORE-AI-EVENT-CONSUMER                                                  │
-│    - KRATOS-CSR                                                              │
-│    - KRATOS-QUANTUMCASH                                                      │
-│    - KRATOS-TRADEX                                                           │
-│    - KYC-SERVICE-MESSAGE-HANDLER                                             │
-│    - LAI-API-MESSAGE-HANDLER                                                 │
-│    - LAS-API                                                                 │
-│    - LIABILITY-PLATFORM-MESSAGE-HANDLER                                      │
-│    - LOANS-API                                                               │
-│    - LOANS-API-MESSAGE-HANDLER                                               │
-│    - LOGIN-AUDITLOG-EVENT-CONSUMER                                           │
-│    - MANDATE-HUB-API                                                         │
-│    - MDH-MESSAGE-HANDLER                                                     │
-│    - MDS-MDH-MESSAGE-HANDLER                                                 │
-│    - MERCHANT-ONBOARDING-API                                                 │
-│    - MERCHANT-ONBOARDING-API-MESSAGE-HANDLER                                 │
-│    - METADATA-SERVICE                                                        │
-│    - MF-COMPLIANCE-API                                                       │
-│    - MF-COMPLIANCE-API-MESSAGE-HANDLER                                       │
-│    - MIGRATION-API                                                           │
-│    - MOCK-MESSAGE-EXCHANGE-SERVICE                                           │
-│    - Mobile-app                                                              │
-│    - NR-API                                                                  │
-│    - NTB-FD-STABLE-MONEY-MESSAGE-HANDLER                                     │
-│    - OAUTH-SERVER                                                            │
-│    - OFFERS-DATAMART-API                                                     │
-│    - OFFERS-DATAMART-API-MESSAGE-HANDLER                                     │
-│    - ON-API                                                                  │
-│    - OPS-USER-API                                                            │
-│    - OPTIMUS-AUTH-INTEGRATION-API                                            │
-│    - OPTIMUS-EVENT-CONSUMER                                                  │
-│    - OPTIMUS-PRIME-API                                                       │
-│    - OVERDRAFT-API                                                           │
-│    - PAYMENT-GATEWAY-SERVICE                                                 │
-│    - PDF-API                                                                 │
-│    - RAS-API                                                                 │
-│    - RAS-API-MDH-MESSAGE-HANDLER                                             │
-│    - RAS-API-MESSAGE-HANDLER                                                 │
-│    - RE-KYC-API                                                              │
-│    - REDIS-EXPIRED-EVENT-CONSUMER                                            │
-│    - REWARDS-INTEGRATION-API                                                 │
-│    - RFX-INWARD-API                                                          │
-│    - RISK-CONTROL-API                                                        │
-│    - RISK-CONTROL-BIOCATCH-DATA-CONSUMER                                     │
-│    - RISK-CONTROL-CUSTOMER-DATA-CONSUMER                                     │
-│    - RISK-CONTROL-CUSTOMER-FAILURE-LOGIN-DATA-CONSUMER                       │
-│    - RISK-CONTROL-FINGERPRINT-DATA-CONSUMER                                  │
-│    - RISK-CONTROL-FRAUD-RISK-INDICATOR-DATA-CONSUMER                         │
-│    - RISK-CONTROL-IP-PROFILE-TRUST-VALIDATION-DATA-CONSUMER                  │
-│    - RISK-CONTROL-RASP-THREAT-DETECTION-ALERT-DATA-CONSUMER                  │
-│    - RISK-CONTROL-REQUEST-DATA-CONSUMER                                      │
-│    - RISK-CONTROL-SERVICE                                                    │
-│    - RISK-CONTROL-SUSPECT-DATA-CONSUMER                                      │
-│    - SALARY-OD-API                                                           │
-│    - SECUREPASS-AUTHENTICATOR                                                │
-│    - SERVICE-REQUEST-API                                                     │
-│    - SESSION-MANAGEMENT-SERVICE                                              │
-│    - SESSION-TRANSFER-SERVICE                                                │
-│    - SGB-API                                                                 │
-│    - SSO-API                                                                 │
-│    - TOKEN-MANAGEMENT-SERVICE                                                │
-│    - TRACING-API                                                             │
-│    - UI-FM-MICROSITE                                                         │
-│    - UI-WEB                                                                  │
-│    - USER-PROFILE-API-MESSAGE-HANDLER                                        │
-│    - USER-PROFILE-SVC                                                        │
-│    - USER-SESSION-ACTIVITY-EVENT-CONSUMER                                    │
-│    - WALLET-INTEGRATION-API                                                  │
-│    - WEALTH-API                                                              │
-│    - WEALTH-API-MESSAGE-HANDLER                                              │
-│    - WEALTH-API-VALUEFY-MESSAGE-HANDLER                                      │
-│    - account-aggregator-api                                                  │
-│    - account-aggregator-api-bureau-accounts-handler                          │
-│    - account-aggregator-api-external-message-handler                         │
-│    - account-aggregator-api-message-handler                                  │
-│    - account-aggregator-api-tsp-consent-handler                              │
-│    - account-aggregator-api-tsp-data-ready-handler                           │
-│    - ai-chat-optimus-adapter                                                 │
-│    - ai-chat-service                                                         │
-│    - ai-voice-optimus-adapter                                                │
-│    - apply-pl-api                                                            │
-│    - approval-workflow-engine                                                │
-│    - assisted-service                                                        │
-│    - beneficiary-api                                                         │
-│    - billpay-api                                                             │
-│    - billpay-api-message-handler                                             │
-│    - bulk-payments-api                                                       │
-│    - bulk-payments-api-message-handler                                       │
-│    - cardless-cash-withdrawal                                                │
-│    - cel-arap                                                                │
-│    - cel-auth                                                                │
-│    - cel-core                                                                │
-│    - cel-cron-executor                                                       │
-│    - cel-erp-invoice-ingestion                                               │
-│    - cel-investment                                                          │
-│    - cel-orch                                                                │
-│    - cel-schedule                                                            │
-│    - cel-smart-collection                                                    │
-│    - cel-tax-payment                                                         │
-│    - channel-service                                                         │
-│    - corporate-portal-api                                                    │
-│    - crypto-service                                                          │
-│    - customer-acquisition-service                                            │
-│    - customer-communication-gateway                                          │
-│    - customer-details-service                                                │
-│    - deposits-api                                                            │
-│    - deposits-api-cdms-message-handler                                       │
-│    - deposits-api-giftwrapper-cbs-message-handler                            │
-│    - ecom-api                                                                │
-│    - email-verification-api                                                  │
-│    - event-tracker-service                                                   │
-│    - fastag-service                                                          │
-│    - fastag-service-message-handler                                          │
-│    - fi-curing-api                                                           │
-│    - fx_temporal_worker_name                                                 │
-│    - gestalt                                                                 │
-│    - grafana                                                                 │
-│    - hydra-version-routing-service                                           │
-│    - idp-api                                                                 │
-│    - idp-api-message-handler                                                 │
-│    - jaeger                                                                  │
-│    - kyc-service                                                             │
-│    - lic-agent-portal-api                                                    │
-│    - login-event-consumer                                                    │
-│    - mapper-api                                                              │
-│    - mdh-data-service                                                        │
-│    - message-exchange-service                                                │
-│    - msme-tally-integrator-api                                               │
-│    - msme-tally-processor-api                                                │
-│    - multifactor-authentication-api                                          │
-│    - nginx                                                                   │
-│    - onboarding                                                              │
-│    - optimus-notification-service                                            │
-│    - optimus-notification-service-message-handler                            │
-│    - optimus-offers-service                                                  │
-│    - payments-api                                                            │
-│    - payments-api-message-handler                                            │
-│    - pfm-api                                                                 │
-│    - pfm-api-message-handler                                                 │
-│    - pfm-api-realtime-txn-message-handler                                    │
-│    - platform-service                                                        │
-│    - platform-service-message-handler                                        │
-│    - risk-monitor-api                                                        │
-│    - socket-tracing-service                                                  │
-│    - tfx-deal                                                                │
-│    - tfx-remittance-api                                                      │
-│    - tfx-sso-integration-service                                             │
-│    - totp-service                                                            │
-│    - traefik-infra                                                           │
-│    - transaction-insights-api                                                │
-│    - universal-search-api                                                    │
-│    - upcoming-api                                                            │
-│    - upi-api                                                                 │
-│    - upi-api-message-handler                                                 │
-│    - user-profile-api-cdms-message-handler                                   │
-│                                                                              │
-│  Note: These are ALL services that have sent traces in the last 1 hour.      │
-│  Use any service name directly with fetch_jaeger_traces tool.                │
-│                                                                              │
-│  Do NOT call any tools. Do not attempt a tool call of any kind. Take         │
-│  reference and help from service_guide_section to choose service  Based      │
-│  only on the text above, output your analysis in this exact format:          │
-│                                                                              │
-│  ISSUE_UNDERSTOOD: yes/no                                                    │
-│  ISSUE_SUMMARY: [brief description of what the issue likely is, based on     │
-│  similarity search]                                                          │
-│  SERVICE: [pick the single most relevant service name, copied EXACTLY as     │
-│  written you can Take reference and help from service_guide_section to       │
-│  choose servicefrom the AVAILABLE JAEGER SERVICES list above. If the list    │
-│  is empty or none apply, write NONE]                                         │
-│  NEXT_STEPS: [what Execute Agent should investigate]                         │
-│  NEEDS_MORE_INFO: yes/no                                                     │
-│  QUESTION_FOR_USER: [if needs more info, what to ask]                        │
-│                                                                              │
-│                                                                              │
-│  Planning:                                                                   │
-│                                                                              │
-│                                                                              │
-│  REFINED_PLAN:                                                               │
-│                                                                              │
-│  ISSUE_UNDERSTOOD: yes                                                       │
-│  ISSUE_SUMMARY: Customer facing FD transactions showing as pending in        │
-│  Mobile/Net Banking. Root cause likely backend processing delay or           │
-│  signatory relationship issue.                                               │
-│  SERVICE: deposits-api                                                       │
-│                                                                              │
-│  NEXT_STEPS:                                                                 │
-│  1. Query Jaeger traces for deposits-api using customer UCIC 1040594758 to   │
-│  trace recent FD activity                                                    │
-│  2. Check backend FD transaction status - verify if                          │
-│  accepted/pending/rejected                                                   │
-│  3. Verify signatory relationship maintenance for FD accounts linked to      │
-│  UCIC 1040594758                                                             │
-│  4. If pending, escalate to Liability Support Desk for fund status           │
-│  verification                                                                │
-│  5. Communicate expected timeline (3-5 working days) or resolution to        │
-│  customer                                                                    │
-│                                                                              │
-│  NEEDS_MORE_INFO: no                                                         │
-│                                                                              │
-│  READY                                                                       │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
 │                                                                              │
 │  Agent: Triage Analyst                                                       │
 │                                                                              │
@@ -858,128 +6,141 @@ LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
 │                                                                              │
 │                                                                              │
 │  ISSUE_UNDERSTOOD: yes                                                       │
-│  ISSUE_SUMMARY: Customer facing FD transactions showing as pending in        │
-│  Mobile/Net Banking. Based on similar historic incidents, this could be due  │
-│  to backend processing delay, signatory relationship not maintained for FD   │
-│  accounts, or transaction pending at backend system.                         │
-│  SERVICE: deposits-api                                                       │
-│  NEXT_STEPS:                                                                 │
-│  1. Query Jaeger traces for deposits-api using customer UCIC 1040594758 to   │
-│  trace recent FD transaction activity                                        │
-│  2. Check backend FD transaction status - verify if transaction is showing   │
-│  as accepted/pending/rejected                                                │
-│  3. Verify if signatory relationship is maintained for FD accounts linked    │
-│  to UCIC 1040594758                                                          │
-│  4. If transaction is pending, escalate to Liability Support Desk for fund   │
-│  status verification                                                         │
-│  5. Inform customer about expected timeline (3-5 working days) if fund is    │
-│  showing as accepted at backend                                              │
+│  ISSUE_SUMMARY: Customer is unable to view details or discrepancies in       │
+│  their generated investment report. Based on similarity search, this         │
+│  appears to be related to investment/portfolio visibility issues in the      │
+│  mobile app, potentially involving external mutual fund visibility, KYC      │
+│  status, or data synchronization problems between platforms.                 │
+│  SERVICE: WEALTH-API                                                         │
+│  NEXT_STEPS: 1) Fetch Jaeger traces from WEALTH-API for customer_id          │
+│  1041409075 to understand the investment report request flow and error       │
+│  context. 2) Check if external mutual fund holdings (CAS-API data) are       │
+│  properly visible to the customer. 3) Verify KYC status via kyc-service to   │
+│  ensure complete KYC for report generation. 4) Compare portfolio data from   │
+│  WEALTH-API vs CAS-API to identify specific discrepancies. 5) If issue       │
+│  persists, try browser workaround or app reinstall as suggested in similar   │
+│  historic incidents.                                                         │
 │  NEEDS_MORE_INFO: no                                                         │
 │  QUESTION_FOR_USER:                                                          │
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-2026-08-27 14:40:50,410 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
-2026-08-27 14:40:50,410 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: deposits-api, Tag: customer_id=1040594758
-2026-08-27 14:40:50,410 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
-2026-08-27 14:40:50,410 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=deposits-api, tag=customer_id=1040594758
-2026-08-27 14:40:50,410 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=deposits-api customer_id=1040594758 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'deposits-api', 'start': 1787755250410513, 'end': 1787841650410513, 'limit': 100, 'tags': '{"customer_id": "1040594758"}'}
-2026-08-27 14:40:55,797 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=5
-2026-08-27 14:40:55,801 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/5] traceID=e6e861053eb10b568d58d2f596ce454e http_codes={'200', '404', '400'} error_flag=True error_logs_count=24 classified=ERROR
-2026-08-27 14:40:55,834 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/5] traceID=876f7cfb6996a1a831f8f84458c87253 http_codes={'204', '200', '404', '202', '401', '400'} error_flag=True error_logs_count=229 classified=ERROR
-2026-08-27 14:40:55,852 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/5] traceID=4c3cf2d3ef42b9fea89f53b12f757461 http_codes={'204', '200', '404', '202', '401', '400'} error_flag=True error_logs_count=101 classified=ERROR
-2026-08-27 14:40:55,855 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/5] traceID=3afec973efaeebebf5f6902da5c21818 http_codes={'200'} error_flag=False error_logs_count=5 classified=ERROR
-2026-08-27 14:40:55,886 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/5] traceID=e780d2492213efef9dbdf737e3f86aee http_codes={'204', '200', '404', '202', '401', '400'} error_flag=True error_logs_count=232 classified=ERROR
-2026-08-27 14:40:55,886 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=5 failed=5 happy_endpoints=0 sessions=4 success_sessions=0
-2026-08-27 14:40:55,897 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=deposits-api tag=customer_id=1040594758 range=0-24h ago total_scanned=5 failed_traces_count=5 happy_hits={} sessions=4 success_sessions=0 error=None
-2026-08-27 14:40:55,897 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-27 15:49:19 IST
-8eff440d3382aebe - account-aggregator-api - /api/account-aggregator-api/v2/networth/get-balance
-    53ba75c7c1c19667 - account-aggregator-api - http://user-profile-api-svc:8080/api/user-profile/v1/get-active-profile
-        c505561d30665165 - USER-PROFILE-SVC - /api/user-profile/v1/get-active-profile
-        HTTP Status: 200
-          ERROR: ProfileCacheProvider.GetProfilePreferences: Error in fetching profile Preference. Error: &{404 4 Profile not found}
-          
-2026-08-27 14:40:55,897 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-27 15:31:17 IST
-Time: 2026-08-27 15:31:18 IST
-c9c1d58b8be924a6 - INSURANCE-API - /api/internal/insurance/v1/process-message/topics/mobile-app-user-profile
-HTTP Status: 200
-  ERROR [SmsIntrospectionServiceV2.addIdTokenToContext]: Received nil id token. returning id token not found error
-    a0dbe35f12e0fec0 - INSURANCE-API - /api/internal/insurance/v1/process-message/topics/mobile-app-user-profile | request/response
-    HTTP Status: 200
-      request: BASE64_ENCODED_CONTENT: eyJyZXN
-2026-08-27 14:40:55,897 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-27 12:57:24 IST
-Time: 2026-08-27 12:57:23 IST
-8bb8803d9efb63cc - nginx - /api/message-exchange-service-proxy/v1/subscribe/deviceId/72073dbbb439830f
-    db6045025ea11b5e - message-exchange-service - /internal/api/message-exchange-service/v1/subscribe/deviceId/:channel
-        4fe3e2313cb8412b - message-exchange-service - async | kafka-publish | OPTIMUS-PUSH-ARCH-MOBILE-APP-UAT
-            bf4c8dce6be0b211 - message-exchange-service - kafka-publish | OPTIMUS-PUSH-ARCH-MOBILE-APP-UAT
+2026-08-27 14:44:33,143 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-08-27 14:44:33,143 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: WEALTH-API, Tag: customer_id=1041409075
+2026-08-27 14:44:33,143 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-27 14:44:33,143 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=WEALTH-API, tag=customer_id=1041409075
+2026-08-27 14:44:33,143 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=WEALTH-API customer_id=1041409075 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'WEALTH-API', 'start': 1787755473143903, 'end': 1787841873143903, 'limit': 100, 'tags': '{"customer_id": "1041409075"}'}
+2026-08-27 14:44:34,740 - new_flow.utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-27 14:44:35,985 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=13
+2026-08-27 14:44:35,991 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/13] traceID=3424d5875a226dfce3686b21f36fe458 http_codes={'200', '202', '404', '401', '204'} error_flag=True error_logs_count=47 classified=ERROR
+2026-08-27 14:44:35,995 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/13] traceID=9dfe0db10a29a0cda238583ab5b5e404 http_codes={'200', '202', '404', '401', '204'} error_flag=True error_logs_count=47 classified=ERROR
+2026-08-27 14:44:36,001 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/13] traceID=c11bb1b028b7e4859d04980866bdf31f http_codes={'200', '202', '404', '401', '204'} error_flag=True error_logs_count=51 classified=ERROR
+2026-08-27 14:44:36,005 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/13] traceID=f0e17f5d1fdd5816c2f5c2a215022e5d http_codes={'200', '202', '404', '401', '204'} error_flag=True error_logs_count=47 classified=ERROR
+2026-08-27 14:44:36,009 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/13] traceID=4fab764fd052fa788a4a006cb784c5ab http_codes={'200', '202', '404', '401', '204'} error_flag=True error_logs_count=52 classified=ERROR
+2026-08-27 14:44:36,024 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/13] traceID=8f1024afff7aefd19c0340a6de1c5fe4 http_codes={'200', '202', '404', '401', '204'} error_flag=True error_logs_count=86 classified=ERROR
+2026-08-27 14:44:36,024 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/13] traceID=806430356971b68b4b211e815ec54692 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-27 14:44:36,025 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/13] traceID=df3cf17a99804d1387dbb63bd6ac3575 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-27 14:44:36,025 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/13] traceID=ea880f6b192b62e5a500b6282f2389f6 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-27 14:44:36,025 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/13] traceID=220c3ce4e37dca2edd6b23bdc098afcc http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-27 14:44:36,026 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/13] traceID=2341323b10829908ca121d4dcb520205 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-27 14:44:36,027 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/13] traceID=15e1c4352ce74ca59d05577da2de707d http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-08-27 14:44:36,032 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/13] traceID=bf489f59c078aa4265fa4b079a681646 http_codes={'200', '202', '404', '401', '204'} error_flag=True error_logs_count=53 classified=ERROR
+2026-08-27 14:44:36,032 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=13 failed=7 happy_endpoints=6 sessions=4 success_sessions=1
+2026-08-27 14:44:36,041 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=WEALTH-API tag=customer_id=1041409075 range=0-24h ago total_scanned=13 failed_traces_count=7 happy_hits={'0f481ba14e2bd00f - WEALTH-API - /api/wl/v1/goals/categories': 1, '73c2d8ab8c9eee5e - WEALTH-API - /api/wl/v1/mutualFund/transactions': 1, 'aba5fd9eeb80d683 - WEALTH-API - /api/wl/v1/mutualFund/v3': 1, 'a502cd7f8a55f15c - WEALTH-API - /api/wl/v1/mutualFund/v3': 1, '36b664c96731e270 - WEALTH-API - /api/wl/v1/groups/permissions/v2': 1, '00a7ea814df263ab - WEALTH-API - /api/wl/v1/holdings/mutualFunds/summary': 1} sessions=4 success_sessions=1 error=None
+2026-08-27 14:44:36,041 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-27 18:43:11 IST
+Time: 2026-08-27 18:43:11 IST
+Time: 2026-08-27 18:43:11 IST
+Time: 2026-08-27 18:43:10 IST
+a286bc09917b0de2 - nginx - /api/message-exchange-service-proxy/v1/subscribe/deviceId/4eb136f3708ded34
+    b257452d13ccabca - message-exchange-service - /internal/api/message-exchange-service/v1/subscribe/deviceId/:channel
+        82515c64376c1009 - message-exchange-service - async | kafka-publish | OPTIMUS-PUSH-ARCH-MOBILE-APP-UAT
+            2cb8c277bf058250 - message-exchange
+2026-08-27 14:44:36,041 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-27 18:41:48 IST
+Time: 2026-08-27 18:41:48 IST
+c4dd6cc73a051750 - nginx - /api/message-exchange-service-proxy/v1/subscribe/deviceId/4eb136f3708ded34
+    d4354891eb6ebb0e - message-exchange-service - /internal/api/message-exchange-service/v1/subscribe/deviceId/:channel
+        acdac8be6b9b6564 - message-exchange-service - async | kafka-publish | OPTIMUS-PUSH-ARCH-MOBILE-APP-UAT
+            c8c4a3260a4caf17 - message-exchange-service - kafka-publish | OPTIMUS-PUSH-ARCH-MOBILE-APP-UAT
 
-2026-08-27 14:40:55,901 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 5 traces in time range 0-24h ago:
+2026-08-27 14:44:36,041 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-27 18:40:43 IST
+Time: 2026-08-27 18:40:43 IST
+Time: 2026-08-27 18:40:43 IST
+Time: 2026-08-27 18:40:43 IST
+a3a1bead64cc5737 - nginx - /api/message-exchange-service-proxy/v1/subscribe/deviceId/4eb136f3708ded34
+    d08ba33c2bf9a6e3 - message-exchange-service - /internal/api/message-exchange-service/v1/subscribe/deviceId/:channel
+        c4be6200aa3876bd - message-exchange-service - async | kafka-publish | OPTIMUS-PUSH-ARCH-MOBILE-APP-UAT
+            f25fd071e39d28a3 - message-exchange
+2026-08-27 14:44:36,045 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 13 traces in time range 0-24h ago:
+
+=== HAPPY PATH (Successful Traces) ===
+  0f481ba14e2bd00f - WEALTH-API - /api/wl/v1/goals/categories → Success: 1
+  73c2d8ab8c9eee5e - WEALTH-API - /api/wl/v1/mutualFund/transactions → Success: 1
+  aba5fd9eeb80d683 - WEALTH-API - /api/wl/v1/mutualFund/v3 → Success: 1
+  a502cd7f8a55f15c - WEALTH-API - /api/wl/v1/mutualFund/v3 → Success: 1
+  36b664c96731e270 - WEALTH-API - /api/wl/v1/groups/permissions/v2 → Success: 1
+  00a7ea814df263ab - WEALTH-API - /api/wl/v1/holdings/mutualFunds/summary → Success: 1
 
 === SESSIONS ===
   Total sessions: 4
-  Successful sessions: 0
+  Successful sessions: 1
 
-=== 5 FAILED TRACES ===
+=== 7 FAILED TRACES ===
 
-Time: 2026-08-27 15:49:19 IST
-8eff440d3382aebe - account-aggregator-api - /api/account-aggregator-api/v2/networth/get-balance
-    53ba75c7c1c19667 - account-aggregator-api - http://user-profile-api-svc:8080/api/user-profile/v1/get-active-profile
-        c505561d30665165 - USER-PROFILE-SVC - /api/user-profile/v1/get-active-profile
-        HTTP Status: 200
-          ERROR: ProfileCacheProvider.GetProfilePreferences: Error in fetching profile Preference. Error: &{404 4 Profile not found}
-          ERROR: ProfileService.getProfilePreferences: Error in fetching preferences of user profile from Redis. Error: &{404 4 Profile not found} 
-          ERROR: userPreferenceRe
-2026-08-27 14:40:55,944 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=traces_found for range=0
-2026-08-27 14:40:55,944 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 0
-2026-08-27 14:40:55,949 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][EVIDENCE COLLECTED] service=deposits-api tag=customer_id range=0 chars=3298547
-2026-08-27 14:40:55,956 - new_flow.agents.execute_agent_jaeger - WARNING - [JaegerOnlyAgent] tool_calls_history exceeded safety limit (3298740 chars) — trimming
-2026-08-27 14:40:55,957 - new_flow.agents.execute_agent_jaeger - WARNING - [JaegerOnlyAgent] collected_evidence exceeded safety limit (3298618 chars) — trimming
-2026-08-27 14:40:55,957 - new_flow.agents.execute_agent_jaeger - WARNING - [JaegerOnlyAgent] jaeger_result exceeded safety limit (3298657 chars) — trimming
-14:40:55 - LiteLLM:INFO: utils.py:3427 - 
+Time: 2026-08-27 18:43:11 IST
+Time: 2026-08-27 18:43:11 IST
+Time: 2026-08-27 18:43:11 IST
+Time: 2026-08-27 18:43:10 IST
+a286bc09917b0de2 - nginx - /api/message-ex
+2026-08-27 14:44:36,083 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=traces_found for range=0
+2026-08-27 14:44:36,083 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 0
+2026-08-27 14:44:36,087 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][EVIDENCE COLLECTED] service=WEALTH-API tag=customer_id range=0 chars=2965872
+2026-08-27 14:44:36,089 - new_flow.agents.execute_agent_jaeger - WARNING - [JaegerOnlyAgent] tool_calls_history exceeded safety limit (2966572 chars) — trimming
+2026-08-27 14:44:36,089 - new_flow.agents.execute_agent_jaeger - WARNING - [JaegerOnlyAgent] collected_evidence exceeded safety limit (2965941 chars) — trimming
+2026-08-27 14:44:36,089 - new_flow.agents.execute_agent_jaeger - WARNING - [JaegerOnlyAgent] jaeger_result exceeded safety limit (2966491 chars) — trimming
+14:44:36 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:40:55,968 - LiteLLM - INFO - 
+2026-08-27 14:44:36,100 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:41:19,973 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][DECISION after_traces] action=resolve root_cause_confirmed=True diagnosis=The FD transactions showing as "pending" is caused by the account-aggregator-api service not properly processing or reflecting the deposit status from deposits-api. The deposits-api successfully retur
-2026-08-27 14:41:19,973 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] RESOLVING at range=0 | diagnosis=The FD transactions showing as "pending" is caused by the account-aggregator-api service not properly processing or reflecting the deposit status from deposits-api. The deposits-api successfully returns the FD with Status "Active" (AccountNumber: 21489334702), but the account-aggregator-api's Async_
-14:41:20 - LiteLLM:INFO: utils.py:3427 - 
+2026-08-27 14:44:47,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][DECISION after_traces] action=resolve root_cause_confirmed=True diagnosis=The customer cannot view their investment report due to authentication and device activation failures. The trace shows multiple auth failures: (1) ERR_IDP_DEVICE_NOT_ACTIVE - the customer's device is 
+2026-08-27 14:44:47,483 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] RESOLVING at range=0 | diagnosis=The customer cannot view their investment report due to authentication and device activation failures. The trace shows multiple auth failures: (1) ERR_IDP_DEVICE_NOT_ACTIVE - the customer's device is not registered/active in the IDP system, (2) ERR_INVALID_ACCESS_TOKEN - access token could not be fe
+14:44:47 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:41:20,018 - LiteLLM - INFO - 
+2026-08-27 14:44:47,511 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:41:30 - LiteLLM:INFO: utils.py:3427 - 
+14:44:55 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:41:30,065 - LiteLLM - INFO - 
+2026-08-27 14:44:55,758 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:41:39 - LiteLLM:INFO: utils.py:3427 - 
+14:45:05 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:41:39,444 - LiteLLM - INFO - 
+2026-08-27 14:45:05,657 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:41:54 - LiteLLM:INFO: utils.py:3427 - 
+14:45:17 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:41:54,165 - LiteLLM - INFO - 
+2026-08-27 14:45:17,381 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:41:54 - LiteLLM:INFO: utils.py:3427 - 
+14:45:17 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:41:54,199 - LiteLLM - INFO - 
+2026-08-27 14:45:17,389 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:42:02 - LiteLLM:INFO: utils.py:3427 - 
+14:45:25 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:42:02,895 - LiteLLM - INFO - 
+2026-08-27 14:45:25,336 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:42:21 - LiteLLM:INFO: utils.py:3427 - 
+14:45:40 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:42:21,894 - LiteLLM - INFO - 
+2026-08-27 14:45:40,888 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:42:21 - LiteLLM:INFO: utils.py:3427 - 
+14:45:40 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:42:21,899 - LiteLLM - INFO - 
+2026-08-27 14:45:40,914 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-14:42:21 - LiteLLM:INFO: utils.py:3427 - 
+14:45:40 - LiteLLM:INFO: utils.py:3427 - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-08-27 14:42:21,954 - LiteLLM - INFO - 
+2026-08-27 14:45:40,918 - LiteLLM - INFO - 
 LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-Plan Agent completed for incident ab22b4583bc78710b6986f34c3e45a2d
-Execute Agent completed for incident ab22b4583bc78710b6986f34c3e45a2d
+Plan Agent completed for incident 55e2f01c3bc78710b6986f34c3e45a7a
+Execute Agent completed for incident 55e2f01c3bc78710b6986f34c3e45a7a
 [CrewAIEventsBus] Warning: Event pairing mismatch. 'agent_execution_error' 
 closed 'llm_call_started' (expected 'agent_execution_started')
 [CrewAIEventsBus] Warning: Event pairing mismatch. 'task_failed' closed 
@@ -1002,8 +163,8 @@ closed 'llm_call_started' (expected 'agent_execution_started')
 │                                                                              │
 ╰──────────────────────────────────────────────────────────────────────────────╯
 
-2026-08-27 14:42:32,270 - new_flow.utils.llm - ERROR - === FULL EXCEPTION TRACEBACK ===
-2026-08-27 14:42:32,277 - new_flow.utils.llm - ERROR - Traceback (most recent call last):
+2026-08-27 14:45:50,393 - new_flow.utils.llm - ERROR - === FULL EXCEPTION TRACEBACK ===
+2026-08-27 14:45:50,402 - new_flow.utils.llm - ERROR - Traceback (most recent call last):
   File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 823, in acompletion
     headers, response = await self.make_openai_chat_completion_request(
                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -1164,8 +325,8 @@ Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. 
 Available Model Group Fallbacks=None
 Consider using a smaller input or implementing a text splitting strategy.
 
-2026-08-27 14:42:32,277 - new_flow.utils.llm - ERROR - === EXCEPTION TYPE: LLMContextLengthExceededError ===
-2026-08-27 14:42:32,277 - new_flow.utils.llm - ERROR - === EXCEPTION MESSAGE: LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+2026-08-27 14:45:50,402 - new_flow.utils.llm - ERROR - === EXCEPTION TYPE: LLMContextLengthExceededError ===
+2026-08-27 14:45:50,402 - new_flow.utils.llm - ERROR - === EXCEPTION MESSAGE: LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
 model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
 
 Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
@@ -1173,13 +334,13 @@ Available Model Group Fallbacks=None
 Consider using a smaller input or implementing a text splitting strategy. ===
 [CrewAIEventsBus] Warning: Event pairing mismatch. 'method_execution_failed' 
 closed 'agent_execution_started' (expected 'method_execution_started')
-2026-08-27 14:42:32,285 - crewai.flow.flow - ERROR - Error executing listener run_resolver_crew: LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+2026-08-27 14:45:50,411 - crewai.flow.flow - ERROR - Error executing listener run_resolver_crew: LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
 model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
 
 Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
 Available Model Group Fallbacks=None
 Consider using a smaller input or implementing a text splitting strategy.
-2026-08-27 14:42:32,286 - __main__ - ERROR - ✗ Flow FAILED | incident=ab22b4583bc78710b6986f34c3e45a2d module=new_flow.flow error=LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+2026-08-27 14:45:50,411 - __main__ - ERROR - ✗ Flow FAILED | incident=55e2f01c3bc78710b6986f34c3e45a7a module=new_flow.flow error=LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
 model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
 
 Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
@@ -1374,5 +535,27 @@ model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
 Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
 Available Model Group Fallbacks=None
 Consider using a smaller input or implementing a text splitting strategy.
-2026-08-27 14:42:32,306 - utils.pii_masking_integration - INFO - PII masking output complete for ServiceNow
-2026-08-27 14:42:33,084 - __main__ - INFO -   Fallback rejection sent | incident=ab22b4583bc78710b6986f34c3e45a2d
+2026-08-27 14:45:50,432 - utils.pii_masking_integration - INFO - PII masking output complete for ServiceNow
+2026-08-27 14:45:51,395 - __main__ - INFO -   Fallback rejection sent | incident=55e2f01c3bc78710b6986f34c3e45a7a
+2026-08-27 14:54:34,786 - new_flow.utils.llm - INFO - OPENAI_API_KEY refreshed
+2026-08-27 15:00:30,624 - __main__ - INFO - → Message received | incident=f5eee05c3b878710b6986f34c3e45a50 event=additional_comments partition=0 offset=609
+2026-08-27 15:00:30,624 - __main__ - INFO - ✓ Offset committed | incident=f5eee05c3b878710b6986f34c3e45a50
+2026-08-27 15:00:30,625 - __main__ - INFO - → Processing | incident=f5eee05c3b878710b6986f34c3e45a50 event=additional_comments module=new_flow.flow
+2026-08-27 15:00:30,656 - __main__ - INFO -   DB status | incident=f5eee05c3b878710b6986f34c3e45a50 status=in_progress
+2026-08-27 15:00:30,660 - __main__ - INFO -   Flow type | incident=f5eee05c3b878710b6986f34c3e45a50 type=additional_comments
+interaction_counter: 1
+Request - url:https://api.aws-uat.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident json:{'callerId': 'devisivanage.t_tho@idfcfirstext.bank.in', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Investment/Mutual Funds', 'tier3': 'Investment Report issue', 'impact': 'Medium', 'urgency': 'Medium', 'shortDescription': 'Customer not able to view details or decrebencies in his generated investment report.', 'description': 'Customer not able to view details or decrebencies in his generated investment report.', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006218014', 'sourceIncidentId': '', 'assignmentGroup': 'Optimus BTO Support', 'businessImpact': '', 'cause': 'Bot is unable to resolve Assign to an Engineer.', 'businessCorrectiveAction': '', 'techCorrectiveAction': '', 'dataSource': '', 'descriptionOfOutage': '', 'entityUCIC': '1041409075', 'hashValues': '', 'ipDetails': '', 'ldwNotifyInformation': '', 'loanAccountNumber': '', 'loginId': '', 'mobileNumber': '1041409075', 'businessPreventiveAction': '', 'techPreventiveAction': '', 'resoultionTeam': '', 'rootCause': '', 'systemName': '', 'urlOrDomain': '', 'userDetail': '', 'individualUCIC': '1041409075', 'sourceIncCreateddttime': '27-Aug-2026 20:13:12', 'incidentId': '55e2f01c3bc78710b6986f34c3e45a7a', 'state': 'On Hold', 'additionalComments': 'BOT is unable to resolve, assign to an Engineer', 'resolutionNotes': '', 'userLocation': ''} headers:{'Content-Type': 'application/json', 'correlationId': '72a574ac-0298-46be-9d05-693c44b3db58', 'source': 'IncidentBot', 'transactionId': 'e30e19cd-47aa-4229-8244-bde31c21c650', 'Authorization': 'Basic MThiNDhmNzctNzMyMy00MWJiLWJmNmUtYzZmODNlODdhOTgyOkI3TGJ1NVhkcX5JT1paaW1SLThNVDE3eWtF'}
+Successfully updated incident 55e2f01c3bc78710b6986f34c3e45a7a in ServiceNow
+Response: {'message': 'Incident has been updated successfully.', 'incidentNumber': 'INC000006218014', 'incidentId': '55e2f01c3bc78710b6986f34c3e45a7a', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Investment/Mutual Funds', 'tier3': 'Investment Report issue', 'impact': 'Medium', 'urgency': 'Medium', 'priority': 'Medium', 'shortDescription': 'Customer not able to view details or decrebencies in his generated investment report.', 'description': 'Customer not able to view details or decrebencies in his generated investment report.', 'contactType': 'Self Service', 'state': 'On Hold', 'onHoldReason': '', 'vendorGroup': '', 'causedByPatch': None, 'resolutionCode': None, 'solutionType': None, 'outageType': None, 'resolutionNotes': '', 'additionalComments': '27-Aug-2026 20:15:50 - Incident BOT (Additional comments)\nBOT is unable to resolve, assign to an Engineer\n\n', 'assignmentGroup': 'Optimus BTO Support', 'sourceIncidentNum': 'INC000006218014', 'sourceIncidentId': '72a574ac-0298-46be-9d05-693c44b3db58', 'businessImpact': None, 'cause': 'Bot is unable to resolve Assign to an Engineer.', 'businessCorrectiveAction': None, 'techCorrectiveAction': None, 'dataSource': None, 'descriptionOfOutage': None, 'emailID': None, 'entityUCIC': '1041409075', 'hashValues': None, 'ipDetails': None, 'ldwNotifyInformation': None, 'loanAccountNumber': None, 'loginId': None, 'mobileNumber': '1041409075', 'businessPreventiveAction': None, 'techPreventiveAction': None, 'resoultionTeam': None, 'rootCause': None, 'systemName': None, 'urlOrDomain': None, 'userDetail': None, 'individualUCIC': '1041409075', 'sourceIncCreateddttime': '27-Aug-2026 20:13:12', 'userLocation': '', 'incidentURL': 'https://idfcfirstbanktest2.service-now.com/isupport?sys_id=55e2f01c3bc78710b6986f34c3e45a7a&view=sp&id=ticket&table=incident'}
+╭───────────────────────────── 🌊 Flow Execution ──────────────────────────────╮
+│                                                                              │
+│  Starting Flow Execution                                                     │
+│  Name: IncidentManagementFlow                                                │
+│  ID: 4333f3a4-3b95-4aef-8ee7-19e1447a18a9                                    │
+│                                                                              │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+╭────────────────────────────── 🌊 Flow Started ───────────────────────────────╮
+│                                                                              │
+│  Flow Started                                 
