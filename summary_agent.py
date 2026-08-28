@@ -3,7 +3,7 @@ import re
 import logging
 from typing import Dict, List
 from pydantic import BaseModel, Field
-
+from new_flow.agents.execute_agent_jaeger import _safety_trim
 os.environ["OTEL_SDK_DISABLED"] = "true"
 
 from crewai import Agent, Task, Crew, LLM
@@ -42,6 +42,7 @@ async def run_summary_agent_async(
         tool_calls_text = "\n=== TOOL CALLS MADE ===\n"
         for call in execution_result.tool_calls:
             tool_calls_text += f"\n{call['tool_name']}:\n{call['output']}\n"
+        tool_calls_text=_safety_trim(tool_calls_text,"tool_calls_text")    
 
     qa_text = ""
     if user_qa_pairs:
@@ -56,8 +57,14 @@ async def run_summary_agent_async(
             backstory=(
                 "You are a senior bank support engineer responding to a customer issue. "
                 "Your response should be professional, clear, and actionable. "
-                "IMPORTANT: Never mention technical tools like Jaeger, ELK, database queries, or any debugging tools. "
-                "Explain the issue and solution in simple terms that a branch employee can understand and communicate to the customer."
+                "IMPORTANT: Never mention the NAMES of which  technical tools, process flow or systems used to investigate like iterations, time ranges  "
+                "(do not say 'Jaeger', 'ELK', 'database query', 'trace', 'span', 'API call', or similar). "
+                "However, you MUST preserve and explicitly state any concrete technical findings from the "
+                "investigation — exact error codes, HTTP status codes, error messages, exception names, "
+                "or field values exactly as found (e.g. 'Error code: ACCOUNT_FROZEN', 'HTTP 403 Forbidden', "
+                "'Exception: InsufficientBalanceException'). Do not paraphrase or omit these — quote them "
+                "verbatim inside your explanation. Explain what the error means in plain language, then state "
+                "the exact code/message as supporting evidence."
             ),
             verbose=False,
             allow_delegation=False,
@@ -76,8 +83,10 @@ async def run_summary_agent_async(
                 f"=== HISTORIC SIMILAR INCIDENTS ===\n{historic_context}\n\n"
                 f"=== USER Q&A ===\n{qa_text}\n\n"
                 "IMPORTANT: Write your response as a bank support engineer would speak to a branch employee. "
-                "Do NOT mention any technical tools (Jaeger, ELK, database, etc.). "
-                "Use simple, clear language. Explain what happened and what action the customer needs to take.\n\n"
+                "Do NOT mention which system or tool was used to investigate (no 'Jaeger', 'ELK', 'trace', 'span'). "
+                "DO include the exact error code, HTTP status, or error message found in the investigation findings "
+                "below, quoted exactly as-is — this is required, not optional. Explain what it means in simple terms "
+                "immediately after stating it, but never drop the raw code/message itself.\n\n"
                 f"Format the output as JSON:\n"
                 f'{{"diagnosis": "...", "solution": "...", "questions": [], "resolved": "yes"}}'
             ),
