@@ -3,7 +3,7 @@ import re
 import logging
 from typing import Dict, List
 from pydantic import BaseModel, Field
-from new_flow.agents.execute_agent_jaeger import _safety_trim
+
 os.environ["OTEL_SDK_DISABLED"] = "true"
 
 from crewai import Agent, Task, Crew, LLM
@@ -37,12 +37,18 @@ async def run_summary_agent_async(
         api_key=llm_config.token
     )
 
+    # Only the LAST tool call is used as supporting evidence. Its output is
+    # already the ranked, budgeted, structured evidence built by query_tools.py
+    # (headers for every distinct error always kept; payload bodies of the
+    # lowest-ranked records dropped only if genuinely oversized, and disclosed
+    # when they are). Re-attaching all N historical calls here was the actual
+    # cause of previous context-window overflows, since each one repeats a
+    # large chunk of raw trace text - the final call already carries everything
+    # meaningful the earlier ones did.
     tool_calls_text = ""
     if execution_result.tool_calls:
-        tool_calls_text = "\n=== TOOL CALLS MADE ===\n"
-        for call in execution_result.tool_calls:
-            tool_calls_text += f"\n{call['tool_name']}:\n{call['output']}\n"
-        tool_calls_text=_safety_trim(tool_calls_text,"tool_calls_text")    
+        last_call = execution_result.tool_calls[-1]
+        tool_calls_text = "\n=== INVESTIGATION EVIDENCE ===\n" + last_call.get("output", "")
 
     qa_text = ""
     if user_qa_pairs:
@@ -57,12 +63,14 @@ async def run_summary_agent_async(
             backstory=(
                 "You are a senior bank support engineer responding to a customer issue. "
                 "Your response should be professional, clear, and actionable. "
-                "IMPORTANT: Never mention the NAMES of which  technical tools, process flow or systems used to investigate like iterations, time ranges  "
+                "IMPORTANT: Never mention the NAMES of technical tools or systems used to investigate "
                 "(do not say 'Jaeger', 'ELK', 'database query', 'trace', 'span', 'API call', or similar). "
+                "Never mention internal process details either - no 'iteration', 'time range', "
+                "'attempt number', 'retry', or how many times something was checked. "
                 "However, you MUST preserve and explicitly state any concrete technical findings from the "
-                "investigation — exact error codes, HTTP status codes, error messages, exception names, "
+                "investigation - exact error codes, HTTP status codes, error messages, exception names, "
                 "or field values exactly as found (e.g. 'Error code: ACCOUNT_FROZEN', 'HTTP 403 Forbidden', "
-                "'Exception: InsufficientBalanceException'). Do not paraphrase or omit these — quote them "
+                "'Exception: InsufficientBalanceException'). Do not paraphrase or omit these - quote them "
                 "verbatim inside your explanation. Explain what the error means in plain language, then state "
                 "the exact code/message as supporting evidence."
             ),
@@ -84,9 +92,11 @@ async def run_summary_agent_async(
                 f"=== USER Q&A ===\n{qa_text}\n\n"
                 "IMPORTANT: Write your response as a bank support engineer would speak to a branch employee. "
                 "Do NOT mention which system or tool was used to investigate (no 'Jaeger', 'ELK', 'trace', 'span'). "
-                "DO include the exact error code, HTTP status, or error message found in the investigation findings "
-                "below, quoted exactly as-is — this is required, not optional. Explain what it means in simple terms "
-                "immediately after stating it, but never drop the raw code/message itself.\n\n"
+                "DO include the exact error code, HTTP status, or error message found in the investigation "
+                "findings above, quoted exactly as-is - this is required, not optional. Explain what it means "
+                "in simple terms immediately after stating it, but never drop the raw code/message itself. "
+                "If the investigation evidence above notes that some errors were omitted or unclear, and the "
+                "root cause is genuinely uncertain, say so honestly rather than inventing a cause.\n\n"
                 f"Format the output as JSON:\n"
                 f'{{"diagnosis": "...", "solution": "...", "questions": [], "resolved": "yes"}}'
             ),
@@ -194,8 +204,9 @@ async def run_context_only_summary_async(
     user_qa_pairs: List[Dict] = None
 ) -> SummaryOutput:
     """
-    Used when the app has no Jaeger/ELK config. Uses the top similarity score
-    (already embedded in historic_context) to decide:
+    Used when the app has no Jaeger/ELK config, or when live investigation
+    found nothing conclusive. Uses the top similarity score (already embedded
+    in historic_context) to decide:
       - HIGH  (>=75%): resolve fully — diagnosis+solution, resolved=yes
       - MEDIUM (50-75%): present the likely diagnosis/solution WITHOUT asking
         a question — resolved=no, questions=[]
