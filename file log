@@ -1,1 +1,85 @@
 
+
+2026-08-28 11:56:22,561 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-08-28 11:56:22,561 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: deposits-api, Tag: customer_id=1064918101
+2026-08-28 11:56:22,561 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-08-28 11:56:22,561 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=deposits-api, tag=customer_id=1064918101
+2026-08-28 11:56:22,561 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=deposits-api customer_id=1064918101 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'deposits-api', 'start': 1787831782561803, 'end': 1787918182561803, 'limit': 100, 'tags': '{"customer_id": "1064918101"}'}
+2026-08-28 11:56:28,242 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=5
+2026-08-28 11:56:28,248 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/5] traceID=fce5a6d56c2193cff59e7aff774be309 http_codes={'200'} error_flag=False error_logs_count=10 classified=ERROR
+2026-08-28 11:56:28,253 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/5] traceID=ad0210087f491226035f871c3e27575b http_codes={'200'} error_flag=False error_logs_count=10 classified=ERROR
+2026-08-28 11:56:28,254 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/5] traceID=487576bd93d87f680c8ed9138e2be071 http_codes={'401', '200'} error_flag=True error_logs_count=1 classified=ERROR
+2026-08-28 11:56:28,254 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/5] traceID=eb4fdaff35896416fea7bfc17022ae00 http_codes={'401', '200'} error_flag=True error_logs_count=1 classified=ERROR
+2026-08-28 11:56:28,258 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/5] traceID=d053846707e7826c6ef663f004028614 http_codes={'200'} error_flag=False error_logs_count=10 classified=ERROR
+2026-08-28 11:56:28,259 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=5 failed=5 happy_endpoints=0 sessions=2 success_sessions=0
+2026-08-28 11:56:28,262 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=deposits-api tag=customer_id=1064918101 range=0-24h ago total_scanned=5 failed_traces_count=5 happy_hits={} sessions=2 success_sessions=0 error=None
+2026-08-28 11:56:28,262 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-08-28 17:24:59 IST
+1abde8f2a9c7335a - gestalt - /api/gestalt/v1/optimus/graphql
+    8e8e995982783020 - gestalt - accounts
+        4f425fda3580fd4d - gestalt - accounts.getAccounts
+            307cd90c5634a450 - gestalt - http://ras-api-svc:8080/api/account/v1
+                0c2b2a225e0f0d6c - RAS-API - /api/account/v1
+                    58b06ce4e58da40d - RAS-API - http://mapper-api-svc:8080/api/mapper/v1/generate-mapped-uuids
+                        62a0bd4a3a4b2e6d - mapper-api - 
+2026-08-28 11:56:28,262 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-08-27 17:28:39 IST
+Time: 2026-08-27 17:28:39 IST
+Time: 2026-08-27 17:28:39 IST
+Time: 2026-08-27 17:28:39 IST
+Time: 2026-08-27 17:28:39 IST
+Time: 2026-08-27 17:28:39 IST
+9af87e7d3089d3d0 - gestalt - /api/gestalt/v1/optimus/graphql
+    c4660e8ee1405096 - gestalt - accounts
+        34a1fbc349c3cc16 - gestalt - accounts.getAccounts
+            f8a831e915a93588 - gestalt - http://ras-api-svc:8080/api/account/v1
+                369bd9e755da0c60 - RAS-API - /api/account/v1
+                  
+2026-08-28 11:56:28,262 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-08-27 17:28:35 IST
+2f16d0aa4c9df720 - deposits-api - /api/deposit/v1/business
+HTTP Status: 401
+  ERROR: Authorize: user does not have access to perform action View_Deposits (Fixed, Recurring)
+    e370905ab5001d9b - deposits-api - /api/deposit/v1/business | request/response
+    HTTP Status: 401
+      request: NO BODY CONTENT
+      response: {"error_code":"ERR_UNAUTHORIZED_ACTION","error_message":"unauthorized to perform action"}
+    798956218353d229 - deposits-api - /admin/oauth2/intro
+2026-08-28 11:56:28,262 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 5 traces in time range 0-24h ago:
+
+=== SESSIONS ===
+  Total sessions: 2
+  Successful sessions: 0
+
+=== 5 FAILED TRACES ===
+
+Time: 2026-08-28 17:24:59 IST
+1abde8f2a9c7335a - gestalt - /api/gestalt/v1/optimus/graphql
+    8e8e995982783020 - gestalt - accounts
+        4f425fda3580fd4d - gestalt - accounts.getAccounts
+            307cd90c5634a450 - gestalt - http://ras-api-svc:8080/api/account/v1
+                0c2b2a225e0f0d6c - RAS-API - /api/account/v1
+                    58b06ce4e58da40d - RAS-API - http://mapper-api-svc:8080/api/mapper/v1/generate-mapped-uuids
+                        62a0bd4a3a4b2e6d - mapper-api - /api/mapper/v1/generate-mapped-uuids
+                        HTTP Status: 200
+                          ERROR: Encountered error json: cannot unmarshal array into Go value
+2026-08-28 11:56:28,263 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=traces_found for range=0
+2026-08-28 11:56:28,263 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 0
+2026-08-28 11:56:28,263 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][EVIDENCE COLLECTED] service=deposits-api tag=customer_id range=0 chars=215204
+2026-08-28 11:56:28,263 - new_flow.agents.execute_agent_jaeger - WARNING - [JaegerOnlyAgent] tool_calls_history exceeded safety limit (215397 chars) — trimming
+2026-08-28 11:56:28,264 - new_flow.agents.execute_agent_jaeger - WARNING - [JaegerOnlyAgent] collected_evidence exceeded safety limit (215275 chars) — trimming
+2026-08-28 11:56:28,264 - new_flow.agents.execute_agent_jaeger - WARNING - [JaegerOnlyAgent] jaeger_result exceeded safety limit (215314 chars) — trimming
+11:56:28 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-28 11:56:28,275 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-28 11:56:39,510 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][DECISION after_traces] action=resolve root_cause_confirmed=True diagnosis=The trace shows the account details for customer 1064918101 (UCIC). The account has an empty nominee field ("Nominee":"") in the CBS system response from RAS-API. This is a required field for creating
+2026-08-28 11:56:39,510 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] RESOLVING at range=0 | diagnosis=The trace shows the account details for customer 1064918101 (UCIC). The account has an empty nominee field ("Nominee":"") in the CBS system response from RAS-API. This is a required field for creating a Fixed Deposit, and without it, the FD creation request fails at the CBS (Core Banking System) lev
+11:56:39 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-28 11:56:39,523 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-08-28 11:56:47,630 - utils.pii_masking_integration - INFO - PII masking output complete for ServiceNow
+Plan Agent completed for incident 258511e83b0b4b10b6986f34c3e45ab1
+Execute Agent completed for incident 258511e83b0b4b10b6986f34c3e45ab1
+Summary Agent completed for incident 258511e83b0b4b10b6986f34c3e45ab1
+interaction_counter: 1
+Request - url:https://api.aws-uat.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident json:{'callerId': 'shishir.pandey_tho@idfcfirstext.bank.in', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Deposits', 'tier3': 'Unable to create Fixed Deposit', 'impact': 'Medium', 'urgency': 'Medium', 'shortDescription': 'Unable to et the fd created check why', 'description': 'Unable to et the fd created check why', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006218050', 'sourceIncidentId': '', 'assignmentGroup': 'Optimus BTO Support', 'businessImpact': '', 'cause': '', 'businessCorrectiveAction': '', 'techCorrectiveAction': '', 'dataSource': '', 'descriptionOfOutage': '', 'entityUCIC': '1064918101', 'hashValues': '', 'ipDetails': '', 'ldwNotifyInformation': '', 'loanAccountNumber': '', 'loginId': '', 'mobileNumber': '1035691943', 'businessPreventiveAction': '', 'techPreventiveAction': '', 'resoultionTeam': '', 'rootCause': '', 'systemName': '', 'urlOrDomain': '', 'userDetail': '', 'individualUCIC': '1064918101', 'sourceIncCreateddttime': '28-Aug-2026 17:24:31', 'incidentId': '258511e83b0b4b10b6986f34c3e45ab1', 'state': 'On Hold', 'additionalComments': 'Diagnosis:\nThe investigation reveals that [REDACTED-CUSTOMER_ID] (UCIC) with [REDACTED-ACCOUNT_NUMBER] has an empty nominee field (Nominee:"") in the CBS system response. This empty field is the root cause - the CBS system requires nominee details as a mandatory field for creating a Fixed Deposit. When the FD creation request is sent to the Core Banking System, it fails because this required field is not populated. This is a regulatory requirement that cannot be bypassed.\n\nSolution:\nThe customer needs to add/update nominee details for their [REDACTED-ACCOUNT_NUMBER] in the CBS system before they can create a Fixed Deposit. This can be done through the mobile app or Net banking by going to account settings and adding nominee information. Once the nominee field is populated with valid details, the customer should be able to create FD successfully. The bank staff or customer service representative should guide the customer to update their nominee details through the available channels.', 'onHoldReason': 'User Action Required', 'userLocation': '', 'resolutionNotes': ''} headers:{'Content-Type': 'application/json', 'correlationId': '6eefc9f6-58a5-45cf-bf0a-2e42c35b4b51', 'source': 'IncidentBot', 'transactionId': '33e1b128-6c63-4f02-90f0-94874e7531ad', 'Authorization': 'Basic MThiNDhmNzctNzMyMy00MWJiLWJmNmUtYzZmODNlODdhOTgyOkI3TGJ1NVhkcX5JT1paaW1SLThNVDE3eWtF'}
+Successfully updated incident 258511e83b0b4b10b6986f34
