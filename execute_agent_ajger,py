@@ -15,22 +15,6 @@ from crewai import LLM
 from pydantic import BaseModel, Field
 
 
-# ─────────────────────────────────────────────────────────────
-# Prompt safety net — only trims when a prompt piece is already
-# oversized enough to risk blowing the model's context window.
-# No effect on normal-sized incidents.
-# ─────────────────────────────────────────────────────────────
-_PROMPT_SAFETY_CHAR_LIMIT = 80000   # ~20k tokens, generous headroom under MiniMax's 150k limit
-
-
-def _safety_trim(text: str, label: str = "content") -> str:
-    """No-op for normal incidents. Only trims if text is already too large to safely send."""
-    if len(text) <= _PROMPT_SAFETY_CHAR_LIMIT:
-        return text
-    logger.warning(f"[JaegerOnlyAgent] {label} exceeded safety limit ({len(text)} chars) — trimming")
-    return text[:_PROMPT_SAFETY_CHAR_LIMIT] + f"\n\n[... trimmed, original was {len(text)} chars]"
-
-
 class JaegerExecutionResult(BaseModel):
     resolved: bool = Field(description="Whether issue was found/resolved")
     diagnosis: str = Field(description="Root cause or findings")
@@ -58,7 +42,11 @@ class JaegerOnlyAgent:
         self.jaeger_tool = JaegerTraceTool()
         self.customer_identifiers = customer_identifiers or {}
 
-        # Evidence collected so far in this run - carried forward into every decision prompt
+        # Evidence collected so far in this run - carried forward into every decision prompt.
+        # No character trimming is applied here anymore: query_tools.py already produces
+        # ranked, budgeted, structured evidence (headers always kept, payload bodies of
+        # lowest-ranked records dropped only if genuinely oversized, and always disclosed).
+        # Blindly re-slicing that text here would risk cutting mid-JSON again.
         self.collected_evidence: List[str] = []
 
         self.llm = LLM(
@@ -79,10 +67,11 @@ class JaegerOnlyAgent:
     # ─────────────────────────────────────────────────────────────
 
     def _collect_evidence(self, service, tag_name, tag_value, time_range_index, result: str):
-        """Store the failed-trace text we already have so it isn't lost across iterations."""
-        if "FAILED TRACES" not in result:
+        """Store the ranked error-evidence text we already have so it isn't lost
+        across iterations. No truncation - query_tools.py already budgeted this."""
+        if "ERROR EVIDENCE" not in result:
             return
-        idx = result.find("FAILED TRACES")
+        idx = result.find("ERROR EVIDENCE")
         section = result[idx:] if idx != -1 else result
         entry = (
             f"[EVIDENCE service={service} tag={tag_name}={tag_value} range_idx={time_range_index}]\n"
@@ -97,19 +86,29 @@ class JaegerOnlyAgent:
     def _evidence_summary(self) -> str:
         if not self.collected_evidence:
             return ""
-        combined = "\n\n".join(self.collected_evidence)
-        combined = _safety_trim(combined, "collected_evidence")
         return (
             "\n*** EVIDENCE ALREADY GATHERED (use this - do not ask to fetch a specific trace ID, "
             "that is not possible; decide RESOLVE or NEW_ITERATION using only the data below and "
             "the tools you have) ***\n"
-            + combined
+            + "\n\n".join(self.collected_evidence)
             + "\n"
         )
 
     def _extract_root_cause_text(self, result: str) -> str:
-        """Pull the clearest ERROR line(s) out of a result that has a confirmed root cause."""
+        """Pull the clearest error message out of a result that has a confirmed
+        root-level failure. Prefers the ROOT-LEVEL FAILURE block specifically -
+        falls back to the first ERROR line/payload if no such block is marked."""
         import re
+
+        for block in result.split("--- ERROR #"):
+            if "ROOT-LEVEL FAILURE" in block:
+                errs = re.findall(r'ERROR(?:\s*\[[^\]]+\])?:\s*(.+)', block)
+                if errs:
+                    return errs[0].strip()[:500]
+                pay = re.findall(r'(?:request|response):\s*(.+)', block)
+                if pay:
+                    return pay[0].strip()[:500]
+
         error_lines = re.findall(r'ERROR(?:\s*\[[^\]]+\])?:\s*(.+)', result)
         if error_lines:
             for line in error_lines:
@@ -204,11 +203,10 @@ class JaegerOnlyAgent:
                     self._collect_evidence(service, tag_name, tag_value, time_range_index, result)
                     ranges_exhausted_per_iteration.append(ranges_tried)
 
-                    # ── Any failure present at all -> stop searching further ranges for this
-                    #    service. We no longer wait for the stronger "[ROOT CAUSE IDENTIFIED]"
-                    #    marker specifically — any FAILED TRACES section is enough to stop and report.
-                    has_any_failure = "FAILED TRACES" in result
-                    root_cause_confirmed = "[ROOT CAUSE IDENTIFIED" in result
+                    # Root-level = the actual origin of the failure (deepest span with
+                    # no failing descendant), NOT just any error/propagated status seen
+                    # upstream. Only a root-level failure forces an automatic stop.
+                    root_cause_confirmed = "[ROOT-LEVEL FAILURE IDENTIFIED" in result
 
                     decision = await self._decide_after_traces(
                         context=context,
@@ -234,12 +232,15 @@ class JaegerOnlyAgent:
                             ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
                         )
 
-                    # Safety net: never silently discard or keep searching past a failure that
-                    # was already found — whether or not it hit the stronger root-cause marker.
-                    if has_any_failure and decision.get("action") != "resolve":
+                    # Safety net: never let the LLM discard or keep searching past a
+                    # CONFIRMED ROOT-LEVEL failure. A merely propagated/upstream error
+                    # is NOT enough to force this - we want the real origin, not the
+                    # first symptom seen.
+                    if root_cause_confirmed and decision.get("action") != "resolve":
                         logger.warning(
-                            f"[JaegerOnlyAgent] LLM chose '{decision.get('action')}' despite a failure "
-                            f"already found at range {time_range_index} - overriding to RESOLVE"
+                            f"[JaegerOnlyAgent] LLM chose '{decision.get('action')}' despite a "
+                            f"confirmed root-level failure at range {time_range_index} - "
+                            f"overriding to RESOLVE"
                         )
                         return JaegerExecutionResult(
                             resolved=True,
@@ -251,6 +252,22 @@ class JaegerOnlyAgent:
                             iterations_completed=iteration,
                             ranges_exhausted_per_iteration=ranges_exhausted_per_iteration
                         )
+
+                    if decision.get("action") == "new_iteration":
+                        new_service = decision.get("new_service")
+                        new_tag_name = decision.get("new_tag_name")
+                        new_tag_value = decision.get("new_tag_value")
+
+                        if new_service and new_tag_name:
+                            if not new_tag_value and new_tag_name in self.customer_identifiers:
+                                new_tag_value = self.customer_identifiers[new_tag_name]
+                            service = new_service
+                            tag_name = new_tag_name
+                            tag_value = new_tag_value
+                            logger.info(f"[JaegerOnlyAgent] LLM decided to try new service={service}, tag={tag_name}")
+                            break
+                        else:
+                            pass
 
                     continue
 
@@ -408,6 +425,9 @@ class JaegerOnlyAgent:
         if any(indicator in result_lower for indicator in no_trace_indicators):
             return "no_traces_continue"
 
+        # "all successful" / no errors is not the same as no traces at all -
+        # it's a legitimate found-but-clean result, still routed to traces_found
+        # so the decision step can see the happy-path summary if useful.
         return "traces_found"
 
     async def _decide_next_service_tag(
@@ -479,10 +499,10 @@ REASONING: [why you chose this combination]
         root_cause_notice = ""
         if root_cause_confirmed:
             root_cause_notice = (
-                "\n*** A CONFIRMED ROOT CAUSE HAS ALREADY BEEN IDENTIFIED IN THE TRACE BELOW "
-                "(marked [ROOT CAUSE IDENTIFIED]). You MUST choose ACTION: resolve using this data, "
+                "\n*** A CONFIRMED ROOT-LEVEL FAILURE HAS ALREADY BEEN IDENTIFIED IN THE TRACE BELOW "
+                "(marked [ROOT-LEVEL FAILURE IDENTIFIED]). You MUST choose ACTION: resolve using this data, "
                 "unless the error is clearly unrelated to the customer's reported issue. "
-                "Do not discard a confirmed failure to search elsewhere. ***\n"
+                "Do not discard a confirmed root-level failure to search elsewhere. ***\n"
             )
 
         prompt = f"""
@@ -493,16 +513,24 @@ REASONING: [why you chose this combination]
 Iteration: {iteration} of {self.max_iterations}
 
 === LATEST JAEGER RESULT ===
-{_safety_trim(jaeger_result, "jaeger_result")}
+{jaeger_result}
 
 === TASK ===
-You already have the failed trace evidence above (and in EVIDENCE ALREADY GATHERED if present).
+You already have the ranked error evidence above (and in EVIDENCE ALREADY GATHERED if present).
+The evidence is ordered with the most likely ROOT-LEVEL failure first - deeper/more specific
+errors rank above errors that merely propagated upward from a downstream failure.
+
 Decide what to do next:
 
 Options:
-1. RESOLVE: Use the evidence above to state the root cause and solution - you do NOT need more detail than what's shown
+1. RESOLVE: Use the evidence above to state the root cause and solution - prefer the
+   ROOT-LEVEL FAILURE entries over propagated ones. You do NOT need more detail than shown.
 2. NEW_ITERATION: Try a different service/tag combination
 3. CONTINUE: Continue searching more time ranges
+
+If the evidence header says some errors were omitted or header-only, and the shown evidence
+does not clearly explain the reported issue, say so explicitly in your diagnosis rather than
+inventing a cause from an unrelated healthy-response payload.
 
 Do NOT choose a NEW_TAG_NAME that isn't "customer_id" or "mobile_number" (e.g. never "trace_id" -
 individual traces cannot be re-fetched by ID with this tool).
@@ -521,9 +549,12 @@ REASONING: [why you chose this action]
             role="Trace Analyzer",
             goal="Analyze Jaeger traces and decide next action",
             backstory=(
-                "You are a debugging expert. Analyze Jaeger traces to "
-                "identify root causes and decide next steps. You never discard "
-                "a confirmed failure to keep searching without good reason."
+                "You are a debugging expert. Analyze ranked Jaeger error evidence to "
+                "identify root causes and decide next steps. You always prefer root-level "
+                "failures over propagated/upstream symptoms, and you never invent a root "
+                "cause from a healthy (non-error) payload just because it's large or detailed. "
+                "You never discard a confirmed root-level failure to keep searching without "
+                "good reason."
             ),
             verbose=False,
             allow_delegation=False,
@@ -566,7 +597,7 @@ Iteration: {iteration} of {self.max_iterations}
 All 7 time ranges (0-6) have been exhausted with NO NEW TRACES FOUND in this service/tag combination.
 
 === TASK ===
-Decide what to do next. If EVIDENCE ALREADY GATHERED above shows a clear failure, prefer RESOLVE.
+Decide what to do next. If EVIDENCE ALREADY GATHERED above shows a clear root-level failure, prefer RESOLVE.
 
 Options:
 1. NEW_ITERATION: Try a different service/tag combination
@@ -615,6 +646,10 @@ REASONING: [why you chose this action]
         return parsed
 
     def _format_tool_calls(self, tool_calls: List[Dict]) -> str:
+        """Format call history for prompts. No truncation - each call's output
+        (already ranked/budgeted by query_tools.py) is shown whole. Empty
+        no-traces results are collapsed to a single line since they carry no
+        diagnostic value and would otherwise just add noise."""
         if not tool_calls:
             return "No previous calls"
 
@@ -628,10 +663,12 @@ REASONING: [why you chose this action]
                 f"- Iteration {iteration}, Range {range_idx}: "
                 f"service={params.get('service')}, tag={params.get('tag_name')}={params.get('tag_value')}"
             )
-            lines.append(f"  Output: {output}")
+            if "No traces found" in output:
+                lines.append("  Output: no traces in this range")
+            else:
+                lines.append(f"  Output: {output}")
 
-        combined = "\n".join(lines)
-        return _safety_trim(combined, "tool_calls_history")
+        return "\n".join(lines)
 
     def _parse_service_tag_decision(self, response: str) -> tuple:
         import re
