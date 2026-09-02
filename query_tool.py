@@ -6,6 +6,7 @@ for SQL, ELK, Jaeger, and schema discovery without predefined JSON definitions.
 """
 
 import os
+import re
 import json
 import base64
 import httpx
@@ -100,9 +101,6 @@ JAEGER_AUTH_TOKEN = os.getenv("JAEGER_AUTH_TOKEN")
 CA_CERT_FILE = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
 CA_CERT_PATH = CA_CERT_FILE  # Alias for consistency with logs.py
 
-# Count-based cap only — keep failed trace COUNT bounded, but never slice trace CONTENT.
-MAX_ERROR_TRACES = 20
-
 _JAEGER_EXCLUDED_OPS = {
     'get', 'set', 'sql:prepare', 'sql:query', 'sql-conn-query', 'sql-rows-next',
     'sql-tx-begin', 'sql-tx-commit', 'sql:exec', 'sql-prepare', 'sql-conn-exec',
@@ -117,8 +115,16 @@ _JAEGER_EXCLUDED_SERVICES = {
     'RISK-CONTROL-USER-METADATA-PROCESSOR',
     'OAUTH-SERVER',
 }
-# Generous guard on a single request/response field only — not a per-trace/per-line cap.
-_JAEGER_MAX_PAYLOAD_CHARS = 5000
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Evidence budget: generous, ranked, never cut mid-record. With structured
+# extraction real incidents land at 2k-8k chars, so this almost never binds.
+# When it does, EVERY distinct error's header (service/operation/status/message)
+# is still always included - only payload BODIES of lowest-ranked records are
+# shed, and that fact is stated explicitly in the output.
+# ─────────────────────────────────────────────────────────────────────────────
+_EVIDENCE_CHAR_BUDGET = 120000      # ~30k tokens
+_PAYLOAD_SLOT = 8000                # guard against one pathological single payload
 
 
 def _jaeger_auth_headers(app: str):
@@ -137,7 +143,7 @@ def _jaeger_us_to_ist(microseconds_ts):
 
 def _try_decode_base64(value: str) -> str:
     """If value looks like base64-encoded text, decode it; otherwise return unchanged.
-    Best-effort only — falls back to the original string on any failure or ambiguity."""
+    Best-effort only - falls back to the original string on any failure or ambiguity."""
     if not value or not isinstance(value, str):
         return value
     stripped = value.strip()
@@ -170,160 +176,336 @@ def _jaeger_trace_has_error(trace) -> bool:
 
 
 def _jaeger_process_trace(trace):
-    """Process a Jaeger trace and return output lines and status info.
-
-    Root-cause-aware pruning: when a trace contains any error span, only the
-    error span(s) plus their FULL descendant subtree get full detail (tags,
-    logs, request/response) — because the actual root cause is usually deeper
-    in the tree than where the error status was first reported. Ancestor spans
-    up to root are shown as lightweight breadcrumbs only (service - operation
-    name, no tag/log dump), so you still see which flow the error occurred in.
-    Unrelated branches with no connection to any error are dropped entirely.
-
-    Traces with no error at all are processed in full as before (happy path).
+    """Lightweight pass used ONLY for session-id extraction and happy-path
+    endpoint labels. Error content is handled entirely by _extract_error_records
+    below. This no longer dumps payloads or subtrees - that was the source of
+    multi-million-character outputs.
 
     Returns a tuple: (output_lines, session_id, status_info)
-    status_info = {
-        "http_codes": set of HTTP status codes,
-        "error_logs": list of error log messages,
-        "error_flag": bool,
-    }
     """
     from collections import defaultdict
     spans = trace.get("spans", [])
     processes = trace.get("processes", {})
-    
+
     id_to_span = {s["spanID"]: s for s in spans}
     pid_to_service = {pid: p["serviceName"] for pid, p in processes.items()}
     children_map = defaultdict(list)
-    parent_map = {}
-    
+
     all_ids = set(id_to_span.keys())
     child_ids = set()
-    
+
     for span in spans:
         for ref in span.get("references", []):
             parent_id = ref.get("spanID")
             if parent_id in id_to_span:
                 children_map[parent_id].append(span["spanID"])
                 child_ids.add(span["spanID"])
-                parent_map[span["spanID"]] = parent_id
-    
+
     roots = all_ids - child_ids
     if not roots:
         return [], None, {"http_codes": set(), "error_logs": [], "error_flag": False}
 
-    def has_error_signal(span):
-        for tag in span.get("tags", []):
-            if tag.get("key") == "http.status_code" and str(tag.get("value", "")).startswith(("4", "5")):
-                return True
-            if tag.get("key") == "error" and tag.get("value") in (True, "true", "True"):
-                return True
-        for log in span.get("logs", []):
-            for f in log.get("fields", []):
-                if f.get("key") == "level" and str(f.get("value", "")).lower() in ("error", "fatal", "critical"):
-                    return True
-        return False
-
-    # Pass 1: which spans carry an error signal themselves
-    error_span_ids = {sid for sid, s in id_to_span.items() if has_error_signal(s)}
-    only_prune = bool(error_span_ids)   # if no error anywhere, process everything (happy path)
-
-    # Pass 2: FULL detail = error span + its entire descendant subtree
-    keep_full = set()
-    def collect_descendants(span_id):
-        keep_full.add(span_id)
-        for child_id in children_map.get(span_id, []):
-            collect_descendants(child_id)
-
-    for eid in error_span_ids:
-        collect_descendants(eid)
-
-    # Pass 3: lightweight breadcrumb = ancestor chain up to root
-    keep_context = set()
-    for eid in error_span_ids:
-        cur = parent_map.get(eid)
-        while cur:
-            if cur not in keep_full:
-                keep_context.add(cur)
-            cur = parent_map.get(cur)
-    
-    import datetime as _datetime
-    import time as _time
-    
     result = []
     session_id = None
     status = {"http_codes": set(), "error_logs": [], "error_flag": False}
-    
+
     def process_span(span_id, depth=0):
         nonlocal session_id
         span = id_to_span[span_id]
         indent = "    " * depth
         op_name = span.get("operationName", "")
         service_name = pid_to_service.get(span.get("processID"), "")
-        
+
         if depth == 0:
             result.append("Time: " + _jaeger_us_to_ist(span["startTime"]))
-        
+
         is_noise = op_name in _JAEGER_EXCLUDED_OPS or service_name in _JAEGER_EXCLUDED_SERVICES
 
-        # Unrelated branch (no connection to any error) — skip entirely, but still
-        # recurse through it in case a descendant needs visiting (safety net).
-        if only_prune and span_id not in keep_full and span_id not in keep_context:
-            for child_id in children_map.get(span_id, []):
-                process_span(child_id, depth + 1)
-            return
-        
         if not is_noise:
             result.append(f"{indent}{span_id} - {service_name} - {op_name}")
-
-            # Breadcrumb-only span: name shown, no tag/log/payload dump.
-            if only_prune and span_id in keep_context:
-                for child_id in children_map.get(span_id, []):
-                    process_span(child_id, depth + 1)
-                return
-
             for tag in span.get("tags", []):
                 key = tag.get("key")
                 val = tag.get("value")
                 if key == "http.status_code":
                     status["http_codes"].add(str(val))
-                    result.append(f"{indent}HTTP Status: {val}")
                 elif key == "error" and val in (True, "true", "True"):
                     status["error_flag"] = True
                 elif key == "session_tracking_id" and not session_id:
                     session_id = val
-            
+
             for log in span.get("logs", []):
                 fields = {f.get("key"): f.get("value") for f in log.get("fields", [])}
-                
-                # Extract session_tracing_id from logs
                 sid = fields.get("session_tracing_id")
                 if not session_id and sid and sid not in ("no-session-trace-id", ""):
                     session_id = sid
-                
+
                 level = str(fields.get("level", "")).lower()
                 event = fields.get("event", "")
                 if level in ("error", "fatal", "critical") and event:
-                    cls = fields.get("Class") or fields.get("class") or ""
-                    method = fields.get("Method") or fields.get("method") or ""
-                    ctx = f" [{cls}.{method}]" if (cls or method) else ""
-                    result.append(f"{indent}  ERROR{ctx}: {event}")
                     status["error_logs"].append(event)
-                
-                for payload_key in ("request", "response"):
-                    if fields.get(payload_key):
-                        raw_val = str(fields[payload_key])
-                        decoded_val = _try_decode_base64(raw_val)
-                        result.append(f"{indent}  {payload_key}: {decoded_val[:_JAEGER_MAX_PAYLOAD_CHARS]}")
-        
+
         for child_id in children_map.get(span_id, []):
             process_span(child_id, depth + 1)
-    
+
     for root_id in roots:
         process_span(root_id)
-    
+
     return result, session_id, status
+
+
+def _extract_error_records(trace) -> List[Dict]:
+    """Extract structured error records from one trace.
+
+    Walks EVERY span - no size-based skipping, no truncation, no subtree
+    expansion. Returns [] if the trace contains no errors. All diagnostic
+    signal lives in logs.fields where level=error, plus request/response
+    payloads that actually carry error structure.
+    """
+    from collections import defaultdict
+    spans = trace.get("spans", [])
+    processes = trace.get("processes", {})
+    trace_id = trace.get("traceID", "")
+
+    id_to_span = {s["spanID"]: s for s in spans}
+    pid_to_service = {pid: p["serviceName"] for pid, p in processes.items()}
+    children_map = defaultdict(list)
+    parent_map = {}
+
+    for span in spans:
+        for ref in span.get("references", []):
+            pid = ref.get("spanID")
+            if pid in id_to_span:
+                children_map[pid].append(span["spanID"])
+                parent_map[span["spanID"]] = pid
+
+    def span_error_info(span):
+        http_status = None
+        error_flag = False
+        for tag in span.get("tags", []):
+            k, v = tag.get("key"), tag.get("value")
+            if k == "http.status_code":
+                http_status = str(v)
+            elif k == "error" and v in (True, "true", "True"):
+                error_flag = True
+
+        error_events, error_payloads = [], []
+        for log in span.get("logs", []):
+            f = {x.get("key"): x.get("value") for x in log.get("fields", [])}
+            level = str(f.get("level", "")).lower()
+            event = f.get("event", "")
+            if level in ("error", "fatal", "critical") and event:
+                cls = f.get("Class") or f.get("class") or ""
+                mth = f.get("Method") or f.get("method") or ""
+                error_events.append({
+                    "message": str(event),
+                    "context": f"{cls}.{mth}" if (cls or mth) else "",
+                })
+            # Only keep payloads that actually carry error structure. This is
+            # what stops healthy 200-OK response bodies from flooding evidence.
+            for pk in ("request", "response"):
+                if f.get(pk):
+                    val = _try_decode_base64(str(f[pk]))
+                    if any(m in val for m in (
+                        "error_code", "errorCode", "error_message", "errorMessage",
+                        '"error"', "Exception", "DENIED", "FORBIDDEN", "UNAUTHORIZED",
+                    )):
+                        error_payloads.append({"kind": pk, "body": val})
+
+        is_error = (
+            (http_status and http_status.startswith(("4", "5")))
+            or error_flag or error_events or error_payloads
+        )
+        if not is_error:
+            return None
+        return {
+            "http_status": http_status,
+            "error_flag": error_flag,
+            "error_events": error_events,
+            "error_payloads": error_payloads,
+        }
+
+    error_ids = {}
+    for sid, s in id_to_span.items():
+        info = span_error_info(s)
+        if info is not None:
+            error_ids[sid] = info
+
+    def has_error_descendant(x):
+        for c in children_map.get(x, []):
+            if c in error_ids or has_error_descendant(c):
+                return True
+        return False
+
+    records = []
+    for sid, info in error_ids.items():
+        span = id_to_span[sid]
+        depth, cur, chain = 0, sid, []
+        while cur in parent_map:
+            cur = parent_map[cur]
+            depth += 1
+            p = id_to_span[cur]
+            chain.append(f"{pid_to_service.get(p.get('processID'), '')} - {p.get('operationName', '')}")
+
+        records.append({
+            "trace_id": trace_id,
+            "span_id": sid,
+            "service": pid_to_service.get(span.get("processID"), ""),
+            "operation": span.get("operationName", ""),
+            "depth": depth,
+            "call_chain": list(reversed(chain))[-4:],
+            # Leaf error = no failing descendant, i.e. this is where the failure
+            # ORIGINATED rather than where it propagated to.
+            "is_leaf_error": not has_error_descendant(sid),
+            "start_time": span.get("startTime"),
+            **info,
+        })
+    return records
+
+
+def _score_record(r: Dict) -> int:
+    """Higher = more likely the true root cause."""
+    s = 0
+    if r["is_leaf_error"]:
+        s += 1000
+    if r["error_payloads"]:
+        s += 400
+    if r["error_events"]:
+        s += 300
+    st = r.get("http_status") or ""
+    if st.startswith("5"):
+        s += 200
+    elif st.startswith("4"):
+        s += 120
+    s += min(r["depth"], 10) * 10
+    return s
+
+
+def _dedupe_records(records: List[Dict]) -> List[Dict]:
+    """Collapse identical repeated failures into one record + occurrence count.
+    Nothing is silently dropped - the count is shown in the rendered output."""
+    seen = {}
+    for r in records:
+        if r["error_events"]:
+            msg = r["error_events"][0]["message"]
+        elif r["error_payloads"]:
+            msg = r["error_payloads"][0]["body"]
+        else:
+            msg = ""
+        norm = re.sub(r'\d{6,}|[0-9a-f]{16,}', "*", msg)[:200]
+        key = (r["service"], r["operation"], r.get("http_status"), norm)
+        if key in seen:
+            seen[key]["occurrences"] += 1
+        else:
+            r["occurrences"] = 1
+            seen[key] = r
+    return list(seen.values())
+
+
+def _record_header_block(r: Dict, index: int) -> str:
+    """Header-only rendering: service, operation, call chain, status, error
+    messages - no payload bodies. Always included for every record."""
+    parts = [
+        f"--- ERROR #{index} "
+        f"[{'ROOT-LEVEL FAILURE' if r['is_leaf_error'] else 'propagated'}] "
+        f"{r['service']} - {r['operation']}"
+        + (f" (x{r['occurrences']} identical occurrences)" if r["occurrences"] > 1 else "")
+    ]
+    if r["call_chain"]:
+        parts.append("  via: " + " -> ".join(r["call_chain"]))
+    if r.get("http_status"):
+        parts.append(f"  HTTP: {r['http_status']}")
+    for e in r["error_events"]:
+        ctx = f" [{e['context']}]" if e["context"] else ""
+        parts.append(f"  ERROR{ctx}: {e['message']}")
+    if r["error_payloads"] and not r["error_events"]:
+        parts.append(f"  [has {len(r['error_payloads'])} error payload(s)]")
+    return "\n".join(parts)
+
+
+def _render_evidence(all_records: List[Dict], traces_scanned: int) -> Dict:
+    """Render ranked evidence within budget.
+
+    Guarantee: every distinct error's header (service/operation/status/message)
+    is ALWAYS included regardless of budget - no error code is ever invisible
+    to the LLM. Only payload BODIES of the lowest-ranked records get dropped if
+    the budget is exceeded, and that is stated explicitly per-record.
+    """
+    ranked = sorted(_dedupe_records(all_records), key=_score_record, reverse=True)
+
+    if not ranked:
+        return {
+            "text": "",
+            "total_errors": 0,
+            "shown_full": 0,
+            "shown_header_only": 0,
+            "has_root_level": False,
+        }
+
+    # Pass 1: headers for every record - always included, always whole
+    headers = [_record_header_block(r, i + 1) for i, r in enumerate(ranked)]
+    headers_total = sum(len(h) for h in headers) + len(headers) * 2
+
+    # Pass 2: add full payload bodies, highest-ranked first, until budget runs out
+    remaining = max(_EVIDENCE_CHAR_BUDGET - headers_total, 0)
+    full_blocks = {}
+    payloads_included, payloads_omitted, truncated_payloads = 0, 0, 0
+
+    for i, r in enumerate(ranked):
+        if not r["error_payloads"]:
+            continue
+        payload_lines = []
+        for p in r["error_payloads"]:
+            b = p["body"]
+            if len(b) > _PAYLOAD_SLOT:
+                b = b[:_PAYLOAD_SLOT] + f" ...[PAYLOAD TRUNCATED - {len(p['body'])} chars total]"
+                truncated_payloads += 1
+            payload_lines.append(f"  {p['kind']}: {b}")
+        block = "\n".join(payload_lines)
+
+        if len(block) <= remaining:
+            full_blocks[i] = block
+            remaining -= len(block)
+            payloads_included += 1
+        else:
+            payloads_omitted += 1
+
+    body = []
+    for i, r in enumerate(ranked):
+        block = headers[i]
+        if i in full_blocks:
+            block += "\n" + full_blocks[i]
+        elif r["error_payloads"]:
+            block += (
+                f"\n  [payload body omitted for size - {len(r['error_payloads'])} "
+                f"payload(s) exist for this error. The error message/status above "
+                f"is still accurate.]"
+            )
+        body.append(block)
+
+    has_root_level = any(r["is_leaf_error"] for r in ranked)
+
+    header_lines = [
+        "=== ERROR EVIDENCE (ranked - root-level failures first) ===",
+        f"Traces scanned: {traces_scanned} | Distinct errors: {len(ranked)} | "
+        f"Full detail shown: {payloads_included} | Header-only (payload omitted): {payloads_omitted}",
+    ]
+    if truncated_payloads:
+        header_lines.append(f"NOTE: {truncated_payloads} oversized payload(s) truncated (marked inline).")
+    if payloads_omitted:
+        header_lines.append(
+            f"NOTE: Every distinct error above is listed with its message/status - "
+            f"only the raw payload BODY was omitted for {payloads_omitted} lower-ranked "
+            f"error(s) due to size. If the shown error messages don't clearly explain "
+            f"the reported issue, say so explicitly rather than inferring a cause."
+        )
+
+    return {
+        "text": "\n".join(header_lines) + "\n\n" + "\n\n".join(body),
+        "total_errors": len(ranked),
+        "shown_full": payloads_included,
+        "shown_header_only": payloads_omitted,
+        "has_root_level": has_root_level,
+    }
 
 
 async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, start_us: int = None, end_us: int = None):
@@ -343,9 +525,8 @@ async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, s
         end_us = now_us
         hours_label = f"{hours_ago}h"
     else:
-        # Calculate hours from the range for logging
         hours_diff = (end_us - start_us) / (3600 * 1_000_000)
-        hours_ago = int(hours_diff)  # Update for error message
+        hours_ago = int(hours_diff)
         hours_label = f"{hours_diff:.0f}h"
     
     # Handle mobile number format
@@ -357,7 +538,6 @@ async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, s
     headers = _jaeger_auth_headers(app)
     params = {"service": service, "start": start_us, "end": end_us, "limit": 100}
     
-    # Only add tags filter if both tag_name and tag_value are provided and non-empty
     if tag_name and tag_value and str(tag_name).strip() and str(tag_value).strip():
         tags = _json.dumps({tag_name: tag_value})
         params["tags"] = tags
@@ -365,68 +545,72 @@ async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, s
     logger.info(f"[JAEGER] app={app} service={service} {tag_name}={tag_value} range={hours_label} endpoint={api_base} params={params}")
     
     try:
-        async with httpx.AsyncClient(timeout=45,verify=CA_CERT_PATH) as client:
+        async with httpx.AsyncClient(timeout=45, verify=CA_CERT_PATH) as client:
             response = await client.get(f"{api_base}/traces", params=params, headers=headers)
             if response.status_code != 200:
                 logger.error(f"[JAEGER][FETCH] Non-200 response | status={response.status_code} body={response.text[:500]}")
-                return {"total_traces_scanned": 0, "failed_traces": [], "error": f"API returned {response.status_code}"}
+                return {"total_traces_scanned": 0, "failed_traces": [], "total_errors": 0, "error": f"API returned {response.status_code}"}
             data = response.json()
 
             traces = data.get("data", [])
             logger.info(f"[JAEGER][FETCH] Raw response | trace_count={len(traces)}")
             
-            # Note: Jaeger API may return total=0 but still have data in the array
             if not traces or len(traces) == 0:
                 logger.info(f"[JAEGER][FETCH] No traces in raw response for service={service} {tag_name}={tag_value} range={hours_label}")
-                return {"total_traces_scanned": 0, "failed_traces": [], "note": f"No traces found in last {hours_ago} hours"}
+                return {"total_traces_scanned": 0, "failed_traces": [], "total_errors": 0, "note": f"No traces found in last {hours_ago} hours"}
             
-            failed = []
-            happy_hits = {}  # Track successful traces by endpoint
+            all_error_records = []
+            happy_hits = {}
             sessions = set()
             success_sessions = set()
+            error_trace_count = 0
             
             for idx, trace in enumerate(traces):
                 output_lines, session_id, status_info = _jaeger_process_trace(trace)
-                
-                # Track session
                 if session_id:
                     sessions.add(session_id)
-                
-                # Determine if trace is an error or success
-                error_codes = sorted(c for c in status_info["http_codes"] if c.startswith(("4", "5")))
+
+                records = _extract_error_records(trace)  # walks EVERY span, no skipping
+
                 has_2xx = any(c.startswith("2") for c in status_info["http_codes"])
-                is_error = bool(error_codes) or status_info["error_flag"] or bool(status_info["error_logs"])
+                is_error = bool(records)
 
                 logger.info(
                     f"[JAEGER][TRACE {idx+1}/{len(traces)}] traceID={trace.get('traceID', 'unknown')} "
-                    f"http_codes={status_info['http_codes']} error_flag={status_info['error_flag']} "
-                    f"error_logs_count={len(status_info['error_logs'])} classified={'ERROR' if is_error else ('SUCCESS' if has_2xx else 'UNKNOWN')}"
+                    f"error_records={len(records)} "
+                    f"root_level={sum(1 for r in records if r['is_leaf_error'])} "
+                    f"classified={'ERROR' if is_error else ('SUCCESS' if has_2xx else 'UNKNOWN')}"
                 )
                 
                 if not is_error and has_2xx:
-                    # Happy path - track successful endpoint
                     if session_id:
                         success_sessions.add(session_id)
                     if len(output_lines) > 1:
-                        # Extract endpoint from second line (service - operation)
                         endpoint_key = output_lines[1] if output_lines else ""
                         happy_hits[endpoint_key] = happy_hits.get(endpoint_key, 0) + 1
                     continue
                 
-                if is_error and output_lines:
-                    # Pruning already happened at the span level in _jaeger_process_trace —
-                    # keep the trace's full (already-pruned) text, no further line-count cap.
-                    failed.append("\n".join(output_lines))
+                if records:
+                    error_trace_count += 1
+                    all_error_records.extend(records)
             
+            evidence = _render_evidence(all_error_records, len(traces))
+
             logger.info(
-                f"[JAEGER][FETCH] Classification summary | total={len(traces)} "
-                f"failed={len(failed)} happy_endpoints={len(happy_hits)} "
-                f"sessions={len(sessions)} success_sessions={len(success_sessions)}"
+                f"[JAEGER][FETCH] Evidence built | traces={len(traces)} error_traces={error_trace_count} "
+                f"distinct_errors={evidence['total_errors']} full_detail={evidence['shown_full']} "
+                f"header_only={evidence['shown_header_only']} root_level={evidence['has_root_level']} "
+                f"chars={len(evidence['text'])}"
             )
             
             return {
                 "total_traces_scanned": len(traces),
-                "failed_traces": failed[:MAX_ERROR_TRACES],  # count cap only, content is full
+                "evidence_text": evidence["text"],
+                "total_errors": evidence["total_errors"],
+                "errors_shown_full": evidence["shown_full"],
+                "errors_header_only": evidence["shown_header_only"],
+                "has_root_level_error": evidence["has_root_level"],
+                "failed_traces": [evidence["text"]] if all_error_records else [],  # back-compat only
                 "happy_hits": happy_hits,
                 "sessions": list(sessions),
                 "success_sessions": list(success_sessions),
@@ -437,7 +621,7 @@ async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, s
             }
     except Exception as e:
         logger.error(f"[JAEGER][FETCH] Exception during fetch | type={type(e).__name__} msg='{e}'", exc_info=True)
-        return {"total_traces_scanned": 0, "failed_traces": [], "error": str(e)}
+        return {"total_traces_scanned": 0, "failed_traces": [], "total_errors": 0, "error": str(e)}
 
 
 class SQLQueryTool(BaseTool):
@@ -476,9 +660,8 @@ class SQLQueryTool(BaseTool):
                 if not data:
                     return "Query executed successfully. No results returned."
                 
-                # Format results
                 output = [f"Found {len(data)} rows:"]
-                for row in data[:20]:  # Limit to 20 rows
+                for row in data[:20]:
                     output.append(str(row))
                 
                 if len(data) > 20:
@@ -508,13 +691,9 @@ class ELKQueryTool(BaseTool):
     async def _arun(self, app: str, query_json: str, parameter_name: str = None, parameter_value: str = None) -> str:
         try:
             elk_indexes = get_elk_indexes(app)
-            elk_index = elk_indexes.get("elk_log_index")  # Default to log index
+            elk_index = elk_indexes.get("elk_log_index")
             
             logger.info(f"[ELKQueryTool] Executing query for app={app}, index={elk_index}...")
-            
-            # Import execute_elk_query from utils.logs - but we need to pass index
-            # For now, we'll use the existing function and it will use default index
-            # A future update can pass app-specific index
             
             result = await execute_elk_query(
                 query_json,
@@ -522,7 +701,6 @@ class ELKQueryTool(BaseTool):
                 parameter_value=parameter_value
             )
             
-            # Prepend app info to result
             if result:
                 result = f"[App: {app} | Index: {elk_index}]\n{result}"
             
@@ -535,33 +713,14 @@ class ELKQueryTool(BaseTool):
 
 
 def _parse_known_tags_from_warning(warning: str) -> List[str]:
-    import re
-    # Match content between "Known tags: [" and "]"
     match = re.search(r"Known tags: \[(.*?)\]", warning)
     if match:
         tags_str = match.group(1)
-        # Parse the list - could be quoted strings or plain values
         tags = re.findall(r"['\"]([^'\"]+)['\"]", tags_str)
         if not tags:
-            # Try plain comma-separated values
             tags = [t.strip() for t in tags_str.split(',')]
         return [t.strip() for t in tags if t.strip()]
     return []
-
-
-def _jaeger_has_root_cause(result: dict) -> bool:
-    failed = result.get("failed_traces", [])
-    if not failed:
-        return False
-    
-    # Check if any failed trace has a clear error message (not just HTTP errors)
-    for trace in failed:
-        # Look for error patterns that indicate root cause found
-        if "ERROR:" in trace or "error" in trace.lower():
-            # Check for specific error messages (not just status codes)
-            if any(pattern in trace for pattern in ["Exception", "Error:", "Failed:", "DENIED", "FORBIDDEN", "ACCESS_DENIED"]):
-                return True
-    return False
 
 
 class JaegerTraceTool(BaseTool):
@@ -577,7 +736,6 @@ class JaegerTraceTool(BaseTool):
     def _run(self, app: str = None, service: str = None, tag_name: str = None, tag_value: str = None, 
              hours_ago: int = 24, service_name: str = None, identifier_name: str = None, 
              identifier_value: str = None, return_raw_json: bool = False, **kwargs) -> str:
-        # Handle backward compatibility with old parameter names
         if service_name and not service:
             service = service_name
         if identifier_name and not tag_name:
@@ -585,7 +743,7 @@ class JaegerTraceTool(BaseTool):
         if identifier_value and not tag_value:
             tag_value = identifier_value
         if not app:
-            app = "optimus"  # Default
+            app = "optimus"
             
         return asyncio.run(self._arun(app, service, tag_name, tag_value, hours_ago, return_raw_json))
     
@@ -614,9 +772,7 @@ class JaegerTraceTool(BaseTool):
         if kwargs.get('identifier_value') and not tag_value:
             tag_value = kwargs.get('identifier_value')
         
-        # Support legacy hours_ago parameter for backward compatibility
         if kwargs.get('hours_ago') and time_range_index == 0:
-            # Convert hours_ago to time_range_index
             hours = kwargs.get('hours_ago')
             if hours <= 24:
                 time_range_index = 0
@@ -640,17 +796,14 @@ class JaegerTraceTool(BaseTool):
 
         validation_warning = validate_tag_with_warning(app, service, tag_name)
         
-        # Search ONLY ONE 24h time range based on time_range_index
         import time as _time
         now_us = int(_time.time() * 1_000_000)
         
-        # Define time ranges: (start_offset_hours, end_offset_hours)
         time_ranges = [
             (0, 24), (24, 48), (48, 72), (72, 96), 
             (96, 120), (120, 144), (144, 168)
         ]
         
-        # Clamp to valid range
         time_range_index = max(0, min(6, time_range_index))
         start_offset, end_offset = time_ranges[time_range_index]
         
@@ -662,79 +815,58 @@ class JaegerTraceTool(BaseTool):
 
         result = await _jaeger_fetch(app, service, tag_name, tag_value, start_us, end_us)
 
-        # ── DIAGNOSTIC: dump raw counts so we can see what was actually found ──
         logger.info(
             f"[JaegerTraceTool][RAW RESULT] service={service} tag={tag_name}={tag_value} "
             f"range={range_label} total_scanned={result.get('total_traces_scanned', 0)} "
-            f"failed_traces_count={len(result.get('failed_traces', []))} "
-            f"happy_hits={result.get('happy_hits', {})} "
+            f"total_errors={result.get('total_errors', 0)} "
+            f"errors_shown_full={result.get('errors_shown_full', 0)} "
+            f"errors_header_only={result.get('errors_header_only', 0)} "
+            f"has_root_level_error={result.get('has_root_level_error', False)} "
             f"sessions={len(result.get('sessions', []))} "
             f"success_sessions={len(result.get('success_sessions', []))} "
             f"error={result.get('error')}"
         )
-        if result.get('failed_traces'):
-            for i, ft in enumerate(result['failed_traces'][:3], 1):
-                logger.info(f"[JaegerTraceTool][FAILED TRACE #{i}] {ft[:500]}")
-        else:
-            logger.info(
-                f"[JaegerTraceTool][NO ERROR EVIDENCE] All {result.get('total_traces_scanned', 0)} "
-                f"scanned traces were successful/non-error"
-            )
 
         scanned = result.get("total_traces_scanned", 0)
 
         if scanned and scanned > 0:
-            # Found traces
-            
-            # Check if raw JSON is requested
             if return_raw_json:
-                import json
                 return json.dumps(result, indent=2, default=str)
             
             output = []
             
-            # Add validation warning if present
             if validation_warning:
                 output.append(validation_warning)
                 output.append("\n" + "="*60 + "\n")
             
             output.append(f"Found {scanned} traces in time range {range_label}:")
             
-            failed = result.get("failed_traces", [])
             happy_hits = result.get("happy_hits", {})
             sessions = result.get("sessions", [])
             success_sessions = result.get("success_sessions", [])
             
-            # Add happy path tracking info
             if happy_hits:
                 output.append("\n=== HAPPY PATH (Successful Traces) ===")
                 for endpoint, count in happy_hits.items():
                     output.append(f"  {endpoint} → Success: {count}")
             
-            # Add session info
             if sessions:
                 output.append(f"\n=== SESSIONS ===")
                 output.append(f"  Total sessions: {len(sessions)}")
                 output.append(f"  Successful sessions: {len(success_sessions)}")
             
-            if failed:
-                if len(failed) > MAX_ERROR_TRACES:
-                    output.append(f"\n[Showing {MAX_ERROR_TRACES} of {len(failed)} error evidence - truncated for context]")
-                    for trace in failed[:MAX_ERROR_TRACES]:
-                        output.append(f"\n{trace}")
-                else:
-                    output.append(f"\n=== {len(failed)} ERROR EVIDENCE ===")
-                    for trace in failed:
-                        output.append(f"\n{trace}")
-                
-                # If root cause found, note it but let LLM decide next step
-                if _jaeger_has_root_cause(result):
-                    output.append("\n[ROOT CAUSE IDENTIFIED in this time range]")
+            if result.get("total_errors", 0) > 0:
+                output.append("\n" + result["evidence_text"])
+                if result.get("has_root_level_error"):
+                    output.append("\n[ROOT-LEVEL FAILURE IDENTIFIED in this time range]")
             else:
-                output.append(f"\n[Showing {min(scanned, 5)} traces for analysis]")
+                output.append(f"\n[No errors found in {scanned} traces - all successful]")
             
             final_output = "\n".join(output)
-            logger.info(f"[JaegerTraceTool][OUTPUT PREVIEW] {final_output[:800]}")
+            logger.info(
+                f"[JaegerTraceTool][OUTPUT] chars={len(final_output)} "
+                f"errors={result.get('total_errors', 0)} full={result.get('errors_shown_full', 0)}"
+            )
             return final_output
         
         # No traces found in this time range
@@ -764,12 +896,9 @@ class GetTableSchemaTool(BaseTool):
     args_schema: type = TableSchemaInput
     
     def _run(self, table_name: str, app: str = "cbs") -> str:
-        """Get table schema synchronously."""
         return asyncio.run(self._arun(table_name, app))
     
     async def _arun(self, table_name: str, app: str = "cbs") -> str:
-        """Get table schema from Oracle metadata."""
-        # Query Oracle ALL_TAB_COLUMNS
         query = """
             SELECT column_name, data_type, data_length, nullable, column_id
             FROM all_tab_columns 
@@ -825,11 +954,9 @@ class ListTablesTool(BaseTool):
     args_schema: type = ListTablesInput
     
     def _run(self, pattern: str = "%", app: str = "cbs") -> str:
-        """List tables synchronously."""
         return asyncio.run(self._arun(pattern, app))
     
     async def _arun(self, pattern: str = "%", app: str = "cbs") -> str:
-        """List tables from Oracle."""
         query = """
             SELECT table_name 
             FROM user_tables 
@@ -878,13 +1005,10 @@ class SimilaritySearchTool(BaseTool):
     args_schema: type = SimilaritySearchInput
     
     def _run(self, query: str, app: str = "cbs", top_k: int = 5) -> str:
-        """Search historic incidents synchronously."""
         return asyncio.run(self._arun(query, app, top_k))
     
     async def _arun(self, query: str, app: str = "cbs", top_k: int = 5) -> str:
-        """Search historic incidents using semantic search."""
         try:
-            # Import here to avoid circular imports
             from agents.context_builder import run_incident_context_crew_async
             
             context = await run_incident_context_crew_async(
