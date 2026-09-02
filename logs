@@ -1,0 +1,586 @@
+
+╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
+│                                                                              │
+│  Agent: Triage Analyst                                                       │
+│                                                                              │
+│  Final Answer:                                                               │
+│                                                                              │
+│                                                                              │
+│  ISSUE_UNDERSTOOD: yes                                                       │
+│  ISSUE_SUMMARY: Customer is unable to create a new Fixed Deposit (FD) via    │
+│  Mobile/Net Banking application. Based on similar historic incidents,        │
+│  potential root causes include: (1) incorrect mobile number entered during   │
+│  FD creation, (2) nominee address not updated in CBS, (3) temporary system   │
+│  issue, or (4) secondary account holder mismatch with FD plan types.         │
+│  SERVICE: deposits-api                                                       │
+│  NEXT_STEPS:                                                                 │
+│  1. Query Jaeger traces for deposits-api service using                       │
+│  customer_id=9945224557, focusing on createFD operations within the last 24  │
+│  hours - extract error_code and error_message                                │
+│  2. Run CBS query to verify nominee address status for                       │
+│  customer_id=9945224557 - check if nominee_address is populated and          │
+│  complete                                                                    │
+│  3. If traces show specific error (e.g., MOBILE_VALIDATION_ERROR,            │
+│  NOMINEE_ADDRESS_MISSING, DEPOSIT_PRODUCT_NOT_FOUND), apply corresponding    │
+│  resolution from similar incidents                                           │
+│  4. If no clear error in traces, check deposits-api health endpoint and      │
+│  recent deployment logs for system-wide issues                               │
+│  5. Verify customer account type (primary/secondary holder) in CBS to rule   │
+│  out plan mismatch issue                                                     │
+│  6. Document findings in ticket with specific error code and resolution      │
+│  applied; escalate to backend team if system-wide issue confirmed            │
+│                                                                              │
+│  NEEDS_MORE_INFO: no                                                         │
+│  QUESTION_FOR_USER: N/A                                                      │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-09-02 19:47:12,095 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
+2026-09-02 19:47:12,095 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: deposits-api, Tag: customer_id=9945224557
+2026-09-02 19:47:12,095 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
+2026-09-02 19:47:12,096 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=deposits-api, tag=customer_id=9945224557
+2026-09-02 19:47:12,096 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=deposits-api customer_id=9945224557 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'deposits-api', 'start': 1788292032096029, 'end': 1788378432096029, 'limit': 100, 'tags': '{"customer_id": "9945224557"}'}
+2026-09-02 19:47:22,392 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=57
+2026-09-02 19:47:22,394 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/57] traceID=faa6c24e482c83095ad637da92c230a3 http_codes={'200'} error_flag=False error_logs_count=9 classified=ERROR
+2026-09-02 19:47:22,395 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/57] traceID=c9beb7f80f3712493af4d06f767713a4 http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-09-02 19:47:22,397 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/57] traceID=dd314fce95112380a173d699cf130dc7 http_codes={'204', '400', '200'} error_flag=True error_logs_count=15 classified=ERROR
+2026-09-02 19:47:22,398 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/57] traceID=c0883bc320e8b1b571caf00551233565 http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-09-02 19:47:22,398 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/57] traceID=5249dcc58f0bd0dd7bfd077772c6a91a http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-09-02 19:47:22,399 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/57] traceID=f760dc3c81afe855e6f3d0b69eeedf11 http_codes={'200'} error_flag=False error_logs_count=9 classified=ERROR
+2026-09-02 19:47:22,416 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/57] traceID=83ac046c2d47d19e447f341c8dd2d10d http_codes={'404', '401', '204', '202', '200'} error_flag=True error_logs_count=140 classified=ERROR
+2026-09-02 19:47:22,419 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/57] traceID=0ad3974d87a990ff3e4fd7752f55afb5 http_codes={'204', '400', '200'} error_flag=True error_logs_count=15 classified=ERROR
+2026-09-02 19:47:22,419 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/57] traceID=647f7467e794394b0e456f8006eb3e0b http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-09-02 19:47:22,419 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/57] traceID=2d0d46dcfd48e4584e982a004a55f37a http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-09-02 19:47:22,421 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/57] traceID=130b7408c92e044b7e5ef7764d2d4fc0 http_codes={'200'} error_flag=False error_logs_count=9 classified=ERROR
+2026-09-02 19:47:22,437 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/57] traceID=2cbdae023dacd7678e787e1e5b2b3421 http_codes={'404', '401', '204', '202', '200'} error_flag=True error_logs_count=133 classified=ERROR
+2026-09-02 19:47:22,453 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/57] traceID=34d49808728cfda85058edeed80f46dc http_codes={'404', '401', '204', '202', '200'} error_flag=True error_logs_count=135 classified=ERROR
+2026-09-02 19:47:22,465 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/57] traceID=355ba5f83e8ebaf2fc4204227a7875d3 http_codes={'404', '401', '204', '202', '200'} error_flag=True error_logs_count=73 classified=ERROR
+2026-09-02 19:47:22,478 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/57] traceID=aea7c36eada762a82cd542258f0fd665 http_codes={'404', '401', '204', '202', '200'} error_flag=True error_logs_count=78 classified=ERROR
+2026-09-02 19:47:22,481 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 16/57] traceID=c6b46c73a0cc21e00789b9a08f1a76b1 http_codes={'204', '400', '200'} error_flag=True error_logs_count=8 classified=ERROR
+2026-09-02 19:47:22,483 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 17/57] traceID=7e4c88995d9a1e88baeaa16140bac2b3 http_codes={'204', '400', '200'} error_flag=True error_logs_count=8 classified=ERROR
+2026-09-02 19:47:22,484 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 18/57] traceID=fa924139912c38ce839a762d1dd33f8b http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,496 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 19/57] traceID=81a951baffc89d61c86450887492ff34 http_codes={'404', '401', '204', '202', '200'} error_flag=True error_logs_count=76 classified=ERROR
+2026-09-02 19:47:22,497 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 20/57] traceID=77b2a7bc10c4366e0c2841bad7f2616d http_codes={'200'} error_flag=False error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,498 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 21/57] traceID=61173fe3d34cff76792969b165a9f090 http_codes={'500', '204', '200'} error_flag=True error_logs_count=5 classified=ERROR
+2026-09-02 19:47:22,499 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 22/57] traceID=c3e0c6ba11797aa19f3a63412610b986 http_codes={'200'} error_flag=False error_logs_count=4 classified=ERROR
+2026-09-02 19:47:22,500 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 23/57] traceID=1c8f0173df1821f872cf538328f917e2 http_codes={'200'} error_flag=False error_logs_count=2 classified=ERROR
+2026-09-02 19:47:22,501 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 24/57] traceID=6a283f74f2abf8fadf04b37caad6afba http_codes={'200'} error_flag=False error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,502 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 25/57] traceID=25bf51a2e8fd69df284ad4046130ce48 http_codes={'204', '400', '200'} error_flag=True error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,502 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 26/57] traceID=5e3c75e5beea55199be55379fec4e42a http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,503 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 27/57] traceID=af08241882850249e16ddbb6c0d2e73c http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,504 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 28/57] traceID=8edd412b52e50c7b399ab7552c5d87b1 http_codes={'200'} error_flag=False error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,505 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 29/57] traceID=2a5ea7948fefb3f6ba24e4c314266645 http_codes={'200'} error_flag=False error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,506 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 30/57] traceID=de8a3196fe4b8b0c069a498ee8ddfaec http_codes={'200'} error_flag=False error_logs_count=4 classified=ERROR
+2026-09-02 19:47:22,508 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 31/57] traceID=031f1226088692c5347cc1e7103311bb http_codes={'204', '200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-09-02 19:47:22,508 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 32/57] traceID=0b63b6e0db917ca5cc3aad503b4ecea6 http_codes={'200'} error_flag=False error_logs_count=1 classified=ERROR
+2026-09-02 19:47:22,509 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 33/57] traceID=541a8e6e4f4090d1c0331730371091d7 http_codes={'200'} error_flag=False error_logs_count=2 classified=ERROR
+2026-09-02 19:47:22,510 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 34/57] traceID=a59e479b976be51881625ec6cf87e47b http_codes={'200'} error_flag=False error_logs_count=2 classified=ERROR
+2026-09-02 19:47:22,512 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 35/57] traceID=6e44dce11a6a13f0a4d6cf932196026c http_codes={'204', '400', '200'} error_flag=True error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,512 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 36/57] traceID=502b8aa2a49d499d0dbff869ed34cd2f http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-09-02 19:47:22,514 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 37/57] traceID=b153a3127a7d9a4dcabb1bae8789e210 http_codes={'204', '400', '200'} error_flag=True error_logs_count=4 classified=ERROR
+2026-09-02 19:47:22,515 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 38/57] traceID=70db60921edc373043cee912e4d3db06 http_codes={'204', '400', '200'} error_flag=True error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,517 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 39/57] traceID=4af7cde35abe391b3fd076eae5f2dc34 http_codes={'204', '400', '200'} error_flag=True error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,519 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 40/57] traceID=e7dde26b54bab9efe10a78a1e683c33e http_codes={'204', '400', '200'} error_flag=True error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,519 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 41/57] traceID=f2bd4b547a5bb8ea821ae1cd556c68c5 http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-09-02 19:47:22,521 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 42/57] traceID=c6e032e93affea28e9de68cc55b88094 http_codes={'204', '400', '200'} error_flag=True error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,522 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 43/57] traceID=82d739731915daadb557f9f279d33ace http_codes={'204', '400', '200'} error_flag=True error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,523 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 44/57] traceID=491e0ab9683d3b096c93f61e939c1fcb http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,523 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 45/57] traceID=5535cb3a24e056644199a16671f2f8a2 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,524 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 46/57] traceID=a744460eb4dccd4d6cdd1ce2982c9b7e http_codes={'200'} error_flag=False error_logs_count=2 classified=ERROR
+2026-09-02 19:47:22,525 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 47/57] traceID=13d4a12a688756b6b1e9fdbd8a3dc64a http_codes={'200'} error_flag=False error_logs_count=6 classified=ERROR
+2026-09-02 19:47:22,526 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 48/57] traceID=0467609929e39e561572110c57511525 http_codes={'200'} error_flag=False error_logs_count=2 classified=ERROR
+2026-09-02 19:47:22,526 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 49/57] traceID=7b1306204182c6c843619f8d1f60db45 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,526 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 50/57] traceID=52fb65eaf8dd3be2b658c7f16f8612c2 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,526 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 51/57] traceID=26ea9ab1301c6ddd8506d7a1077372c5 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,527 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 52/57] traceID=624598d2c41a6605f7175c4ce0f71346 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,527 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 53/57] traceID=8bd63c44ccb5fc537f1a7a203291e977 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,527 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 54/57] traceID=aba76d40eca4e1578ace0d693a140c17 http_codes={'200'} error_flag=False error_logs_count=3 classified=ERROR
+2026-09-02 19:47:22,528 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 55/57] traceID=85e123e3307c57b7bc8ddd6016e79859 http_codes={'200'} error_flag=False error_logs_count=0 classified=SUCCESS
+2026-09-02 19:47:22,529 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 56/57] traceID=b164bd7a70573031d87d24bf16d51834 http_codes={'200'} error_flag=False error_logs_count=2 classified=ERROR
+2026-09-02 19:47:22,542 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 57/57] traceID=96ce49391898604a56c09152d14501fd http_codes={'404', '401', '204', '202', '200'} error_flag=True error_logs_count=80 classified=ERROR
+2026-09-02 19:47:22,542 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Classification summary | total=57 failed=46 happy_endpoints=11 sessions=11 success_sessions=4
+2026-09-02 19:47:22,587 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=deposits-api tag=customer_id=9945224557 range=0-24h ago total_scanned=57 failed_traces_count=20 happy_hits={'3a533adfcb650819 - nginx - /api/deposit/v1/plans/calculate-maturity': 1, '9d79669e98f19d91 - nginx - /api/deposit/v1/plans/calculate-maturity': 1, '07ef25f821fb3609 - nginx - /api/deposit/v1/plans/calculate-maturity': 1, '70bed412439f999d - nginx - /api/deposit/v1/plans/calculate-maturity': 1, 'fdcc6b39f7a80f3d - nginx - /api/deposit/v1/plans/calculate-maturity': 1, '172d5c20d94c4d3f - deposits-api - /api/deposit/v1/plans/calculate-maturity': 1, 'ad40c6f927b0ebc2 - deposits-api - /api/deposit/v1/plans/calculate-maturity': 1, '731076c6db694f11 - deposits-api - /api/deposit/v1/plans/calculate-maturity': 1, 'd2fc21725910d8d9 - deposits-api - /api/deposit/v1/plans/calculate-maturity': 1, '5755787e8f85c8f4 - deposits-api - /api/deposit/v1/plans/calculate-maturity': 1, 'a379c98e8a17e803 - nginx - /api/deposit/v1/plans/calculate-maturity': 1} sessions=11 success_sessions=4 error=None
+2026-09-02 19:47:22,587 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #1] Time: 2026-09-02 19:37:17 IST
+Time: 2026-09-02 19:37:17 IST
+d5d91753172306c8 - deposits-api - /api/deposit/v1
+HTTP Status: 200
+  ERROR: Failed to check with pushToggleClient if feature toggle is enabled, checking the toggle value via http. Error : toggle not present in state
+  ERROR: Failed to check with pushToggleClient if feature toggle is enabled, checking the toggle value via http. Error : toggle not present in state
+    706ea4dad590e53d - deposits-api - /api/deposit/v1 | request/response
+  
+2026-09-02 19:47:22,587 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #2] Time: 2026-09-02 19:37:16 IST
+eba4e3c4267260af - nginx - /api/deposit/v1/plans/calculate-maturity
+    783a04ca745f64aa - deposits-api - /api/deposit/v1/plans/calculate-maturity
+        8bfb16a766d61f01 - deposits-api - http://user-profile-api-svc:8080/api/user-profile/v1/get-active-profile
+            8aeccd80a40dd6e3 - USER-PROFILE-SVC - /api/user-profile/v1/get-active-profile
+            HTTP Status: 200
+              ERROR: ProfileCacheProvider.GetProfilePreferences: Error in fetching profile
+2026-09-02 19:47:22,587 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][FAILED TRACE #3] Time: 2026-09-02 19:35:47 IST
+Time: 2026-09-02 19:35:47 IST
+4df917b2350cbf9e - nginx - /api/deposit/v1
+HTTP Status: 400
+    15d67868c9581b68 - deposits-api - /api/deposit/v1
+    HTTP Status: 400
+      ERROR [requestExecutorService.createDeposit]: Error in creating deposit at COTS: ErrorCode: ERR_CREATE_DEPOSIT_PAN_NOT_UPDATED ErrorMessage: Failed to create deposits in auto closure as PAN is not updated
+      ERROR: Error occurred while creating deposit : ErrorCode: ERR_CREATE_DEPOSIT_PAN_NOT_UPD
+2026-09-02 19:47:22,592 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT PREVIEW] Found 57 traces in time range 0-24h ago:
+
+=== HAPPY PATH (Successful Traces) ===
+  3a533adfcb650819 - nginx - /api/deposit/v1/plans/calculate-maturity → Success: 1
+  9d79669e98f19d91 - nginx - /api/deposit/v1/plans/calculate-maturity → Success: 1
+  07ef25f821fb3609 - nginx - /api/deposit/v1/plans/calculate-maturity → Success: 1
+  70bed412439f999d - nginx - /api/deposit/v1/plans/calculate-maturity → Success: 1
+  fdcc6b39f7a80f3d - nginx - /api/deposit/v1/plans/calculate-maturity → Success: 1
+  172d5c20d94c4d3f - deposits-api - /api/deposit/v1/plans/calculate-maturity → Success: 1
+  ad40c6f927b0ebc2 - deposits-api - /api/deposit/v1/plans/calculate-maturity → Success: 1
+  731076c6db694f11 - deposits-api - /api/deposit/v1/plans/calculate-maturity → Success: 1
+  d2fc21725910d8d9 - deposits-api 
+2026-09-02 19:47:22,649 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=traces_found for range=0
+2026-09-02 19:47:22,649 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Traces found at range 0
+2026-09-02 19:47:22,658 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][EVIDENCE COLLECTED] service=deposits-api tag=customer_id range=0 chars=4404142
+19:47:22 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-09-02 19:47:22,748 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:47:39 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-09-02 19:47:39,620 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:47:56 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-09-02 19:47:56,326 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:48:26 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-09-02 19:48:26,918 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:48:27 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-09-02 19:48:27,015 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:48:43 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-09-02 19:48:43,706 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:48:54 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-09-02 19:48:54,706 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:48:54 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-09-02 19:48:54,710 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+19:48:54 - LiteLLM:INFO: utils.py:3427 - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+2026-09-02 19:48:54,715 - LiteLLM - INFO - 
+LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
+Plan Agent completed for incident 76c1bcda3bcf8f10b6986f34c3e45a11
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'agent_execution_error' 
+closed 'llm_call_started' (expected 'agent_execution_started')
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'task_failed' closed 
+'agent_execution_started' (expected 'task_started')
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'crew_kickoff_failed' closed 
+'llm_call_started' (expected 'crew_kickoff_started')
+
+
+╭────────────────────────── Tracing Preference Saved ──────────────────────────╮
+│                                                                              │
+│  Info: Tracing has been disabled.                                            │
+│                                                                              │
+│  Your preference has been saved. Future Crew/Flow executions will not        │
+│  collect traces.                                                             │
+│                                                                              │
+│  To enable tracing later, do any one of these:                               │
+│  • Set tracing=True in your Crew/Flow code                                   │
+│  • Set CREWAI_TRACING_ENABLED=true in your project's .env file               │
+│  • Run: crewai traces enable                                                 │
+│                                                                              │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+2026-09-02 19:49:13,175 - new_flow.utils.llm - ERROR - === FULL EXCEPTION TRACEBACK ===
+2026-09-02 19:49:13,182 - new_flow.utils.llm - ERROR - Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 823, in acompletion
+    headers, response = await self.make_openai_chat_completion_request(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/logging_utils.py", line 190, in async_wrapper
+    result = await func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 454, in make_openai_chat_completion_request
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 436, in make_openai_chat_completion_request
+    await openai_aclient.chat.completions.with_raw_response.create(
+  File "/usr/local/lib/python3.11/site-packages/openai/_legacy_response.py", line 386, in wrapped
+    return cast(LegacyAPIResponse[R], await func(*args, **kwargs))
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 2907, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/_base_client.py", line 1992, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/_base_client.py", line 1777, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.BadRequestError: Error code: 400 - {'error': {'message': "litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)\nmodel=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.\n\nSet 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5\nAvailable Model Group Fallbacks=None", 'type': None, 'param': None, 'code': '400'}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/litellm/main.py", line 599, in acompletion
+    response = await init_response
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 870, in acompletion
+    raise OpenAIError(
+litellm.llms.openai.common_utils.OpenAIError: Error code: 400 - {'error': {'message': "litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)\nmodel=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.\n\nSet 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5\nAvailable Model Group Fallbacks=None", 'type': None, 'param': None, 'code': '400'}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/crewai/llm.py", line 1339, in _ahandle_non_streaming_response
+    response = await litellm.acompletion(**params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/utils/minimax_tool_call_patch.py", line 65, in acompletion
+    return _recover(await _orig_acompletion(*args, **kwargs))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/utils.py", line 1642, in wrapper_async
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/litellm/utils.py", line 1488, in wrapper_async
+    result = await original_function(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/main.py", line 618, in acompletion
+    raise exception_type(
+          ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 2328, in exception_type
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 363, in exception_type
+    raise ContextWindowExceededError(
+litellm.exceptions.ContextWindowExceededError: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
+
+Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
+Available Model Group Fallbacks=None
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/new_flow/utils/llm.py", line 96, in run_crew_with_retry_async
+    result = await crew_coro
+             ^^^^^^^^^^^^^^^
+  File "/app/new_flow/agents/execute_agent_jaeger.py", line 779, in run_jaeger_only_async
+    return await agent.execute(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/agents/execute_agent_jaeger.py", line 211, in execute
+    decision = await self._decide_after_traces(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/agents/execute_agent_jaeger.py", line 572, in _decide_after_traces
+    result = await crew.akickoff()
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/crew.py", line 976, in akickoff
+    result = await self._arun_sequential_process()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/crew.py", line 1035, in _arun_sequential_process
+    return await self._aexecute_tasks(self.tasks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/crew.py", line 1097, in _aexecute_tasks
+    task_output = await task.aexecute_sync(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/task.py", line 578, in aexecute_sync
+    return await self._aexecute_core(agent, context, tools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/task.py", line 694, in _aexecute_core
+    raise e  # Re-raise the exception after emitting the event
+    ^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/task.py", line 602, in _aexecute_core
+    result = await agent.aexecute_task(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 892, in aexecute_task
+    result = await self._handle_execution_error_async(e, task, context, tools)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 698, in _handle_execution_error_async
+    return await self.aexecute_task(task, context, tools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 892, in aexecute_task
+    result = await self._handle_execution_error_async(e, task, context, tools)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 698, in _handle_execution_error_async
+    return await self.aexecute_task(task, context, tools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 892, in aexecute_task
+    result = await self._handle_execution_error_async(e, task, context, tools)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 697, in _handle_execution_error_async
+    self._check_execution_error(e, task)
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 656, in _check_execution_error
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 879, in aexecute_task
+    result = await self._aexecute_without_timeout(task_prompt, task)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 937, in _aexecute_without_timeout
+    result = await self.agent_executor.ainvoke(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1131, in ainvoke
+    formatted_answer = await self._ainvoke_loop()
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1170, in _ainvoke_loop
+    return await self._ainvoke_loop_react()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1287, in _ainvoke_loop_react
+    handle_context_length(
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 712, in handle_context_length
+    summarize_messages(
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 980, in summarize_messages
+    summarized_contents = pool.submit(ctx.run, asyncio.run, coro).result()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 896, in _asummarize_chunks
+    results = await asyncio.gather(*[_summarize_one(chunk) for chunk in chunks])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 892, in _summarize_one
+    summary = await llm.acall(summarization_messages, callbacks=callbacks)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/llm.py", line 1931, in acall
+    return await self._ahandle_non_streaming_response(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/llm.py", line 1356, in _ahandle_non_streaming_response
+    raise LLMContextLengthExceededError(error_msg) from e
+crewai.utilities.exceptions.context_window_exceeding_exception.LLMContextLengthExceededError: LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
+
+Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
+Available Model Group Fallbacks=None
+Consider using a smaller input or implementing a text splitting strategy.
+
+2026-09-02 19:49:13,182 - new_flow.utils.llm - ERROR - === EXCEPTION TYPE: LLMContextLengthExceededError ===
+2026-09-02 19:49:13,182 - new_flow.utils.llm - ERROR - === EXCEPTION MESSAGE: LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
+
+Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
+Available Model Group Fallbacks=None
+Consider using a smaller input or implementing a text splitting strategy. ===
+[CrewAIEventsBus] Warning: Event pairing mismatch. 'method_execution_failed' 
+closed 'agent_execution_started' (expected 'method_execution_started')
+2026-09-02 19:49:13,191 - crewai.flow.flow - ERROR - Error executing listener run_resolver_crew: LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
+
+Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
+Available Model Group Fallbacks=None
+Consider using a smaller input or implementing a text splitting strategy.
+2026-09-02 19:49:13,191 - __main__ - ERROR - ✗ Flow FAILED | incident=76c1bcda3bcf8f10b6986f34c3e45a11 module=new_flow.flow error=LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
+
+Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
+Available Model Group Fallbacks=None
+Consider using a smaller input or implementing a text splitting strategy.
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 823, in acompletion
+    headers, response = await self.make_openai_chat_completion_request(
+                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/logging_utils.py", line 190, in async_wrapper
+    result = await func(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 454, in make_openai_chat_completion_request
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 436, in make_openai_chat_completion_request
+    await openai_aclient.chat.completions.with_raw_response.create(
+  File "/usr/local/lib/python3.11/site-packages/openai/_legacy_response.py", line 386, in wrapped
+    return cast(LegacyAPIResponse[R], await func(*args, **kwargs))
+                                      ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/resources/chat/completions/completions.py", line 2907, in create
+    return await self._post(
+           ^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/_base_client.py", line 1992, in post
+    return await self.request(cast_to, opts, stream=stream, stream_cls=stream_cls)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/openai/_base_client.py", line 1777, in request
+    raise self._make_status_error_from_response(err.response) from None
+openai.BadRequestError: Error code: 400 - {'error': {'message': "litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)\nmodel=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.\n\nSet 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5\nAvailable Model Group Fallbacks=None", 'type': None, 'param': None, 'code': '400'}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/litellm/main.py", line 599, in acompletion
+    response = await init_response
+               ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/llms/openai/openai.py", line 870, in acompletion
+    raise OpenAIError(
+litellm.llms.openai.common_utils.OpenAIError: Error code: 400 - {'error': {'message': "litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)\nmodel=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.\n\nSet 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5\nAvailable Model Group Fallbacks=None", 'type': None, 'param': None, 'code': '400'}}
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/local/lib/python3.11/site-packages/crewai/llm.py", line 1339, in _ahandle_non_streaming_response
+    response = await litellm.acompletion(**params)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/utils/minimax_tool_call_patch.py", line 65, in acompletion
+    return _recover(await _orig_acompletion(*args, **kwargs))
+                    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/utils.py", line 1642, in wrapper_async
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/litellm/utils.py", line 1488, in wrapper_async
+    result = await original_function(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/main.py", line 618, in acompletion
+    raise exception_type(
+          ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 2328, in exception_type
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/litellm/litellm_core_utils/exception_mapping_utils.py", line 363, in exception_type
+    raise ContextWindowExceededError(
+litellm.exceptions.ContextWindowExceededError: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
+
+Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
+Available Model Group Fallbacks=None
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/app/worker.py", line 138, in process_message
+    await flow.akickoff()
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2211, in akickoff
+    return await self.kickoff_async(inputs, input_files)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2091, in kickoff_async
+    await asyncio.gather(*tasks)
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2262, in _execute_start_method
+    await self._execute_listeners(start_method_name, result, finished_event_id)
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2552, in _execute_listeners
+    await asyncio.gather(*tasks)
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2820, in _execute_single_listener
+    await self._execute_listeners(
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2552, in _execute_listeners
+    await asyncio.gather(*tasks)
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2806, in _execute_single_listener
+    listener_result, finished_event_id = await self._execute_method(
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2428, in _execute_method
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/crewai/flow/flow.py", line 2341, in _execute_method
+    result = await method(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/flow.py", line 351, in run_resolver_crew
+    return await self._run_agentic_resolver(app)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/flow.py", line 413, in _run_agentic_resolver
+    execution_result = await run_crew_with_retry_async(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/utils/llm.py", line 96, in run_crew_with_retry_async
+    result = await crew_coro
+             ^^^^^^^^^^^^^^^
+  File "/app/new_flow/agents/execute_agent_jaeger.py", line 779, in run_jaeger_only_async
+    return await agent.execute(
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/agents/execute_agent_jaeger.py", line 211, in execute
+    decision = await self._decide_after_traces(
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/app/new_flow/agents/execute_agent_jaeger.py", line 572, in _decide_after_traces
+    result = await crew.akickoff()
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/crew.py", line 976, in akickoff
+    result = await self._arun_sequential_process()
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/crew.py", line 1035, in _arun_sequential_process
+    return await self._aexecute_tasks(self.tasks)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/crew.py", line 1097, in _aexecute_tasks
+    task_output = await task.aexecute_sync(
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/task.py", line 578, in aexecute_sync
+    return await self._aexecute_core(agent, context, tools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/task.py", line 694, in _aexecute_core
+    raise e  # Re-raise the exception after emitting the event
+    ^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/task.py", line 602, in _aexecute_core
+    result = await agent.aexecute_task(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 892, in aexecute_task
+    result = await self._handle_execution_error_async(e, task, context, tools)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 698, in _handle_execution_error_async
+    return await self.aexecute_task(task, context, tools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 892, in aexecute_task
+    result = await self._handle_execution_error_async(e, task, context, tools)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 698, in _handle_execution_error_async
+    return await self.aexecute_task(task, context, tools)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 892, in aexecute_task
+    result = await self._handle_execution_error_async(e, task, context, tools)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 697, in _handle_execution_error_async
+    self._check_execution_error(e, task)
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 656, in _check_execution_error
+    raise e
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 879, in aexecute_task
+    result = await self._aexecute_without_timeout(task_prompt, task)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agent/core.py", line 937, in _aexecute_without_timeout
+    result = await self.agent_executor.ainvoke(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1131, in ainvoke
+    formatted_answer = await self._ainvoke_loop()
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1170, in _ainvoke_loop
+    return await self._ainvoke_loop_react()
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/agents/crew_agent_executor.py", line 1287, in _ainvoke_loop_react
+    handle_context_length(
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 712, in handle_context_length
+    summarize_messages(
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 980, in summarize_messages
+    summarized_contents = pool.submit(ctx.run, asyncio.run, coro).result()
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/_base.py", line 456, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/usr/local/lib/python3.11/concurrent/futures/thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 190, in run
+    return runner.run(main)
+           ^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/asyncio/base_events.py", line 653, in run_until_complete
+    return future.result()
+           ^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 896, in _asummarize_chunks
+    results = await asyncio.gather(*[_summarize_one(chunk) for chunk in chunks])
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/utilities/agent_utils.py", line 892, in _summarize_one
+    summary = await llm.acall(summarization_messages, callbacks=callbacks)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/llm.py", line 1931, in acall
+    return await self._ahandle_non_streaming_response(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.11/site-packages/crewai/llm.py", line 1356, in _ahandle_non_streaming_response
+    raise LLMContextLengthExceededError(error_msg) from e
+crewai.utilities.exceptions.context_window_exceeding_exception.LLMContextLengthExceededError: LLM context length exceeded. Original error: litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: OpenAIException - litellm.ContextWindowExceededError: litellm.BadRequestError: ContextWindowExceededError: Hosted_vllmException - This model's maximum context length is 150000 tokens. However, you requested 0 output tokens and your prompt contains at least 150001 input tokens, for a total of at least 150001 tokens. Please reduce the length of the input prompt or the number of requested output tokens. (parameter=input_tokens, value=150001)
+model=/app/models/MiniMax-M2.5. context_window_fallbacks=None. fallbacks=None.
+
+Set 'context_window_fallback' - https://docs.litellm.ai/docs/routing#fallbacks. Received Model Group=/app/models/MiniMax-M2.5
+Available Model Group Fallbacks=None
+Consider using a smaller input or implementing a text splitting strategy.
+2026-09-02 19:49:13,214 - utils.pii_masking_integration - INFO - PII masking output complete for ServiceNow
+2026-09-02 19:49:14,599 - __main__ - INFO -   Fallback rejection sent | incident=76c1bcda3bcf8f10b6986f34c3e45a11
+shishir.pandey_tho@0325LTPB0124444 ~ % 
