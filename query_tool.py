@@ -96,6 +96,10 @@ class SimilaritySearchInput(BaseModel):
 JAEGER_API_BASE = os.getenv("JAEGER_API_BASE", "https://tracing.uat-opt.idfcfirstbank.com/api")
 JAEGER_AUTH_TOKEN = os.getenv("JAEGER_AUTH_TOKEN")
 
+# SSL certificate verification - must match the CA cert used for ELK/LLM calls
+CA_CERT_FILE = os.getenv("CA_CERT_FILE", "./IDFCBANKCA.pem")
+CA_CERT_PATH = CA_CERT_FILE  # Alias for consistency with logs.py
+
 # Count-based cap only — keep failed trace COUNT bounded, but never slice trace CONTENT.
 MAX_ERROR_TRACES = 20
 
@@ -361,7 +365,7 @@ async def _jaeger_fetch(app: str, service: str, tag_name: str, tag_value: str, s
     logger.info(f"[JAEGER] app={app} service={service} {tag_name}={tag_value} range={hours_label} endpoint={api_base} params={params}")
     
     try:
-        async with httpx.AsyncClient(timeout=45) as client:
+        async with httpx.AsyncClient(timeout=45,verify=CA_CERT_PATH) as client:
             response = await client.get(f"{api_base}/traces", params=params, headers=headers)
             if response.status_code != 200:
                 logger.error(f"[JAEGER][FETCH] Non-200 response | status={response.status_code} body={response.text[:500]}")
@@ -673,7 +677,7 @@ class JaegerTraceTool(BaseTool):
                 logger.info(f"[JaegerTraceTool][FAILED TRACE #{i}] {ft[:500]}")
         else:
             logger.info(
-                f"[JaegerTraceTool][NO FAILED TRACES] All {result.get('total_traces_scanned', 0)} "
+                f"[JaegerTraceTool][NO ERROR EVIDENCE] All {result.get('total_traces_scanned', 0)} "
                 f"scanned traces were successful/non-error"
             )
 
@@ -715,11 +719,11 @@ class JaegerTraceTool(BaseTool):
             
             if failed:
                 if len(failed) > MAX_ERROR_TRACES:
-                    output.append(f"\n[Showing {MAX_ERROR_TRACES} of {len(failed)} failed traces - truncated for context]")
+                    output.append(f"\n[Showing {MAX_ERROR_TRACES} of {len(failed)} error evidence - truncated for context]")
                     for trace in failed[:MAX_ERROR_TRACES]:
                         output.append(f"\n{trace}")
                 else:
-                    output.append(f"\n=== {len(failed)} FAILED TRACES ===")
+                    output.append(f"\n=== {len(failed)} ERROR EVIDENCE ===")
                     for trace in failed:
                         output.append(f"\n{trace}")
                 
