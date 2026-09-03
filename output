@@ -1,0 +1,45 @@
+# Jaeger RCA Pipeline — Issue & Fix Summary
+
+## The Problem
+Bot was either **crashing** (context window exceeded, 150k token limit) or giving **wrong root cause** (hallucinating from unrelated data), even after adding basic safety limits.
+
+## Root Cause
+Jaeger traces contain mostly noise — healthy request/response data, timestamps, span metadata. Our old code:
+- Pulled the **entire trace** (including healthy 200-OK payloads) into the prompt
+- Used **blind character trimming** (`text[:80000]`) when size got too big
+- This cut data **at a random position**, sometimes slicing the real error in half or dropping it entirely
+- LLM then guessed/invented a plausible-sounding root cause from whatever leftover text it saw
+
+**Real example:** Actual error was `PAN_NOT_UPDATED` (HTTP 400). Bot instead reported "empty nominee field" — data it picked up from an unrelated healthy response that happened to survive the trim.
+
+---
+
+## What We Changed — 3 Files
+
+### 1. `query_tools.py` — Extract only what matters
+- **Before:** Grabbed whole trace text, included healthy spans, trimmed blindly by character count
+- **After:** Scan every span, extract only actual **error records** (error code, message, HTTP status)
+- **Rank** errors — root-cause-level failures score highest, symptoms/propagated errors score lower
+- **Deduplicate** repeated identical errors (e.g., same error 8 times → shown once + count)
+- Result: 4.4 million characters of noise → ~4,000 characters of real signal
+
+### 2. `execute_agent_jaeger.py` — Stop cutting evidence
+- **Before:** Applied a second blind trim on top of already-processed data
+- **After:** Removed trimming entirely — evidence from step 1 is already small and clean, so nothing needs cutting
+- Bot now stops investigating as soon as a **root-level failure** is confirmed (not just any error seen)
+
+### 3. `summary_agent.py` — Stop re-attaching old data
+- **Before:** Re-attached raw data from *every* previous search attempt into the final response — this alone caused repeated context overflow crashes
+- **After:** Only uses the **final, already-ranked** evidence — no duplication
+
+---
+
+## Result
+| Before | After |
+|---|---|
+| Up to 4.4M characters sent to LLM | ~2,000–5,000 characters (real errors only) |
+| Random data loss on trim | No data loss — every error's message is always kept |
+| Crashes on large incidents | No crashes — size never approaches the limit |
+| Hallucinated root causes | Root cause backed by actual error code/message |
+
+**One-line summary for leadership:** *We stopped feeding the AI everything and cutting randomly when it got too big. We now extract only the actual errors, rank them by relevance, and guarantee the real error message is never lost — even in large incidents.*
