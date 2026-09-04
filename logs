@@ -1,353 +1,2119 @@
-
-╭─────────────────────────── ✅ Agent Final Answer ────────────────────────────╮
-│                                                                              │
-│  Agent: Triage Analyst                                                       │
-│                                                                              │
-│  Final Answer:                                                               │
-│                                                                              │
-│                                                                              │
-│  ISSUE_UNDERSTOOD: yes                                                       │
-│  ISSUE_SUMMARY: Customer unable to perform credit card payment via           │
-│  Mobile/Net Banking application. Historic incidents show similar cases       │
-│  where root causes include: (1) no error logs found in system, (2) Net       │
-│  Banking/Mobile Banking not activated, (3) temporary system issues, or (4)   │
-│  requires escalation to Prime/Credit Card team.                              │
-│  SERVICE: CREDIT-CARD-API                                                    │
-│  NEXT_STEPS:                                                                 │
-│  1. Query Jaeger traces for CREDIT-CARD-API with customer_id 9903236403,     │
-│  time range last 24hrs - look for payment failure events                     │
-│  2. If traces found with errors: capture error codes and determine if        │
-│  retryable (timeout/connection issues = retry, auth/validation failures =    │
-│  screenshot + escalation)                                                    │
-│  3. If traces show system errors (5xx, service down): check CREDIT-CARD-API  │
-│  service health dashboard                                                    │
-│  4. If no traces found: query core banking system for customer_id            │
-│  9903236403 Net Banking/Mobile Banking activation status                     │
-│  5. Ask customer to retry the credit card payment and confirm if issue       │
-│  persists                                                                    │
-│  6. If issue persists: request exact date/time with latest error screenshot  │
-│  7. If no logs found and issue persists: escalate to Prime/Credit Card team  │
-│  with trace data                                                             │
-│  NEEDS_MORE_INFO: no                                                         │
-│  QUESTION_FOR_USER:                                                          │
-│                                                                              │
-╰──────────────────────────────────────────────────────────────────────────────╯
-
-2026-09-02 20:57:08,916 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 1 START ===
-2026-09-02 20:57:08,916 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: CREDIT-CARD-API, Tag: customer_id=9903236403
-2026-09-02 20:57:08,916 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
-2026-09-02 20:57:08,916 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=CREDIT-CARD-API, tag=customer_id=9903236403
-2026-09-02 20:57:08,916 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=CREDIT-CARD-API customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'CREDIT-CARD-API', 'start': 1788296228916934, 'end': 1788382628916934, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:11,107 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=40
-2026-09-02 20:57:11,108 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 1/40] traceID=c0a3d182e4b62510d93901d0162d1152 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,110 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 2/40] traceID=131a0d883451d60f18f17ef759b7ad5b error_records=2 root_level=2 classified=ERROR
-2026-09-02 20:57:11,111 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 3/40] traceID=a79a0e47c2445c4beb9b1e055f9baaff error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,112 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 4/40] traceID=6c24a7c03f195bbfbf4fc3efcc39e890 error_records=6 root_level=5 classified=ERROR
-2026-09-02 20:57:11,113 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 5/40] traceID=efb61d86cab4cf83477424d29175b5bc error_records=2 root_level=2 classified=ERROR
-2026-09-02 20:57:11,114 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 6/40] traceID=e8d14bfd0b79a48a179a5345181ee3b9 error_records=6 root_level=5 classified=ERROR
-2026-09-02 20:57:11,115 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 7/40] traceID=b2fff3f34fed5d02384588ccbca165ec error_records=6 root_level=5 classified=ERROR
-2026-09-02 20:57:11,116 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 8/40] traceID=c87bdae63ca8bdf4d12818f2356f1162 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,117 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 9/40] traceID=9549bb194941b31b72c01c68de0eb677 error_records=2 root_level=1 classified=ERROR
-2026-09-02 20:57:11,118 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 10/40] traceID=086e5c3855bf4b008fade83175f080e5 error_records=2 root_level=2 classified=ERROR
-2026-09-02 20:57:11,119 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 11/40] traceID=4a1c8e352f6b374c97bd924c3c0b6c8a error_records=3 root_level=2 classified=ERROR
-2026-09-02 20:57:11,121 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 12/40] traceID=5ea6e1a171ab5e1cb30e3335be6cda74 error_records=15 root_level=10 classified=ERROR
-2026-09-02 20:57:11,139 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 13/40] traceID=ffb3df278d8e562e230198c20396752c error_records=49 root_level=28 classified=ERROR
-2026-09-02 20:57:11,139 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 14/40] traceID=5a04eaaa807f895f31663010cffd269e error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,139 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 15/40] traceID=984efdd66a3978c8d01cf69046ce328b error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,140 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 16/40] traceID=a2069c33b47e56fd0ddfa888588ae90d error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,140 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 17/40] traceID=6026bd4547045607616f8dd1c5166c98 error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,140 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 18/40] traceID=629b7a0f12ab5f76aca9cd93d83dcdc5 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,154 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 19/40] traceID=4b6c2520d27f8456ef1196c25d656cda error_records=38 root_level=24 classified=ERROR
-2026-09-02 20:57:11,155 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 20/40] traceID=4e3bd1e0b2f5be7561bf67bcba686807 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,155 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 21/40] traceID=31fdb9333ea13f8344b037102c871c12 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,155 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 22/40] traceID=d0189e9c70e3f64342578fe761b72b3c error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,155 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 23/40] traceID=a31c52b4d8a6c5c12de856dfcad630e8 error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,170 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 24/40] traceID=f2cbdf48a7419d8904f8c8fa9cbc138a error_records=42 root_level=28 classified=ERROR
-2026-09-02 20:57:11,170 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 25/40] traceID=c611a0d87dc6a08fe98a97ab8db8ef31 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,170 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 26/40] traceID=df4a55b38ed111faeff2f69b217b7772 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,171 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 27/40] traceID=d23b4615843d3e3d3fb0a29084ae2411 error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,171 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 28/40] traceID=65920b68f0b474d21b467c500658ac5a error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,171 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 29/40] traceID=54d500b6d739fe3d66d0ba2629b173f2 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,171 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 30/40] traceID=0a1467d56b61939be5a39328aa88e6e5 error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,179 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 31/40] traceID=116efc50a1d2612924d3c6806b1f1a1b error_records=35 root_level=21 classified=ERROR
-2026-09-02 20:57:11,179 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 32/40] traceID=dc4a68d12bb02c0ecf5b2d638bf97335 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,179 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 33/40] traceID=59ebe58695410d79363a3fca9359bfe5 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,179 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 34/40] traceID=0ff633850c458b16ae450ad86828d770 error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,179 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 35/40] traceID=bcd951404e15bef3911d9a7e3634f7f6 error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,194 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 36/40] traceID=6d0e2e15788c4b1ae558518b9b91d7ff error_records=42 root_level=27 classified=ERROR
-2026-09-02 20:57:11,195 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 37/40] traceID=efa57d1805a80b192cb0121b257737ce error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,195 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 38/40] traceID=d67971b05451d07f716526f584c5e67a error_records=1 root_level=1 classified=ERROR
-2026-09-02 20:57:11,195 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 39/40] traceID=1e3f99bd323535a7534d875c3631f50e error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,195 - new_flow.tools.query_tools - INFO - [JAEGER][TRACE 40/40] traceID=f62ab3de70abf6dff7902314b49f2310 error_records=0 root_level=0 classified=SUCCESS
-2026-09-02 20:57:11,197 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Evidence built | traces=40 error_traces=30 distinct_errors=65 full_detail=8 header_only=0 root_level=True chars=47972
-2026-09-02 20:57:11,214 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=CREDIT-CARD-API tag=customer_id=9903236403 range=0-24h ago total_scanned=40 total_errors=65 errors_shown_full=8 errors_header_only=0 has_root_level_error=True sessions=5 success_sessions=4 error=None
-2026-09-02 20:57:11,214 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][OUTPUT] chars=49215 errors=65 full=8
-2026-09-02 20:57:11,215 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=0
-2026-09-02 20:57:11,215 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
-2026-09-02 20:57:11,215 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
-2026-09-02 20:57:11,215 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=CREDIT-CARD-API, tag=customer_id=9903236403
-2026-09-02 20:57:11,215 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=CREDIT-CARD-API customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'CREDIT-CARD-API', 'start': 1788209831215463, 'end': 1788296231215463, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:11,251 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:11,251 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=CREDIT-CARD-API customer_id=9903236403 range=24h
-2026-09-02 20:57:11,251 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=CREDIT-CARD-API tag=customer_id=9903236403 range=24-48h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:11,251 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=1
-2026-09-02 20:57:11,251 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
-2026-09-02 20:57:11,251 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
-2026-09-02 20:57:11,251 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=CREDIT-CARD-API, tag=customer_id=9903236403
-2026-09-02 20:57:11,251 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=CREDIT-CARD-API customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'CREDIT-CARD-API', 'start': 1788123431251427, 'end': 1788209831251427, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:11,286 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:11,286 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=CREDIT-CARD-API customer_id=9903236403 range=24h
-2026-09-02 20:57:11,286 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=CREDIT-CARD-API tag=customer_id=9903236403 range=48-72h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:11,286 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=2
-2026-09-02 20:57:11,286 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
-2026-09-02 20:57:11,286 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
-2026-09-02 20:57:11,286 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=CREDIT-CARD-API, tag=customer_id=9903236403
-2026-09-02 20:57:11,286 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=CREDIT-CARD-API customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'CREDIT-CARD-API', 'start': 1788037031286672, 'end': 1788123431286672, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:11,315 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:11,315 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=CREDIT-CARD-API customer_id=9903236403 range=24h
-2026-09-02 20:57:11,315 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=CREDIT-CARD-API tag=customer_id=9903236403 range=72-96h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:11,315 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=3
-2026-09-02 20:57:11,315 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 3, continuing...
-2026-09-02 20:57:11,315 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=4
-2026-09-02 20:57:11,315 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 96-120h ago for service=CREDIT-CARD-API, tag=customer_id=9903236403
-2026-09-02 20:57:11,315 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=CREDIT-CARD-API customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'CREDIT-CARD-API', 'start': 1787950631315497, 'end': 1788037031315497, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:11,343 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:11,343 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=CREDIT-CARD-API customer_id=9903236403 range=24h
-2026-09-02 20:57:11,343 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=CREDIT-CARD-API tag=customer_id=9903236403 range=96-120h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:11,343 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=4
-2026-09-02 20:57:11,343 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 4, continuing...
-2026-09-02 20:57:11,343 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=5
-2026-09-02 20:57:11,343 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 120-144h ago for service=CREDIT-CARD-API, tag=customer_id=9903236403
-2026-09-02 20:57:11,343 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=CREDIT-CARD-API customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'CREDIT-CARD-API', 'start': 1787864231343418, 'end': 1787950631343418, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:11,370 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:11,370 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=CREDIT-CARD-API customer_id=9903236403 range=24h
-2026-09-02 20:57:11,370 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=CREDIT-CARD-API tag=customer_id=9903236403 range=120-144h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:11,370 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=5
-2026-09-02 20:57:11,370 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 5, continuing...
-2026-09-02 20:57:11,370 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=6
-2026-09-02 20:57:11,370 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 144-168h ago for service=CREDIT-CARD-API, tag=customer_id=9903236403
-2026-09-02 20:57:11,370 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=CREDIT-CARD-API customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'CREDIT-CARD-API', 'start': 1787777831370385, 'end': 1787864231370385, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:11,403 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:11,403 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=CREDIT-CARD-API customer_id=9903236403 range=24h
-2026-09-02 20:57:11,403 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=CREDIT-CARD-API tag=customer_id=9903236403 range=144-168h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:11,403 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=6
-2026-09-02 20:57:11,403 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 6, continuing...
-2026-09-02 20:57:11,403 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] All 7 time ranges exhausted for iteration 1
-20:57:11 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:11,417 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:13,309 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][DECISION after_all_ranges] action=new_iteration diagnosis=
-2026-09-02 20:57:13,309 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Starting new iteration with service=PAYMENT-GATEWAY-SERVICE, tag=customer_id
-2026-09-02 20:57:13,309 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 2 START ===
-2026-09-02 20:57:13,309 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: PAYMENT-GATEWAY-SERVICE, Tag: customer_id=9903236403
-2026-09-02 20:57:13,309 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
-2026-09-02 20:57:13,309 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:13,309 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788296233309790, 'end': 1788382633309790, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:13,719 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:13,719 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:13,720 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=0-24h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:13,720 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=0
-2026-09-02 20:57:13,720 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
-2026-09-02 20:57:13,720 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
-2026-09-02 20:57:13,720 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:13,720 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788209833720174, 'end': 1788296233720174, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:13,749 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:13,749 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:13,749 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=24-48h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:13,749 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=1
-2026-09-02 20:57:13,749 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
-2026-09-02 20:57:13,749 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
-2026-09-02 20:57:13,749 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:13,749 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788123433749364, 'end': 1788209833749364, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:13,777 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:13,777 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:13,777 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=48-72h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:13,777 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=2
-2026-09-02 20:57:13,777 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
-2026-09-02 20:57:13,777 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
-2026-09-02 20:57:13,777 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:13,777 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788037033777632, 'end': 1788123433777632, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:13,809 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:13,809 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:13,809 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=72-96h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:13,809 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=3
-2026-09-02 20:57:13,809 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 3, continuing...
-2026-09-02 20:57:13,809 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=4
-2026-09-02 20:57:13,809 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 96-120h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:13,809 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1787950633809747, 'end': 1788037033809747, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:13,838 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:13,838 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:13,838 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=96-120h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:13,838 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=4
-2026-09-02 20:57:13,838 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 4, continuing...
-2026-09-02 20:57:13,838 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=5
-2026-09-02 20:57:13,838 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 120-144h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:13,838 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1787864233838724, 'end': 1787950633838724, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:13,867 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:13,867 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:13,867 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=120-144h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:13,867 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=5
-2026-09-02 20:57:13,867 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 5, continuing...
-2026-09-02 20:57:13,867 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=6
-2026-09-02 20:57:13,867 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 144-168h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:13,867 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1787777833867811, 'end': 1787864233867811, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:13,898 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:13,898 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:13,898 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=144-168h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:13,898 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=6
-2026-09-02 20:57:13,898 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 6, continuing...
-2026-09-02 20:57:13,898 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] All 7 time ranges exhausted for iteration 2
-20:57:13 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:13,908 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:16,575 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][DECISION after_all_ranges] action=new_iteration diagnosis=
-2026-09-02 20:57:16,575 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Starting new iteration with service=PAYMENT-GATEWAY-SERVICE, tag=customer_id
-2026-09-02 20:57:16,575 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 3 START ===
-2026-09-02 20:57:16,575 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: PAYMENT-GATEWAY-SERVICE, Tag: customer_id=9903236403
-2026-09-02 20:57:16,575 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
-2026-09-02 20:57:16,575 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:16,575 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788296236575799, 'end': 1788382636575799, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:16,985 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:16,985 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:16,985 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=0-24h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:16,985 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=0
-2026-09-02 20:57:16,985 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
-2026-09-02 20:57:16,985 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
-2026-09-02 20:57:16,986 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:16,986 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788209836986009, 'end': 1788296236986009, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:17,015 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:17,015 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:17,015 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=24-48h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:17,015 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=1
-2026-09-02 20:57:17,015 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
-2026-09-02 20:57:17,015 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
-2026-09-02 20:57:17,015 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:17,015 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788123437015862, 'end': 1788209837015862, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:17,045 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:17,045 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:17,045 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=48-72h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:17,045 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=2
-2026-09-02 20:57:17,045 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
-2026-09-02 20:57:17,045 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
-2026-09-02 20:57:17,045 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:17,045 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788037037045757, 'end': 1788123437045757, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:17,109 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:17,110 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:17,110 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=72-96h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:17,110 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=3
-2026-09-02 20:57:17,110 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 3, continuing...
-2026-09-02 20:57:17,110 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=4
-2026-09-02 20:57:17,110 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 96-120h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:17,110 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1787950637110367, 'end': 1788037037110367, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:17,137 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:17,137 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:17,137 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=96-120h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:17,138 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=4
-2026-09-02 20:57:17,138 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 4, continuing...
-2026-09-02 20:57:17,138 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=5
-2026-09-02 20:57:17,138 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 120-144h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:17,138 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1787864237138186, 'end': 1787950637138186, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:17,165 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:17,165 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:17,165 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=120-144h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:17,165 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=5
-2026-09-02 20:57:17,165 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 5, continuing...
-2026-09-02 20:57:17,165 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=6
-2026-09-02 20:57:17,165 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 144-168h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:17,165 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1787777837165900, 'end': 1787864237165900, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:17,192 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:17,192 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:17,192 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=144-168h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:17,192 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=6
-2026-09-02 20:57:17,192 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 6, continuing...
-2026-09-02 20:57:17,192 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] All 7 time ranges exhausted for iteration 3
-20:57:17 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:17,202 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:20,281 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][DECISION after_all_ranges] action=new_iteration diagnosis=
-2026-09-02 20:57:20,281 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Starting new iteration with service=PAYMENT-GATEWAY-SERVICE, tag=customer_id
-2026-09-02 20:57:20,281 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] === ITERATION 4 START ===
-2026-09-02 20:57:20,281 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Service: PAYMENT-GATEWAY-SERVICE, Tag: customer_id=9903236403
-2026-09-02 20:57:20,281 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=0
-2026-09-02 20:57:20,281 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 0-24h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:20,281 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788296240281301, 'end': 1788382640281301, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:20,772 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:20,772 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:20,772 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=0-24h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:20,773 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=0
-2026-09-02 20:57:20,773 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 0, continuing...
-2026-09-02 20:57:20,773 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=1
-2026-09-02 20:57:20,773 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 24-48h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:20,773 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788209840773111, 'end': 1788296240773111, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:20,812 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:20,812 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:20,812 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=24-48h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:20,812 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=1
-2026-09-02 20:57:20,812 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 1, continuing...
-2026-09-02 20:57:20,812 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=2
-2026-09-02 20:57:20,812 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 48-72h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:20,812 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788123440812604, 'end': 1788209840812604, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:20,841 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:20,841 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:20,841 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=48-72h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:20,841 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=2
-2026-09-02 20:57:20,841 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 2, continuing...
-2026-09-02 20:57:20,841 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=3
-2026-09-02 20:57:20,841 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 72-96h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:20,842 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1788037040841948, 'end': 1788123440841948, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:20,872 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:20,872 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:20,872 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=72-96h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:20,872 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=3
-2026-09-02 20:57:20,872 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 3, continuing...
-2026-09-02 20:57:20,872 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=4
-2026-09-02 20:57:20,872 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 96-120h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:20,872 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1787950640872906, 'end': 1788037040872906, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:20,903 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:20,903 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:20,903 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=96-120h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:20,903 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=4
-2026-09-02 20:57:20,903 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 4, continuing...
-2026-09-02 20:57:20,903 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=5
-2026-09-02 20:57:20,903 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 120-144h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:20,903 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1787864240903902, 'end': 1787950640903902, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:20,931 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:20,931 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:20,931 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=120-144h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:20,931 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=5
-2026-09-02 20:57:20,931 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 5, continuing...
-2026-09-02 20:57:20,931 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] Calling Jaeger with time_range_index=6
-2026-09-02 20:57:20,931 - new_flow.tools.query_tools - INFO - [JaegerTraceTool] Searching 144-168h ago for service=PAYMENT-GATEWAY-SERVICE, tag=customer_id=9903236403
-2026-09-02 20:57:20,931 - new_flow.tools.query_tools - INFO - [JAEGER] app=optimus service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h endpoint=https://tracing.uat-opt.idfcfirstbank.com/api params={'service': 'PAYMENT-GATEWAY-SERVICE', 'start': 1787777840931755, 'end': 1787864240931755, 'limit': 100, 'tags': '{"customer_id": "9903236403"}'}
-2026-09-02 20:57:20,957 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] Raw response | trace_count=0
-2026-09-02 20:57:20,957 - new_flow.tools.query_tools - INFO - [JAEGER][FETCH] No traces in raw response for service=PAYMENT-GATEWAY-SERVICE customer_id=9903236403 range=24h
-2026-09-02 20:57:20,957 - new_flow.tools.query_tools - INFO - [JaegerTraceTool][RAW RESULT] service=PAYMENT-GATEWAY-SERVICE tag=customer_id=9903236403 range=144-168h ago total_scanned=0 total_errors=0 errors_shown_full=0 errors_header_only=0 has_root_level_error=False sessions=0 success_sessions=0 error=None
-2026-09-02 20:57:20,957 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] break_reason=no_traces_continue for range=6
-2026-09-02 20:57:20,957 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] No traces at range 6, continuing...
-2026-09-02 20:57:20,957 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] All 7 time ranges exhausted for iteration 4
-20:57:20 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:20,968 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:24,770 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent][DECISION after_all_ranges] action=resolve diagnosis=No runtime error found in CREDIT-CARD-API service traces. All 7 time ranges exhausted with no new traces found for customer_id 9903236403. This aligns with historic incident root cause pattern #1: "no
-2026-09-02 20:57:24,770 - new_flow.agents.execute_agent_jaeger - INFO - [JaegerOnlyAgent] RESOLVING after all ranges exhausted | diagnosis=No runtime error found in CREDIT-CARD-API service traces. All 7 time ranges exhausted with no new traces found for customer_id 9903236403. This aligns with historic incident root cause pattern #1: "no error logs found in system" - suggesting the issue is likely not a code/runtime failure but may be 
-20:57:24 - LiteLLM:INFO: utils.py:3427 - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:24,778 - LiteLLM - INFO - 
-LiteLLM completion() model= /app/models/MiniMax-M2.5; provider = openai
-2026-09-02 20:57:27,727 - utils.pii_masking_integration - INFO - PII masking output complete for ServiceNow
-Plan Agent completed for incident 3df04d523b83cf10b6986f34c3e45ac4
-Execute Agent completed for incident 3df04d523b83cf10b6986f34c3e45ac4
-Summary Agent completed for incident 3df04d523b83cf10b6986f34c3e45ac4
-interaction_counter: 2
-Request - url:https://api.aws-uat.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident json:{'callerId': 'shishir.pandey_tho@idfcfirstext.bank.in', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Credit Card', 'tier3': 'Credit Card Transactions issue', 'impact': 'Medium', 'urgency': 'Medium', 'shortDescription': 'Unablke to do credit card apoyment check whyb ', 'description': 'Unablke to do credit card apoyment check whyb', 'contactType': 'Self Service', 'sourceIncidentNum': 'INC000006218131', 'sourceIncidentId': '', 'assignmentGroup': 'Optimus BTO Support', 'businessImpact': '', 'cause': '', 'businessCorrectiveAction': '', 'techCorrectiveAction': '', 'dataSource': '', 'descriptionOfOutage': '', 'entityUCIC': '9903236403', 'hashValues': '', 'ipDetails': '', 'ldwNotifyInformation': '', 'loanAccountNumber': '', 'loginId': '', 'mobileNumber': '', 'businessPreventiveAction': '', 'techPreventiveAction': '', 'resoultionTeam': '', 'rootCause': '', 'systemName': '', 'urlOrDomain': '', 'userDetail': '', 'individualUCIC': '9903236403', 'sourceIncCreateddttime': '03-Sep-2026 02:21:34', 'incidentId': '3df04d523b83cf10b6986f34c3e45ac4', 'state': 'On Hold', 'additionalComments': "Diagnosis:\nAfter thorough investigation of the CREDIT-CARD-API service, no runtime errors were found. The system shows no traces for customer [REDACTED-CUSTOMER_ID] across all searched time ranges (up to 168 hours ago). This indicates the issue is likely not a backend code or system failure. Based on similar historic incidents, the most probable cause is that the customer's Net Banking or Mobile Banking account has not been activated, which is required for processing credit card payments through our digital channels.\n\nSolution:\nPlease verify if the customer has an active Net Banking or Mobile Banking registration. If not activated, guide the customer to activate it first through our branch or online portal. If Net Banking/Mobile Banking is already active, ask the customer to retry the credit card payment and confirm if the issue persists. If the problem continues after retry, escalate the case to our Prime team and Credit Card team for further manual verification, as no system logs were captured to diagnose a specific technical error.", 'onHoldReason': 'User Action Required', 'userLocation': '', 'resolutionNotes': ''} headers:{'Content-Type': 'application/json', 'correlationId': '90860b86-c854-4aed-958d-0a381e64ee2a', 'source': 'IncidentBot', 'transactionId': '10ce4b8d-c012-49db-af2d-42e6badee30d', 'Authorization': 'Basic MThiNDhmNzctNzMyMy00MWJiLWJmNmUtYzZmODNlODdhOTgyOkI3TGJ1NVhkcX5JT1paaW1SLThNVDE3eWtF'}
-Successfully updated incident 3df04d523b83cf10b6986f34c3e45ac4 in ServiceNow
-Response: {'message': 'Incident has been updated successfully.', 'incidentNumber': 'INC000006218131', 'incidentId': '3df04d523b83cf10b6986f34c3e45ac4', 'incidentType': 'Application', 'businessService': 'Optimus', 'tier1': 'Optimus', 'tier2': 'Credit Card', 'tier3': 'Credit Card Transactions issue', 'impact': 'Medium', 'urgency': 'Medium', 'priority': 'Medium', 'shortDescription': 'Unablke to do credit card apoyment check whyb ', 'description': 'Unablke to do credit card apoyment check whyb', 'contactType': 'Self Service', 'state': 'On Hold', 'onHoldReason': 'User Action Required', 'vendorGroup': '', 'causedByPatch': None, 'resolutionCode': None, 'solutionType': None, 'outageType': None, 'resolutionNotes': '', 'additionalComments': "03-Sep-2026 02:27:27 - Incident BOT (Additional comments)\nDiagnosis:\nAfter thorough investigation of the CREDIT-CARD-API service, no runtime errors were found. The system shows no traces for customer [REDACTED-CUSTOMER_ID] across all searched time ranges (up to 168 hours ago). This indicates the issue is likely not a backend code or system failure. Based on similar historic incidents, the most probable cause is that the customer's Net Banking or Mobile Banking account has not been activated, which is required for processing credit card payments through our digital channels.\n\nSolution:\nPlease verify if the customer has an active Net Banking or Mobile Banking registration. If not activated, guide the customer to activate it first through our branch or online portal. If Net Banking/Mobile Banking is already active, ask the customer to retry the credit card payment and confirm if the issue persists. If the problem continues after retry, escalate the case to our Prime team and Credit Card team for further manual verification, as no system logs were captured to diagnose a specific technical error.\n\n", 'assignmentGroup': 'Optimus BTO Support', 'sourceIncidentNum': 'INC000006218131', 'sourceIncidentId': '90860b86-c854-4aed-958d-0a381e64ee2a', 'businessImpact': None, 'cause': None, 'businessCorrectiveAction': None, 'techCorrectiveAction': None, 'dataSource': None, 'descriptionOfOutage': None, 'emailID': None, 'entityUCIC': '9903236403', 'hashValues': None, 'ipDetails': None, 'ldwNotifyInformation': None, 'loanAccountNumber': None, 'loginId': None, 'mobileNumber': None, 'businessPreventiveAction': None, 'techPreventiveAction': None, 'resoultionTeam': None, 'rootCause': None, 'systemName': None, 'urlOrDomain': None, 'userDetail': None, 'individualUCIC': '9903236403', 'sourceIncCreateddttime': '03-Sep-2026 02:21:34', 'userLocation': '', 'incidentURL': 'https://idfcfirstbanktest2.service-now.com/isupport?sys_id=3df04d523b83cf10b6986f34c3e45ac4&view=sp&id=ticket&table=incident'}
-Resolution sent for incident 3df04d523b83cf10b6986f34c3e45ac4
-DB updated for incident 3df04d523b83cf10b6986f34c3e45ac4 status=on_hold
-╭───────────────────────────── ✅ Flow Completion ─────────────────────────────╮
-│                                                                              │
-│  Flow Execution Completed                         
+{
+    "data": [
+        {
+            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+            "spans": [
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "970c13eb4b794f0a",
+                    "operationName": "summary_agent",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "10083b53bc705731"
+                        }
+                    ],
+                    "startTime": 1788520066814613,
+                    "duration": 11790220,
+                    "tags": [
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "767e0f3c5598a4f2",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520037728919,
+                    "duration": 193304,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788001637727201\u0026end=1788088037727201\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "e557053dbdf6f8eb",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520037924916,
+                    "duration": 200833,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1787915237923222\u0026end=1788001637923222\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "dd59683d0efeb49e",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520060110748,
+                    "duration": 102612,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1787915260108997\u0026end=1788001660108997\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "1616694c111fe31e",
+                    "operationName": "execute_jaeger_agent",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "10083b53bc705731"
+                        }
+                    ],
+                    "startTime": 1788520033863323,
+                    "duration": 32951213,
+                    "tags": [
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "issue_summary",
+                            "type": "string",
+                            "value": "Customer unable to retrieve last financial year statement in .csv format via net banking. Based on s"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "d5c5f72c1bb2208f",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520033866249,
+                    "duration": 1395940,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788433633864556\u0026end=1788520033864556\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "9dbe7b1a349eadc7",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520055706517,
+                    "duration": 1750886,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788433655704777\u0026end=1788520055704777\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "69852a4b9805ec23",
+                    "operationName": "send_resolution_to_servicenow_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "878ab354c0f955f6"
+                        }
+                    ],
+                    "startTime": 1788520078605938,
+                    "duration": 2132992,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e41c057247078b90cbee238b416d4360"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "resolution_length",
+                            "type": "int64",
+                            "value": 1260
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "23ee83db0089ed9a",
+                    "operationName": "payload_to_incident_description",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "70d713b620646f2a"
+                        }
+                    ],
+                    "startTime": 1788519939690613,
+                    "duration": 21,
+                    "tags": [
+                        {
+                            "key": "description_length",
+                            "type": "int64",
+                            "value": 143
+                        },
+                        {
+                            "key": "individualUCIC",
+                            "type": "string",
+                            "value": "6532647653"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "short_description_length",
+                            "type": "int64",
+                            "value": 146
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "24af81e2bb9e3772",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "10083b53bc705731"
+                        }
+                    ],
+                    "startTime": 1788519993853433,
+                    "duration": 142793,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/services?lookback=1h"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "8ce7ced4c07944be",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "81f60ac9717a2ae4"
+                        }
+                    ],
+                    "startTime": 1788519994009939,
+                    "duration": 11041492,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "e6703b17c148cc25",
+                    "operationName": "process_message",
+                    "references": [],
+                    "startTime": 1788519923621446,
+                    "duration": 157159952,
+                    "tags": [
+                        {
+                            "key": "current_status",
+                            "type": "string",
+                            "value": "in_progress"
+                        },
+                        {
+                            "key": "event_type",
+                            "type": "string",
+                            "value": "new_incident"
+                        },
+                        {
+                            "key": "flow_module",
+                            "type": "string",
+                            "value": "new_flow.flow"
+                        },
+                        {
+                            "key": "flow_status",
+                            "type": "string",
+                            "value": "completed"
+                        },
+                        {
+                            "key": "flow_type",
+                            "type": "string",
+                            "value": "new_incident"
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e41c057247078b90cbee238b416d4360"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "89d931cd0eca7467",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "a4f7fbc30c935224"
+                        }
+                    ],
+                    "startTime": 1788520078607754,
+                    "duration": 57166,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "http://pii-masking-service-svc:8080/pii-masking-service/api/v1/mask/batch"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "d664fefde683cb32",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "a4f7fbc30c935224"
+                        }
+                    ],
+                    "startTime": 1788520078666573,
+                    "duration": 2071669,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://api.internal.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "437775933cde27a2",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520058371473,
+                    "duration": 850935,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788260858369782\u0026end=1788347258369782\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "f5740e60183fd260",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520059224988,
+                    "duration": 236678,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788174459223307\u0026end=1788260859223307\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "728c0ef9dea04788",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520059464471,
+                    "duration": 490793,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788088059462698\u0026end=1788174459462698\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "8a67039a500dd7e9",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520059958062,
+                    "duration": 149999,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788001659956345\u0026end=1788088059956345\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "897ecccbfc3cf7b5",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520035265016,
+                    "duration": 1768344,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788347235263302\u0026end=1788433635263302\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "b26d12a8b75f6e8c",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520046798454,
+                    "duration": 195851,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788174446796752\u0026end=1788260846796752\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "7e61c11c23674012",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520046998116,
+                    "duration": 305079,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788088046995489\u0026end=1788174446995489\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "0891ab93c361ce4b",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520047305739,
+                    "duration": 362951,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788001647304071\u0026end=1788088047304071\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "933dc05dcd57d485",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520057460077,
+                    "duration": 908798,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788347257458350\u0026end=1788433657458350\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "9c9ded4408c5808b",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520045126425,
+                    "duration": 425462,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788433645124758\u0026end=1788520045124758\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "25231b258d6e68a3",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520045554547,
+                    "duration": 919689,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788347245552800\u0026end=1788433645552800\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "c473de250be53459",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520046476915,
+                    "duration": 318944,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788260846475204\u0026end=1788347246475204\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "22383351e0b29324",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520047671311,
+                    "duration": 200100,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1787915247669659\u0026end=1788001647669659\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "a4f7fbc30c935224",
+                    "operationName": "send_update_to_servicenow_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "69852a4b9805ec23"
+                        }
+                    ],
+                    "startTime": 1788520078605970,
+                    "duration": 2132935,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e41c057247078b90cbee238b416d4360"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "question_length",
+                            "type": "int64",
+                            "value": 1260
+                        },
+                        {
+                            "key": "resolution_length",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "3bc50582c08da5cd",
+                    "operationName": "crew_kickoff_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "e0a0dd8a3e702660"
+                        }
+                    ],
+                    "startTime": 1788519956385432,
+                    "duration": 37464051,
+                    "tags": [
+                        {
+                            "key": "incident_description",
+                            "type": "string",
+                            "value": "\nIncident Summary:\n- Application: Mobile/Net Banking\n- Problem Category: application_issue\n\nCustomer Identifiers:\n- ucic: 6532647653\n- customer_id: 6532647653\n\nLLM Analysis:\n- User Goal: The customer is requesting the statement of the last financial year in .csv format through net banking but is unable to retrieve it.\n- Issue Description: The customer called regarding the statement of the last financial year in .csv format in net banking and is not getting the statement.\n- Problem Summary: The customer is unable to access the statement of the last financial year in .csv format through the net banking portal.\n\nOriginal Description:\nShort Description: customer called regarding statement of last financially year in the format of .csv format in the net banking customer not getting the statement   \nDescription: customer called regarding statement of last financially year in the format of .csv format in the net banking customer not getting the statement\n\nPlease investigate this issue starting with Similarity Search\nfor similar historic incidents, then check Jaeger traces to\nunderstand the current error context.\n..."
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "81f60ac9717a2ae4",
+                    "operationName": "plan_agent",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "10083b53bc705731"
+                        }
+                    ],
+                    "startTime": 1788519993997073,
+                    "duration": 39866169,
+                    "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": "optimus"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "38a3c167b1a87148",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "81f60ac9717a2ae4"
+                        }
+                    ],
+                    "startTime": 1788520005058526,
+                    "duration": 6737031,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "736970f53c49c3cd",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "81f60ac9717a2ae4"
+                        }
+                    ],
+                    "startTime": 1788520011802581,
+                    "duration": 14481593,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "305962b3ed0122c8",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520037036765,
+                    "duration": 277126,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788260837034390\u0026end=1788347237034390\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "878ab354c0f955f6",
+                    "operationName": "update_servicenow",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "e6703b17c148cc25"
+                        }
+                    ],
+                    "startTime": 1788520078605867,
+                    "duration": 2170669,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e41c057247078b90cbee238b416d4360"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "resolution_result",
+                            "type": "string",
+                            "value": "yes"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "70d713b620646f2a",
+                    "operationName": "initialize_and_classify",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "e6703b17c148cc25"
+                        }
+                    ],
+                    "startTime": 1788519939690541,
+                    "duration": 16684910,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e41c057247078b90cbee238b416d4360"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "e0a0dd8a3e702660",
+                    "operationName": "_run_incident_context_crew_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "b9ef994a10a67d82"
+                        }
+                    ],
+                    "startTime": 1788519956378591,
+                    "duration": 37471029,
+                    "tags": [
+                        {
+                            "key": "application",
+                            "type": "string",
+                            "value": "Optimus"
+                        },
+                        {
+                            "key": "incident_description",
+                            "type": "string",
+                            "value": "\nIncident Summary:\n- Application: Mobile/Net Banking\n- Problem Category: application_issue\n\nCustomer..."
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "10083b53bc705731",
+                    "operationName": "run_resolver",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "e6703b17c148cc25"
+                        }
+                    ],
+                    "startTime": 1788519993850360,
+                    "duration": 84754537,
+                    "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": "optimus"
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e41c057247078b90cbee238b416d4360"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "qa_pairs_count",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "ca271ce9c4f90a03",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520037514576,
+                    "duration": 211695,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788088037512328\u0026end=1788174437512328\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "a3d1e3e260d44761",
+                    "operationName": "logic_router",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "e6703b17c148cc25"
+                        }
+                    ],
+                    "startTime": 1788519956375989,
+                    "duration": 197,
+                    "tags": [
+                        {
+                            "key": "intent",
+                            "type": "string",
+                            "value": "additional_info"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "sop_exists",
+                            "type": "bool",
+                            "value": false
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "b9ef994a10a67d82",
+                    "operationName": "gather_context",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "e6703b17c148cc25"
+                        }
+                    ],
+                    "startTime": 1788519956376739,
+                    "duration": 37472944,
+                    "tags": [
+                        {
+                            "key": "incident_description_length",
+                            "type": "int64",
+                            "value": 322
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e41c057247078b90cbee238b416d4360"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                    "spanID": "1e86d1e6672086b4",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+                            "spanID": "1616694c111fe31e"
+                        }
+                    ],
+                    "startTime": 1788520037317179,
+                    "duration": 193994,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788174437314938\u0026end=1788260837314938\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                }
+            ],
+            "processes": {
+                "p1": {
+                    "serviceName": "genai-de-incident-manager",
+                    "tags": [
+                        {
+                            "key": "deployment.environment",
+                            "type": "string",
+                            "value": "prod"
+                        },
+                        {
+                            "key": "service.namespace",
+                            "type": "string",
+                            "value": "ai-platform"
+                        },
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.34.1"
+                        }
+                    ]
+                }
+            },
+            "warnings": null
+        }
+    ],
+    "total": 0,
+    "limit": 0,
+    "offset": 0,
+    "errors": null
+}
