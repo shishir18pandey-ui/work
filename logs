@@ -1,22 +1,76 @@
 {
     "data": [
         {
-            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
+            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
             "spans": [
                 {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "970c13eb4b794f0a",
-                    "operationName": "summary_agent",
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "f5ac6b412d453cdf",
+                    "operationName": "logic_router",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "10083b53bc705731"
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "6304d8f9a97a6639"
                         }
                     ],
-                    "startTime": 1788520066814613,
-                    "duration": 11790220,
+                    "startTime": 1788245732366634,
+                    "duration": 181,
                     "tags": [
+                        {
+                            "key": "intent",
+                            "type": "string",
+                            "value": "additional_info"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "sop_exists",
+                            "type": "bool",
+                            "value": false
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "b9e4c8350bdfc98b",
+                    "operationName": "_run_incident_context_deterministic_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "e721ecd0c195d996"
+                        }
+                    ],
+                    "startTime": 1788245732367447,
+                    "duration": 378765366,
+                    "tags": [
+                        {
+                            "key": "application",
+                            "type": "string",
+                            "value": "CMS BXP"
+                        },
+                        {
+                            "key": "incident_description",
+                            "type": "string",
+                            "value": "\nIncident Summary:\n- Application: CMS BXP\n- Problem Category: application_issue\n\nCustomer Identifier..."
+                        },
                         {
                             "key": "internal.span.format",
                             "type": "string",
@@ -38,474 +92,18 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "767e0f3c5598a4f2",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520037728919,
-                    "duration": 193304,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788001637727201\u0026end=1788088037727201\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "e557053dbdf6f8eb",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520037924916,
-                    "duration": 200833,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1787915237923222\u0026end=1788001637923222\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "dd59683d0efeb49e",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520060110748,
-                    "duration": 102612,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1787915260108997\u0026end=1788001660108997\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "1616694c111fe31e",
-                    "operationName": "execute_jaeger_agent",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "10083b53bc705731"
-                        }
-                    ],
-                    "startTime": 1788520033863323,
-                    "duration": 32951213,
-                    "tags": [
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "issue_summary",
-                            "type": "string",
-                            "value": "Customer unable to retrieve last financial year statement in .csv format via net banking. Based on s"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "d5c5f72c1bb2208f",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520033866249,
-                    "duration": 1395940,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788433633864556\u0026end=1788520033864556\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "9dbe7b1a349eadc7",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520055706517,
-                    "duration": 1750886,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788433655704777\u0026end=1788520055704777\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "69852a4b9805ec23",
-                    "operationName": "send_resolution_to_servicenow_async",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "878ab354c0f955f6"
-                        }
-                    ],
-                    "startTime": 1788520078605938,
-                    "duration": 2132992,
-                    "tags": [
-                        {
-                            "key": "incident_id",
-                            "type": "string",
-                            "value": "e41c057247078b90cbee238b416d4360"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "resolution_length",
-                            "type": "int64",
-                            "value": 1260
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "23ee83db0089ed9a",
-                    "operationName": "payload_to_incident_description",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "70d713b620646f2a"
-                        }
-                    ],
-                    "startTime": 1788519939690613,
-                    "duration": 21,
-                    "tags": [
-                        {
-                            "key": "description_length",
-                            "type": "int64",
-                            "value": 143
-                        },
-                        {
-                            "key": "individualUCIC",
-                            "type": "string",
-                            "value": "6532647653"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "short_description_length",
-                            "type": "int64",
-                            "value": 146
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "24af81e2bb9e3772",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "10083b53bc705731"
-                        }
-                    ],
-                    "startTime": 1788519993853433,
-                    "duration": 142793,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/services?lookback=1h"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "8ce7ced4c07944be",
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "446245c0d296693c",
                     "operationName": "POST",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "81f60ac9717a2ae4"
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "b9e4c8350bdfc98b"
                         }
                     ],
-                    "startTime": 1788519994009939,
-                    "duration": 11041492,
+                    "startTime": 1788245732371672,
+                    "duration": 4231622,
                     "tags": [
                         {
                             "key": "http.method",
@@ -520,7 +118,7 @@
                         {
                             "key": "http.url",
                             "type": "string",
-                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                            "value": "http://jira-conf-rag-api-svc:8000/api/jira-conf-rag/semantic-search"
                         },
                         {
                             "key": "internal.span.format",
@@ -548,12 +146,190 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "e6703b17c148cc25",
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "12c3974fd36d92d4",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "c5fefd9ab1e44549"
+                        }
+                    ],
+                    "startTime": 1788246175429418,
+                    "duration": 119570441,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://api.internal.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788246294999850,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "e9e1097aeb7fcebe",
+                    "operationName": "initialize_and_classify",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "6304d8f9a97a6639"
+                        }
+                    ],
+                    "startTime": 1788245715571810,
+                    "duration": 16794258,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "3e26db8b2bcab92f",
+                    "operationName": "update_servicenow",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "6304d8f9a97a6639"
+                        }
+                    ],
+                    "startTime": 1788246175405330,
+                    "duration": 119642277,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "resolution_result",
+                            "type": "string",
+                            "value": "no"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "6304d8f9a97a6639",
                     "operationName": "process_message",
                     "references": [],
-                    "startTime": 1788519923621446,
-                    "duration": 157159952,
+                    "startTime": 1788245683488700,
+                    "duration": 611563128,
                     "tags": [
                         {
                             "key": "current_status",
@@ -583,7 +359,7 @@
                         {
                             "key": "incident_id",
                             "type": "string",
-                            "value": "e41c057247078b90cbee238b416d4360"
+                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
                         },
                         {
                             "key": "internal.span.format",
@@ -606,18 +382,145 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "89d931cd0eca7467",
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "c31f4f3876280ad3",
+                    "operationName": "payload_to_incident_description",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "e9e1097aeb7fcebe"
+                        }
+                    ],
+                    "startTime": 1788245715571874,
+                    "duration": 21,
+                    "tags": [
+                        {
+                            "key": "description_length",
+                            "type": "int64",
+                            "value": 160
+                        },
+                        {
+                            "key": "individualUCIC",
+                            "type": "string",
+                            "value": "6079617804"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "short_description_length",
+                            "type": "int64",
+                            "value": 115
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "ccea283b24204217",
+                    "operationName": "context_only_summary",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "b2883594ec8ba444"
+                        }
+                    ],
+                    "startTime": 1788246111137891,
+                    "duration": 48200704,
+                    "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": "cms bxp"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "ad68e9f365767c80",
+                    "operationName": "send_question_to_servicenow_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "3e26db8b2bcab92f"
+                        }
+                    ],
+                    "startTime": 1788246175405406,
+                    "duration": 119594583,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "855d222cc5ed1384",
                     "operationName": "POST",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "a4f7fbc30c935224"
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "c5fefd9ab1e44549"
                         }
                     ],
-                    "startTime": 1788520078607754,
-                    "duration": 57166,
+                    "startTime": 1788246175411573,
+                    "duration": 16089,
                     "tags": [
                         {
                             "key": "http.method",
@@ -660,779 +563,28 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "d664fefde683cb32",
-                    "operationName": "POST",
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "e721ecd0c195d996",
+                    "operationName": "gather_context",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "a4f7fbc30c935224"
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "6304d8f9a97a6639"
                         }
                     ],
-                    "startTime": 1788520078666573,
-                    "duration": 2071669,
+                    "startTime": 1788245732367345,
+                    "duration": 378765532,
                     "tags": [
                         {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "POST"
-                        },
-                        {
-                            "key": "http.status_code",
+                            "key": "incident_description_length",
                             "type": "int64",
-                            "value": 200
+                            "value": 308
                         },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://api.internal.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "437775933cde27a2",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520058371473,
-                    "duration": 850935,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788260858369782\u0026end=1788347258369782\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "f5740e60183fd260",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520059224988,
-                    "duration": 236678,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788174459223307\u0026end=1788260859223307\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "728c0ef9dea04788",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520059464471,
-                    "duration": 490793,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788088059462698\u0026end=1788174459462698\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "8a67039a500dd7e9",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520059958062,
-                    "duration": 149999,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788001659956345\u0026end=1788088059956345\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "897ecccbfc3cf7b5",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520035265016,
-                    "duration": 1768344,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788347235263302\u0026end=1788433635263302\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "b26d12a8b75f6e8c",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520046798454,
-                    "duration": 195851,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788174446796752\u0026end=1788260846796752\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "7e61c11c23674012",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520046998116,
-                    "duration": 305079,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788088046995489\u0026end=1788174446995489\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "0891ab93c361ce4b",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520047305739,
-                    "duration": 362951,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788001647304071\u0026end=1788088047304071\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "933dc05dcd57d485",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520057460077,
-                    "duration": 908798,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=USER-PROFILE-SVC\u0026start=1788347257458350\u0026end=1788433657458350\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "9c9ded4408c5808b",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520045126425,
-                    "duration": 425462,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788433645124758\u0026end=1788520045124758\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "25231b258d6e68a3",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520045554547,
-                    "duration": 919689,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788347245552800\u0026end=1788433645552800\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "c473de250be53459",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520046476915,
-                    "duration": 318944,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1788260846475204\u0026end=1788347246475204\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "22383351e0b29324",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520047671311,
-                    "duration": 200100,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=account-aggregator-api\u0026start=1787915247669659\u0026end=1788001647669659\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "a4f7fbc30c935224",
-                    "operationName": "send_update_to_servicenow_async",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "69852a4b9805ec23"
-                        }
-                    ],
-                    "startTime": 1788520078605970,
-                    "duration": 2132935,
-                    "tags": [
                         {
                             "key": "incident_id",
                             "type": "string",
-                            "value": "e41c057247078b90cbee238b416d4360"
+                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
                         },
                         {
                             "key": "internal.span.format",
@@ -1445,16 +597,6 @@
                             "value": "genai-de-incident-manager"
                         },
                         {
-                            "key": "question_length",
-                            "type": "int64",
-                            "value": 1260
-                        },
-                        {
-                            "key": "resolution_length",
-                            "type": "int64",
-                            "value": 0
-                        },
-                        {
                             "key": "span.kind",
                             "type": "string",
                             "value": "internal"
@@ -1465,23 +607,23 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "3bc50582c08da5cd",
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "be400fb358de6df0",
                     "operationName": "crew_kickoff_async",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "e0a0dd8a3e702660"
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "b9e4c8350bdfc98b"
                         }
                     ],
-                    "startTime": 1788519956385432,
-                    "duration": 37464051,
+                    "startTime": 1788245736605938,
+                    "duration": 374526800,
                     "tags": [
                         {
                             "key": "incident_description",
                             "type": "string",
-                            "value": "\nIncident Summary:\n- Application: Mobile/Net Banking\n- Problem Category: application_issue\n\nCustomer Identifiers:\n- ucic: 6532647653\n- customer_id: 6532647653\n\nLLM Analysis:\n- User Goal: The customer is requesting the statement of the last financial year in .csv format through net banking but is unable to retrieve it.\n- Issue Description: The customer called regarding the statement of the last financial year in .csv format in net banking and is not getting the statement.\n- Problem Summary: The customer is unable to access the statement of the last financial year in .csv format through the net banking portal.\n\nOriginal Description:\nShort Description: customer called regarding statement of last financially year in the format of .csv format in the net banking customer not getting the statement   \nDescription: customer called regarding statement of last financially year in the format of .csv format in the net banking customer not getting the statement\n\nPlease investigate this issue starting with Similarity Search\nfor similar historic incidents, then check Jaeger traces to\nunderstand the current error context.\n..."
+                            "value": "\nIncident Summary:\n- Application: CMS BXP\n- Problem Category: application_issue\n\nCustomer Identifiers:\n- ucic: 6079617804\n- customer_id: 6079617804\n\nLLM Analysis:\n- User Goal: The user is providing information about a client not receiving the MT940 statement on their registered email IDs and is requesting the issue to be checked and resolved on priority.\n- Issue Description: The client has not received the MT940 statement on their registered email IDs, as per the trail mail referenced by the user.\n- Problem Summary: The user is informing that the client is not receiving the MT940 statement on their registered email IDs and is requesting the issue to be checked and resolved on priority.\n\nOriginal Description:\nShort Description: Please refer below trail mail, as the Client is not yet received the MT940 statement on their registered Email IDs.\nDescription: Please refer below trail mail, as the Client is not yet received the MT940 statement on their registered Email IDs.Kindly check the issue \u0026 resolve on priority.\n\nPlease investigate this issue starting with Similarity Search\nfor similar historic incidents, then check Jaeger traces to\nunderstand the current error context.\n..."
                         },
                         {
                             "key": "internal.span.format",
@@ -1504,356 +646,28 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "81f60ac9717a2ae4",
-                    "operationName": "plan_agent",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "10083b53bc705731"
-                        }
-                    ],
-                    "startTime": 1788519993997073,
-                    "duration": 39866169,
-                    "tags": [
-                        {
-                            "key": "app",
-                            "type": "string",
-                            "value": "optimus"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "38a3c167b1a87148",
-                    "operationName": "POST",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "81f60ac9717a2ae4"
-                        }
-                    ],
-                    "startTime": 1788520005058526,
-                    "duration": 6737031,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "POST"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "736970f53c49c3cd",
-                    "operationName": "POST",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "81f60ac9717a2ae4"
-                        }
-                    ],
-                    "startTime": 1788520011802581,
-                    "duration": 14481593,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "POST"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "305962b3ed0122c8",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520037036765,
-                    "duration": 277126,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788260837034390\u0026end=1788347237034390\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "878ab354c0f955f6",
-                    "operationName": "update_servicenow",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "e6703b17c148cc25"
-                        }
-                    ],
-                    "startTime": 1788520078605867,
-                    "duration": 2170669,
-                    "tags": [
-                        {
-                            "key": "incident_id",
-                            "type": "string",
-                            "value": "e41c057247078b90cbee238b416d4360"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "resolution_result",
-                            "type": "string",
-                            "value": "yes"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "70d713b620646f2a",
-                    "operationName": "initialize_and_classify",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "e6703b17c148cc25"
-                        }
-                    ],
-                    "startTime": 1788519939690541,
-                    "duration": 16684910,
-                    "tags": [
-                        {
-                            "key": "incident_id",
-                            "type": "string",
-                            "value": "e41c057247078b90cbee238b416d4360"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "e0a0dd8a3e702660",
-                    "operationName": "_run_incident_context_crew_async",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "b9ef994a10a67d82"
-                        }
-                    ],
-                    "startTime": 1788519956378591,
-                    "duration": 37471029,
-                    "tags": [
-                        {
-                            "key": "application",
-                            "type": "string",
-                            "value": "Optimus"
-                        },
-                        {
-                            "key": "incident_description",
-                            "type": "string",
-                            "value": "\nIncident Summary:\n- Application: Mobile/Net Banking\n- Problem Category: application_issue\n\nCustomer..."
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "10083b53bc705731",
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "b2883594ec8ba444",
                     "operationName": "run_resolver",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "e6703b17c148cc25"
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "6304d8f9a97a6639"
                         }
                     ],
-                    "startTime": 1788519993850360,
-                    "duration": 84754537,
+                    "startTime": 1788246111137660,
+                    "duration": 48201033,
                     "tags": [
                         {
                             "key": "app",
                             "type": "string",
-                            "value": "optimus"
+                            "value": "cms bxp"
                         },
                         {
                             "key": "incident_id",
                             "type": "string",
-                            "value": "e41c057247078b90cbee238b416d4360"
+                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
                         },
                         {
                             "key": "internal.span.format",
@@ -1881,126 +695,23 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "ca271ce9c4f90a03",
-                    "operationName": "GET",
+                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                    "spanID": "c5fefd9ab1e44549",
+                    "operationName": "send_update_to_servicenow_async",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
+                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+                            "spanID": "ad68e9f365767c80"
                         }
                     ],
-                    "startTime": 1788520037514576,
-                    "duration": 211695,
+                    "startTime": 1788246175405433,
+                    "duration": 119594545,
                     "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788088037512328\u0026end=1788174437512328\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "a3d1e3e260d44761",
-                    "operationName": "logic_router",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "e6703b17c148cc25"
-                        }
-                    ],
-                    "startTime": 1788519956375989,
-                    "duration": 197,
-                    "tags": [
-                        {
-                            "key": "intent",
-                            "type": "string",
-                            "value": "additional_info"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "sop_exists",
-                            "type": "bool",
-                            "value": false
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "b9ef994a10a67d82",
-                    "operationName": "gather_context",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "e6703b17c148cc25"
-                        }
-                    ],
-                    "startTime": 1788519956376739,
-                    "duration": 37472944,
-                    "tags": [
-                        {
-                            "key": "incident_description_length",
-                            "type": "int64",
-                            "value": 322
-                        },
                         {
                             "key": "incident_id",
                             "type": "string",
-                            "value": "e41c057247078b90cbee238b416d4360"
+                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
                         },
                         {
                             "key": "internal.span.format",
@@ -2013,63 +724,19 @@
                             "value": "genai-de-incident-manager"
                         },
                         {
+                            "key": "question_length",
+                            "type": "int64",
+                            "value": 172
+                        },
+                        {
+                            "key": "resolution_length",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
                             "key": "span.kind",
                             "type": "string",
                             "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                    "spanID": "1e86d1e6672086b4",
-                    "operationName": "GET",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "cd1651c7af5604fdad58b713ee4ff55d",
-                            "spanID": "1616694c111fe31e"
-                        }
-                    ],
-                    "startTime": 1788520037317179,
-                    "duration": 193994,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "GET"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "https://tracing.prod-opt.idfcfirstbank.com/api/traces?service=deposits-api\u0026start=1788174437314938\u0026end=1788260837314938\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226532647653%22%7D"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
                         }
                     ],
                     "logs": [],
