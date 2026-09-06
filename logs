@@ -1,163 +1,21 @@
 {
     "data": [
         {
-            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
+            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
             "spans": [
                 {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "f5ac6b412d453cdf",
-                    "operationName": "logic_router",
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "dfe4a62e9b27dbc0",
+                    "operationName": "GET",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "6304d8f9a97a6639"
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "77307f4e83231fab"
                         }
                     ],
-                    "startTime": 1788245732366634,
-                    "duration": 181,
-                    "tags": [
-                        {
-                            "key": "intent",
-                            "type": "string",
-                            "value": "additional_info"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "sop_exists",
-                            "type": "bool",
-                            "value": false
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "b9e4c8350bdfc98b",
-                    "operationName": "_run_incident_context_deterministic_async",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "e721ecd0c195d996"
-                        }
-                    ],
-                    "startTime": 1788245732367447,
-                    "duration": 378765366,
-                    "tags": [
-                        {
-                            "key": "application",
-                            "type": "string",
-                            "value": "CMS BXP"
-                        },
-                        {
-                            "key": "incident_description",
-                            "type": "string",
-                            "value": "\nIncident Summary:\n- Application: CMS BXP\n- Problem Category: application_issue\n\nCustomer Identifier..."
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "446245c0d296693c",
-                    "operationName": "POST",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "b9e4c8350bdfc98b"
-                        }
-                    ],
-                    "startTime": 1788245732371672,
-                    "duration": 4231622,
-                    "tags": [
-                        {
-                            "key": "http.method",
-                            "type": "string",
-                            "value": "POST"
-                        },
-                        {
-                            "key": "http.status_code",
-                            "type": "int64",
-                            "value": 200
-                        },
-                        {
-                            "key": "http.url",
-                            "type": "string",
-                            "value": "http://jira-conf-rag-api-svc:8000/api/jira-conf-rag/semantic-search"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "opentelemetry.instrumentation.httpx"
-                        },
-                        {
-                            "key": "otel.scope.version",
-                            "type": "string",
-                            "value": "0.55b1"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "client"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "12c3974fd36d92d4",
-                    "operationName": "POST",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "c5fefd9ab1e44549"
-                        }
-                    ],
-                    "startTime": 1788246175429418,
-                    "duration": 119570441,
+                    "startTime": 1788705564241491,
+                    "duration": 14299,
                     "tags": [
                         {
                             "key": "error",
@@ -167,12 +25,12 @@
                         {
                             "key": "http.method",
                             "type": "string",
-                            "value": "POST"
+                            "value": "GET"
                         },
                         {
                             "key": "http.url",
                             "type": "string",
-                            "value": "https://api.internal.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident"
+                            "value": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788446364240223\u0026end=1788532764240223\u0026limit=100"
                         },
                         {
                             "key": "internal.span.format",
@@ -197,7 +55,7 @@
                         {
                             "key": "otel.status_description",
                             "type": "string",
-                            "value": "ConnectTimeout: "
+                            "value": "ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
                         },
                         {
                             "key": "span.kind",
@@ -207,7 +65,7 @@
                     ],
                     "logs": [
                         {
-                            "timestamp": 1788246294999850,
+                            "timestamp": 1788705564255782,
                             "fields": [
                                 {
                                     "key": "event",
@@ -222,17 +80,17 @@
                                 {
                                     "key": "exception.message",
                                     "type": "string",
-                                    "value": ""
+                                    "value": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
                                 },
                                 {
                                     "key": "exception.stacktrace",
                                     "type": "string",
-                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"
                                 },
                                 {
                                     "key": "exception.type",
                                     "type": "string",
-                                    "value": "httpx.ConnectTimeout"
+                                    "value": "httpx.ConnectError"
                                 }
                             ]
                         }
@@ -241,23 +99,177 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "e9e1097aeb7fcebe",
-                    "operationName": "initialize_and_classify",
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "d06c3dac30aca613",
+                    "operationName": "GET",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "6304d8f9a97a6639"
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "2c8eede085911af0"
                         }
                     ],
-                    "startTime": 1788245715571810,
-                    "duration": 16794258,
+                    "startTime": 1788705550049627,
+                    "duration": 19413,
                     "tags": [
                         {
-                            "key": "incident_id",
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
                             "type": "string",
-                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/services?lookback=1h"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788705550069020,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectError"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "e201e1d320c40de4",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "1add301b0ca9b419"
+                        }
+                    ],
+                    "startTime": 1788705553951458,
+                    "duration": 2454508,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "de3ebc33f1b8258e",
+                    "operationName": "payload_to_incident_description",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "ff8996ebb4244ac7"
+                        }
+                    ],
+                    "startTime": 1788705486166217,
+                    "duration": 21,
+                    "tags": [
+                        {
+                            "key": "description_length",
+                            "type": "int64",
+                            "value": 153
+                        },
+                        {
+                            "key": "individualUCIC",
+                            "type": "string",
+                            "value": ""
                         },
                         {
                             "key": "internal.span.format",
@@ -270,6 +282,11 @@
                             "value": "genai-de-incident-manager"
                         },
                         {
+                            "key": "short_description_length",
+                            "type": "int64",
+                            "value": 151
+                        },
+                        {
                             "key": "span.kind",
                             "type": "string",
                             "value": "internal"
@@ -280,23 +297,28 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "3e26db8b2bcab92f",
-                    "operationName": "update_servicenow",
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "2c8eede085911af0",
+                    "operationName": "run_resolver",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "6304d8f9a97a6639"
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "0a78630ef5337e52"
                         }
                     ],
-                    "startTime": 1788246175405330,
-                    "duration": 119642277,
+                    "startTime": 1788705550041184,
+                    "duration": 20647273,
                     "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": "wealth management system (wms)"
+                        },
                         {
                             "key": "incident_id",
                             "type": "string",
-                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
+                            "value": "0fb158a347c70bd024da9868036d431c"
                         },
                         {
                             "key": "internal.span.format",
@@ -309,9 +331,9 @@
                             "value": "genai-de-incident-manager"
                         },
                         {
-                            "key": "resolution_result",
-                            "type": "string",
-                            "value": "no"
+                            "key": "qa_pairs_count",
+                            "type": "int64",
+                            "value": 0
                         },
                         {
                             "key": "span.kind",
@@ -324,12 +346,12 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "6304d8f9a97a6639",
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "0a78630ef5337e52",
                     "operationName": "process_message",
                     "references": [],
-                    "startTime": 1788245683488700,
-                    "duration": 611563128,
+                    "startTime": 1788705470096335,
+                    "duration": 103245411,
                     "tags": [
                         {
                             "key": "current_status",
@@ -359,7 +381,7 @@
                         {
                             "key": "incident_id",
                             "type": "string",
-                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
+                            "value": "0fb158a347c70bd024da9868036d431c"
                         },
                         {
                             "key": "internal.span.format",
@@ -382,111 +404,23 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "c31f4f3876280ad3",
-                    "operationName": "payload_to_incident_description",
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "b685d3883be863c3",
+                    "operationName": "update_servicenow",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "e9e1097aeb7fcebe"
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "0a78630ef5337e52"
                         }
                     ],
-                    "startTime": 1788245715571874,
-                    "duration": 21,
-                    "tags": [
-                        {
-                            "key": "description_length",
-                            "type": "int64",
-                            "value": 160
-                        },
-                        {
-                            "key": "individualUCIC",
-                            "type": "string",
-                            "value": "6079617804"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "short_description_length",
-                            "type": "int64",
-                            "value": 115
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "ccea283b24204217",
-                    "operationName": "context_only_summary",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "b2883594ec8ba444"
-                        }
-                    ],
-                    "startTime": 1788246111137891,
-                    "duration": 48200704,
-                    "tags": [
-                        {
-                            "key": "app",
-                            "type": "string",
-                            "value": "cms bxp"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "ad68e9f365767c80",
-                    "operationName": "send_question_to_servicenow_async",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "3e26db8b2bcab92f"
-                        }
-                    ],
-                    "startTime": 1788246175405406,
-                    "duration": 119594583,
+                    "startTime": 1788705570689224,
+                    "duration": 2647776,
                     "tags": [
                         {
                             "key": "incident_id",
                             "type": "string",
-                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
+                            "value": "0fb158a347c70bd024da9868036d431c"
                         },
                         {
                             "key": "internal.span.format",
@@ -499,6 +433,11 @@
                             "value": "genai-de-incident-manager"
                         },
                         {
+                            "key": "resolution_result",
+                            "type": "string",
+                            "value": "no"
+                        },
+                        {
                             "key": "span.kind",
                             "type": "string",
                             "value": "internal"
@@ -509,18 +448,67 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "855d222cc5ed1384",
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "d5473ac1a1f057cc",
+                    "operationName": "send_update_to_servicenow_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "e3aba92b073244f6"
+                        }
+                    ],
+                    "startTime": 1788705570689325,
+                    "duration": 2610974,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "0fb158a347c70bd024da9868036d431c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "question_length",
+                            "type": "int64",
+                            "value": 276
+                        },
+                        {
+                            "key": "resolution_length",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "9c5a0f24eb4f39c4",
                     "operationName": "POST",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "c5fefd9ab1e44549"
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "d5473ac1a1f057cc"
                         }
                     ],
-                    "startTime": 1788246175411573,
-                    "duration": 16089,
+                    "startTime": 1788705570691021,
+                    "duration": 20714,
                     "tags": [
                         {
                             "key": "http.method",
@@ -563,111 +551,23 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "e721ecd0c195d996",
-                    "operationName": "gather_context",
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "1add301b0ca9b419",
+                    "operationName": "plan_agent",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "6304d8f9a97a6639"
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "2c8eede085911af0"
                         }
                     ],
-                    "startTime": 1788245732367345,
-                    "duration": 378765532,
-                    "tags": [
-                        {
-                            "key": "incident_description_length",
-                            "type": "int64",
-                            "value": 308
-                        },
-                        {
-                            "key": "incident_id",
-                            "type": "string",
-                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "be400fb358de6df0",
-                    "operationName": "crew_kickoff_async",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "b9e4c8350bdfc98b"
-                        }
-                    ],
-                    "startTime": 1788245736605938,
-                    "duration": 374526800,
-                    "tags": [
-                        {
-                            "key": "incident_description",
-                            "type": "string",
-                            "value": "\nIncident Summary:\n- Application: CMS BXP\n- Problem Category: application_issue\n\nCustomer Identifiers:\n- ucic: 6079617804\n- customer_id: 6079617804\n\nLLM Analysis:\n- User Goal: The user is providing information about a client not receiving the MT940 statement on their registered email IDs and is requesting the issue to be checked and resolved on priority.\n- Issue Description: The client has not received the MT940 statement on their registered email IDs, as per the trail mail referenced by the user.\n- Problem Summary: The user is informing that the client is not receiving the MT940 statement on their registered email IDs and is requesting the issue to be checked and resolved on priority.\n\nOriginal Description:\nShort Description: Please refer below trail mail, as the Client is not yet received the MT940 statement on their registered Email IDs.\nDescription: Please refer below trail mail, as the Client is not yet received the MT940 statement on their registered Email IDs.Kindly check the issue \u0026 resolve on priority.\n\nPlease investigate this issue starting with Similarity Search\nfor similar historic incidents, then check Jaeger traces to\nunderstand the current error context.\n..."
-                        },
-                        {
-                            "key": "internal.span.format",
-                            "type": "string",
-                            "value": "otlp"
-                        },
-                        {
-                            "key": "otel.scope.name",
-                            "type": "string",
-                            "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "span.kind",
-                            "type": "string",
-                            "value": "internal"
-                        }
-                    ],
-                    "logs": [],
-                    "processID": "p1",
-                    "warnings": null
-                },
-                {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "b2883594ec8ba444",
-                    "operationName": "run_resolver",
-                    "references": [
-                        {
-                            "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "6304d8f9a97a6639"
-                        }
-                    ],
-                    "startTime": 1788246111137660,
-                    "duration": 48201033,
+                    "startTime": 1788705550069204,
+                    "duration": 14104776,
                     "tags": [
                         {
                             "key": "app",
                             "type": "string",
-                            "value": "cms bxp"
-                        },
-                        {
-                            "key": "incident_id",
-                            "type": "string",
-                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
+                            "value": "wealth management system (wms)"
                         },
                         {
                             "key": "internal.span.format",
@@ -678,11 +578,6 @@
                             "key": "otel.scope.name",
                             "type": "string",
                             "value": "genai-de-incident-manager"
-                        },
-                        {
-                            "key": "qa_pairs_count",
-                            "type": "int64",
-                            "value": 0
                         },
                         {
                             "key": "span.kind",
@@ -695,23 +590,206 @@
                     "warnings": null
                 },
                 {
-                    "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                    "spanID": "c5fefd9ab1e44549",
-                    "operationName": "send_update_to_servicenow_async",
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "a332c10273eafad3",
+                    "operationName": "POST",
                     "references": [
                         {
                             "refType": "CHILD_OF",
-                            "traceID": "3dd8a42f5a5cd6bed8c6b085f9feeaf0",
-                            "spanID": "ad68e9f365767c80"
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "1add301b0ca9b419"
                         }
                     ],
-                    "startTime": 1788246175405433,
-                    "duration": 119594545,
+                    "startTime": 1788705556413705,
+                    "duration": 3151290,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "bf28670e1cbf171a",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "77307f4e83231fab"
+                        }
+                    ],
+                    "startTime": 1788705564258244,
+                    "duration": 9361,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788359964256937\u0026end=1788446364256937\u0026limit=100"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788705564267596,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectError"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "0e98b01dfd8122c4",
+                    "operationName": "summary_agent",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "2c8eede085911af0"
+                        }
+                    ],
+                    "startTime": 1788705567506519,
+                    "duration": 3181884,
+                    "tags": [
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "e3aba92b073244f6",
+                    "operationName": "send_question_to_servicenow_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "b685d3883be863c3"
+                        }
+                    ],
+                    "startTime": 1788705570689298,
+                    "duration": 2611036,
                     "tags": [
                         {
                             "key": "incident_id",
                             "type": "string",
-                            "value": "40d6b4fd97cbcf10a082bb77f053aff5"
+                            "value": "0fb158a347c70bd024da9868036d431c"
                         },
                         {
                             "key": "internal.span.format",
@@ -724,14 +802,890 @@
                             "value": "genai-de-incident-manager"
                         },
                         {
-                            "key": "question_length",
-                            "type": "int64",
-                            "value": 172
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "e1badbb217008ec3",
+                    "operationName": "logic_router",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "0a78630ef5337e52"
+                        }
+                    ],
+                    "startTime": 1788705520390237,
+                    "duration": 209,
+                    "tags": [
+                        {
+                            "key": "intent",
+                            "type": "string",
+                            "value": "additional_info"
                         },
                         {
-                            "key": "resolution_length",
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "sop_exists",
+                            "type": "bool",
+                            "value": false
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "c826874629ca4c3a",
+                    "operationName": "crew_kickoff_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "62aeee27b3a861b7"
+                        }
+                    ],
+                    "startTime": 1788705520401010,
+                    "duration": 29639388,
+                    "tags": [
+                        {
+                            "key": "incident_description",
+                            "type": "string",
+                            "value": "\nIncident Summary:\n- Application: Wealth Management System(WMS)\n- Problem Category: application_issue\n\nCustomer Identifiers:\n- Not provided\n\nLLM Analysis:\n- User Goal: The user is providing information about a redemption request made on 28th August and the fact that the amount has not yet been received, along with a system-generated confirmation message.\n- Issue Description: The user redeemed units in HDFC Mid Cap Fund-Reg(G) on 28th August but has not yet received the amount. The system has confirmed that the redemption request was processed for all units.\n- Problem Summary: The user is informing the system about a completed redemption request and the delay in receiving the amount, which may be a follow-up to an earlier query or a new report of the issue.\n\nOriginal Description:\nShort Description: Cx redeem on 28th aug but still amount not yet receive.  Success! Your REDEMPTION request in HDFC Mid Cap Fund-Reg(G) has been processed for All Units.\nDescription: Cx redeem on 28th aug but still amount not yet receive.\r\n\r\nSuccess! Your REDEMPTION request in HDFC Mid Cap Fund-Reg(G) has been processed for All Units.\n\nPlease investigate this issue starting with Similarity Search\nfor similar historic incidents, then check Jaeger traces to\nunderstand the current error context.\n..."
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "f196a7f888541d20",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "d5473ac1a1f057cc"
+                        }
+                    ],
+                    "startTime": 1788705570713797,
+                    "duration": 2585549,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
                             "type": "int64",
-                            "value": 0
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://api.internal.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "1df7a24bc315a8ba",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "1add301b0ca9b419"
+                        }
+                    ],
+                    "startTime": 1788705550086508,
+                    "duration": 3857260,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "861645d19a3b8d54",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "77307f4e83231fab"
+                        }
+                    ],
+                    "startTime": 1788705564270017,
+                    "duration": 13009,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788273564268732\u0026end=1788359964268732\u0026limit=100"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788705564283016,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectError"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "6fbfcc9bd6f587cf",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "77307f4e83231fab"
+                        }
+                    ],
+                    "startTime": 1788705564176861,
+                    "duration": 45784,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788619164175235\u0026end=1788705564175235\u0026limit=100"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788705564222632,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectError"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "9c97caa26d8f7925",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "77307f4e83231fab"
+                        }
+                    ],
+                    "startTime": 1788705564225199,
+                    "duration": 13885,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788532764223875\u0026end=1788619164223875\u0026limit=100"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788705564239075,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectError"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "657f9e65e9dd45f3",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "77307f4e83231fab"
+                        }
+                    ],
+                    "startTime": 1788705564299804,
+                    "duration": 13266,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788100764298542\u0026end=1788187164298542\u0026limit=100"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788705564313060,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectError"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "feb0970938678774",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "ff8996ebb4244ac7"
+                        }
+                    ],
+                    "startTime": 1788705502299567,
+                    "duration": 46205,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://app.auth.idfcfirstbank.com/api/session-management/v1/token"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.requests"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "62aeee27b3a861b7",
+                    "operationName": "_run_incident_context_crew_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "9f2bdea19f24bf05"
+                        }
+                    ],
+                    "startTime": 1788705520392803,
+                    "duration": 29647720,
+                    "tags": [
+                        {
+                            "key": "application",
+                            "type": "string",
+                            "value": "Wealth Management System (WMS)"
+                        },
+                        {
+                            "key": "incident_description",
+                            "type": "string",
+                            "value": "\nIncident Summary:\n- Application: Wealth Management System(WMS)\n- Problem Category: application_issu..."
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "77307f4e83231fab",
+                    "operationName": "execute_jaeger_agent",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "2c8eede085911af0"
+                        }
+                    ],
+                    "startTime": 1788705564174068,
+                    "duration": 3332375,
+                    "tags": [
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "issue_summary",
+                            "type": "string",
+                            "value": "Customer redeemed units in HDFC Mid Cap Fund-Reg(G) on 28th August. System confirmed redemption was "
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "7002522594fa7fe2",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "77307f4e83231fab"
+                        }
+                    ],
+                    "startTime": 1788705564285478,
+                    "duration": 11915,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788187164284218\u0026end=1788273564284218\u0026limit=100"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788705564297384,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": "[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectError"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "ff8996ebb4244ac7",
+                    "operationName": "initialize_and_classify",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "0a78630ef5337e52"
+                        }
+                    ],
+                    "startTime": 1788705486166148,
+                    "duration": 34223464,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "0fb158a347c70bd024da9868036d431c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                    "spanID": "9f2bdea19f24bf05",
+                    "operationName": "gather_context",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "7df0cde39a37e86bfc079026bf4f1f6f",
+                            "spanID": "0a78630ef5337e52"
+                        }
+                    ],
+                    "startTime": 1788705520390999,
+                    "duration": 29649579,
+                    "tags": [
+                        {
+                            "key": "incident_description_length",
+                            "type": "int64",
+                            "value": 337
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "0fb158a347c70bd024da9868036d431c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
                         },
                         {
                             "key": "span.kind",
