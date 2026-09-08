@@ -1,0 +1,1119 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "datasource", "uid": "grafana" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "links": [],
+  "panels": [
+    {
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "collapsed": false,
+      "panels": [],
+      "title": "Incident Volume & Outcomes (all applications)",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "One process_message span = one incident handled by the flow. Not filterable by $app: the app tag is not present on the root span.",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Incidents Processed",
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "semi-dark-blue" }] },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 1 },
+      "id": 1,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": { "interval": "$interval", "min_doc_count": 0, "trimEdges": 0 },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"process_message\"",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "update_servicenow spans tagged resolution_result=yes.",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Resolved",
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }] },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 1 },
+      "id": 2,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": { "interval": "$interval", "min_doc_count": 0, "trimEdges": 0 },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"update_servicenow\" AND tag.resolution_result: \"yes\"",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Bot asked the assignee a follow-up question instead of giving a diagnosis (question_length > 0).",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Responded with Question",
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange" }] },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 1 },
+      "id": 3,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": { "interval": "$interval", "min_doc_count": 0, "trimEdges": 0 },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"send_update_to_servicenow_async\" AND tag.question_length: [1 TO *]",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Bot returned an actual resolution body (resolution_length > 0).",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Responded with Diagnosis",
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "semi-dark-blue" }] },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 1 },
+      "id": 4,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": { "interval": "$interval", "min_doc_count": 0, "trimEdges": 0 },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"send_update_to_servicenow_async\" AND tag.resolution_length: [1 TO *]",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Distinct traces containing at least one span with error=true.",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Error Traces",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green" }, { "color": "red", "value": 1 }]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 1 },
+      "id": 5,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "field": "traceID", "id": "1", "settings": {}, "type": "cardinality" }],
+          "query": "process.serviceName: $servicename AND tag.error: true",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Resolved / Processed. This is auto-resolution rate, NOT semantic accuracy.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "red" }, { "color": "orange", "value": 20 }, { "color": "green", "value": 50 }]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 1 },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "none",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": [], "fields": "/^C$/", "values": false },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "alias": "resolved",
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": { "interval": "1y", "min_doc_count": "0", "trimEdges": 0 },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"update_servicenow\" AND tag.resolution_result: \"yes\"",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        },
+        {
+          "alias": "processed",
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": { "interval": "1y", "min_doc_count": "0", "trimEdges": 0 },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"process_message\"",
+          "refId": "B",
+          "timeField": "startTimeMillis"
+        },
+        {
+          "datasource": { "name": "Expression", "type": "__expr__", "uid": "__expr__" },
+          "expression": "($A/$B)*100",
+          "hide": false,
+          "refId": "C",
+          "type": "math"
+        }
+      ],
+      "title": "Auto-Resolution Rate",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Discovery panel. Shows every distinct value of flow_status so you can find out whether a 'rejected' state is actually emitted. If only 'completed' ever appears, the rejected metric cannot be built without new instrumentation.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 5 },
+      "id": 7,
+      "options": {
+        "displayLabels": ["name", "value"],
+        "legend": { "displayMode": "list", "placement": "right", "showLegend": true, "values": ["value"] },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "tag.flow_status",
+              "id": "2",
+              "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "_count", "size": "10" },
+              "type": "terms"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"process_message\"",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Flow Status Breakdown (does 'rejected' exist?)",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Routing intent from logic_router. 'additional_info' is the additional-comment path.",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "mappings": [] },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 5 },
+      "id": 8,
+      "options": {
+        "displayLabels": ["name", "value"],
+        "legend": { "displayMode": "list", "placement": "right", "showLegend": true, "values": ["value"] },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "tag.intent",
+              "id": "2",
+              "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "_count", "size": "10" },
+              "type": "terms"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"logic_router\"",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Intent Breakdown",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Does a Standard Operating Procedure exist for the incident? sop_exists=false means the resolver has no playbook to follow.",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "mappings": [] },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 5 },
+      "id": 9,
+      "options": {
+        "displayLabels": ["name", "value"],
+        "legend": { "displayMode": "list", "placement": "right", "showLegend": true, "values": ["value"] },
+        "pieType": "donut",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "tag.sop_exists",
+              "id": "2",
+              "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "_count", "size": "5" },
+              "type": "terms"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"logic_router\"",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "SOP Coverage",
+      "type": "piechart"
+    },
+    {
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 12 },
+      "id": 101,
+      "collapsed": false,
+      "panels": [],
+      "title": "Application-wise",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Anchored on run_resolver, which occurs once per incident AND carries the app tag. Use this operation for anything app-sliced.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "semi-dark-blue" }] },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 13 },
+      "id": 10,
+      "options": {
+        "displayMode": "gradient",
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "tag.app",
+              "id": "2",
+              "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "_count", "size": "20" },
+              "type": "terms"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"run_resolver\" AND tag.app: $app",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Incidents by Application",
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Incident arrival rate per application over time.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Incidents",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "auto",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green" }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 16, "x": 8, "y": 13 },
+      "id": 11,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "right", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "tag.app",
+              "id": "3",
+              "settings": { "min_doc_count": "0", "order": "desc", "orderBy": "_count", "size": "10" },
+              "type": "terms"
+            },
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": { "interval": "$interval", "min_doc_count": 0, "trimEdges": 0 },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"run_resolver\" AND tag.app: $app",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Incidents Over Time by Application",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Mean resolver time per application. Large spreads here point at a specific app's context-gathering being slow.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green" }, { "color": "yellow", "value": 60000000 }, { "color": "red", "value": 300000000 }]
+          },
+          "unit": "µs"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 0, "y": 21 },
+      "id": 12,
+      "options": {
+        "displayMode": "gradient",
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "maxVizHeight": 300,
+        "minVizHeight": 16,
+        "minVizWidth": 8,
+        "namePlacement": "auto",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showUnfilled": true,
+        "sizing": "auto",
+        "valueMode": "color"
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "tag.app",
+              "id": "2",
+              "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "_count", "size": "20" },
+              "type": "terms"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "field": "duration", "id": "1", "settings": {}, "type": "avg" }],
+          "query": "process.serviceName: $servicename AND operationName: \"run_resolver\" AND tag.app: $app",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Avg Resolver Duration by Application",
+      "type": "bargauge"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Which resolver path ran: deterministic (context-only summary) vs crew (plan_agent + jaeger_agent + summary_agent). These have very different latency profiles.",
+      "fieldConfig": {
+        "defaults": { "color": { "mode": "palette-classic" }, "mappings": [] },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 8, "y": 21 },
+      "id": 13,
+      "options": {
+        "displayLabels": ["name", "value"],
+        "legend": { "displayMode": "list", "placement": "bottom", "showLegend": true, "values": ["value"] },
+        "pieType": "pie",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "operationName",
+              "id": "2",
+              "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "_count", "size": "5" },
+              "type": "terms"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: (\"_run_incident_context_crew_async\" OR \"_run_incident_context_deterministic_async\")",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Resolver Path Split",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Incidents where the similarity search produced zero usable Q&A pairs. Closest available proxy for retrieval quality until retrieval scores are instrumented.",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Empty Retrieval",
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{ "color": "green" }, { "color": "orange", "value": 1 }]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 7, "w": 8, "x": 16, "y": 21 },
+      "id": 14,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": { "interval": "$interval", "min_doc_count": 0, "trimEdges": 0 },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND operationName: \"run_resolver\" AND tag.qa_pairs_count: 0 AND tag.app: $app",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Retrieval Returned Nothing",
+      "type": "stat"
+    },
+    {
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 28 },
+      "id": 102,
+      "collapsed": false,
+      "panels": [],
+      "title": "Errors & Tool Health",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Where failures land. execute_jaeger_agent and its child GETs dominating here means the trace-investigation tool is down.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineWidth": 1,
+            "scaleDistribution": { "type": "linear" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "red" }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 29 },
+      "id": 15,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.7,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": { "mode": "single", "sort": "none" },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "operationName",
+              "id": "2",
+              "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "_count", "size": "15" },
+              "type": "terms"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND tag.error: true",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Error Spans by Operation",
+      "type": "barchart"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Which downstream endpoints are failing. Expect the Jaeger query API and ServiceNow update endpoint to appear.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineWidth": 1,
+            "scaleDistribution": { "type": "linear" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "dark-red" }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 29 },
+      "id": 16,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.7,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": { "calcs": [], "displayMode": "list", "placement": "bottom", "showLegend": false },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": { "mode": "single", "sort": "none" },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "tag.http@url",
+              "id": "2",
+              "settings": { "min_doc_count": "1", "order": "desc", "orderBy": "_count", "size": "10" },
+              "type": "terms"
+            }
+          ],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "type": "count" }],
+          "query": "process.serviceName: $servicename AND tag.error: true",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Failing Endpoints",
+      "type": "barchart"
+    },
+    {
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 37 },
+      "id": 103,
+      "collapsed": false,
+      "panels": [],
+      "title": "Drill-down",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Every incident, newest first. Click the Trace ID to open the waterfall in Jaeger.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true,
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text" }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "traceID" },
+            "properties": [
+              { "id": "displayName", "value": "Trace ID" },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Open in Jaeger",
+                    "url": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/trace/${__data.fields.traceID}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "duration" },
+            "properties": [
+              { "id": "displayName", "value": "Duration" },
+              { "id": "unit", "value": "µs" },
+              { "id": "decimals", "value": 1 },
+              { "id": "custom.cellOptions", "value": { "type": "color-text" } },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    { "color": "green" },
+                    { "color": "orange", "value": 120000000 },
+                    { "color": "red", "value": 300000000 }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "startTimeMillis" },
+            "properties": [
+              { "id": "displayName", "value": "Start Time" },
+              { "id": "unit", "value": "time: YYYY-MM-DD HH:mm:ss" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "tag.incident_id" },
+            "properties": [{ "id": "displayName", "value": "Incident ID" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "tag.flow_status" },
+            "properties": [{ "id": "displayName", "value": "Flow Status" }]
+          }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 38 },
+      "id": 17,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Start Time" }]
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "settings": { "limit": "100" }, "type": "logs" }],
+          "query": "process.serviceName: $servicename AND operationName: \"process_message\"",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Recent Incidents",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_source": true,
+              "_type": true,
+              "highlight": true,
+              "id": true,
+              "logs": true,
+              "operationName": true,
+              "process.serviceName": true,
+              "process.tags": true,
+              "references": true,
+              "sort": true,
+              "spanID": true,
+              "startTime": true,
+              "tag.internal@span@format": true,
+              "tag.otel@scope@name": true,
+              "tag.span@kind": true,
+              "tags": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "duration": 3,
+              "startTimeMillis": 0,
+              "tag.event_type": 5,
+              "tag.flow_status": 4,
+              "tag.incident_id": 2,
+              "traceID": 1
+            },
+            "orderByMode": "manual",
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+      "description": "Every failing span. Use this to spot flows whose root reports completed while a downstream call actually errored.",
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "custom": {
+            "align": "auto",
+            "cellOptions": { "type": "auto" },
+            "filterable": true,
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "text" }] }
+        },
+        "overrides": [
+          {
+            "matcher": { "id": "byName", "options": "traceID" },
+            "properties": [
+              { "id": "displayName", "value": "Trace ID" },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Open in Jaeger",
+                    "url": "https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/trace/${__data.fields.traceID}"
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "duration" },
+            "properties": [
+              { "id": "displayName", "value": "Duration" },
+              { "id": "unit", "value": "µs" },
+              { "id": "decimals", "value": 1 }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "startTimeMillis" },
+            "properties": [
+              { "id": "displayName", "value": "Start Time" },
+              { "id": "unit", "value": "time: YYYY-MM-DD HH:mm:ss" }
+            ]
+          },
+          {
+            "matcher": { "id": "byName", "options": "tag.otel@status_description" },
+            "properties": [{ "id": "displayName", "value": "Error" }]
+          },
+          {
+            "matcher": { "id": "byName", "options": "tag.http@url" },
+            "properties": [{ "id": "displayName", "value": "URL" }]
+          }
+        ]
+      },
+      "gridPos": { "h": 9, "w": 24, "x": 0, "y": 47 },
+      "id": 18,
+      "options": {
+        "cellHeight": "sm",
+        "footer": { "countRows": false, "fields": "", "reducer": ["sum"], "show": false },
+        "showHeader": true,
+        "sortBy": [{ "desc": true, "displayName": "Start Time" }]
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [],
+          "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+          "metrics": [{ "id": "1", "settings": { "limit": "100" }, "type": "logs" }],
+          "query": "process.serviceName: $servicename AND tag.error: true",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Error Spans",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_source": true,
+              "_type": true,
+              "highlight": true,
+              "id": true,
+              "logs": true,
+              "process.serviceName": true,
+              "process.tags": true,
+              "references": true,
+              "sort": true,
+              "spanID": true,
+              "startTime": true,
+              "tag.internal@span@format": true,
+              "tag.otel@scope@name": true,
+              "tag.otel@scope@version": true,
+              "tag.span@kind": true,
+              "tags": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "duration": 4,
+              "operationName": 2,
+              "startTimeMillis": 0,
+              "tag.http@url": 5,
+              "tag.otel@status_description": 3,
+              "traceID": 1
+            },
+            "orderByMode": "manual",
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": ["genai", "incident-manager"],
+  "templating": {
+    "list": [
+      {
+        "auto": true,
+        "auto_count": 300,
+        "auto_min": "5m",
+        "current": { "text": "1h", "value": "1h" },
+        "name": "interval",
+        "options": [],
+        "query": "1m,10m,30m,1h,6h,12h,1d,7d",
+        "refresh": 2,
+        "type": "interval"
+      },
+      {
+        "current": { "text": "genai-de-incident-manager", "value": "genai-de-incident-manager" },
+        "name": "servicename",
+        "label": "Service",
+        "query": "genai-de-incident-manager",
+        "skipUrlSync": false,
+        "type": "constant"
+      },
+      {
+        "allValue": "*",
+        "current": { "text": "All", "value": ["$__all"] },
+        "datasource": { "type": "elasticsearch", "uid": "Elasticsearch-jaeger-spans" },
+        "definition": "{\"find\": \"terms\", \"field\": \"tag.app\", \"query\": \"process.serviceName: genai-de-incident-manager AND operationName: run_resolver\"}",
+        "includeAll": true,
+        "label": "Application",
+        "multi": true,
+        "name": "app",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"tag.app\", \"query\": \"process.serviceName: genai-de-incident-manager AND operationName: run_resolver\"}",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-7d", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "GenAI Incident Manager - Overview",
+  "uid": "genai-incident-mgr",
+  "version": 1
+}
