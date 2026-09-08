@@ -1,1 +1,2351 @@
-{"data":[{"traceID":"111040870bf1e4d9e48d02dab869cf4a","spans":[{"traceID":"111040870bf1e4d9e48d02dab869cf4a","spanID":"0a8797a4a5564e8b","operationName":"POST","references":[],"startTime":1788889842794301,"duration":70653,"tags":[{"key":"http.method","type":"string","value":"POST"},{"key":"http.status_code","type":"int64","value":200},{"key":"http.url","type":"string","value":"https://app.auth.idfcfirstbank.com/api/session-management/v1/token"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"opentelemetry.instrumentation.requests"},{"key":"otel.scope.version","type":"string","value":"0.55b1"},{"key":"span.kind","type":"string","value":"client"}],"logs":[],"processID":"p1","warnings":null}],"processes":{"p1":{"serviceName":"genai-de-incident-manager","tags":[{"key":"deployment.environment","type":"string","value":"prod"},{"key":"service.namespace","type":"string","value":"ai-platform"},{"key":"telemetry.sdk.language","type":"string","value":"python"},{"key":"telemetry.sdk.name","type":"string","value":"opentelemetry"},{"key":"telemetry.sdk.version","type":"string","value":"1.34.1"}]}},"warnings":null},{"traceID":"c601c959a6a75782edb26865acc75db7","spans":[{"traceID":"c601c959a6a75782edb26865acc75db7","spanID":"3ad7a47eb66bb501","operationName":"POST","references":[],"startTime":1788889837445641,"duration":4261465,"tags":[{"key":"http.method","type":"string","value":"POST"},{"key":"http.status_code","type":"int64","value":200},{"key":"http.url","type":"string","value":"http://jira-conf-rag-api-svc:8000/api/jira-conf-rag/semantic-search"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"opentelemetry.instrumentation.httpx"},{"key":"otel.scope.version","type":"string","value":"0.55b1"},{"key":"span.kind","type":"string","value":"client"}],"logs":[],"processID":"p1","warnings":null}],"processes":{"p1":{"serviceName":"genai-de-incident-manager","tags":[{"key":"deployment.environment","type":"string","value":"prod"},{"key":"service.namespace","type":"string","value":"ai-platform"},{"key":"telemetry.sdk.language","type":"string","value":"python"},{"key":"telemetry.sdk.name","type":"string","value":"opentelemetry"},{"key":"telemetry.sdk.version","type":"string","value":"1.34.1"}]}},"warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spans":[{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"72d5c93fe042f00d","operationName":"GET","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"83a4847d85773b6a"}],"startTime":1788889868847511,"duration":9864,"tags":[{"key":"error","type":"bool","value":true},{"key":"http.method","type":"string","value":"GET"},{"key":"http.url","type":"string","value":"https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788544268846211\u0026end=1788630668846211\u0026limit=100"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"opentelemetry.instrumentation.httpx"},{"key":"otel.scope.version","type":"string","value":"0.55b1"},{"key":"otel.status_code","type":"string","value":"ERROR"},{"key":"otel.status_description","type":"string","value":"ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"span.kind","type":"string","value":"client"}],"logs":[{"timestamp":1788889868857366,"fields":[{"key":"event","type":"string","value":"exception"},{"key":"exception.escaped","type":"string","value":"False"},{"key":"exception.message","type":"string","value":"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"exception.stacktrace","type":"string","value":"Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"},{"key":"exception.type","type":"string","value":"httpx.ConnectError"}]}],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"86bdf07eeb203ee8","operationName":"GET","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"83a4847d85773b6a"}],"startTime":1788889876359822,"duration":11979,"tags":[{"key":"error","type":"bool","value":true},{"key":"http.method","type":"string","value":"GET"},{"key":"http.url","type":"string","value":"https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=finnone\u0026start=1788457876358373\u0026end=1788544276358373\u0026limit=100\u0026tags=%7B%22username%22%3A+%22locked%22%7D"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"opentelemetry.instrumentation.httpx"},{"key":"otel.scope.version","type":"string","value":"0.55b1"},{"key":"otel.status_code","type":"string","value":"ERROR"},{"key":"otel.status_description","type":"string","value":"ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"span.kind","type":"string","value":"client"}],"logs":[{"timestamp":1788889876371789,"fields":[{"key":"event","type":"string","value":"exception"},{"key":"exception.escaped","type":"string","value":"False"},{"key":"exception.message","type":"string","value":"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"exception.stacktrace","type":"string","value":"Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"},{"key":"exception.type","type":"string","value":"httpx.ConnectError"}]}],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"0a82decb8ef517a1","operationName":"update_servicenow","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"725d6e16226a15f9"}],"startTime":1788889889768938,"duration":2559952,"tags":[{"key":"incident_id","type":"string","value":"0e00534897578714a082bb77f053af52"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"genai-de-incident-manager"},{"key":"resolution_result","type":"string","value":"yes"},{"key":"span.kind","type":"string","value":"internal"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"6c9e9385bc43c826","operationName":"send_resolution_to_servicenow_async","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"0a82decb8ef517a1"}],"startTime":1788889889769012,"duration":2518324,"tags":[{"key":"incident_id","type":"string","value":"0e00534897578714a082bb77f053af52"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"genai-de-incident-manager"},{"key":"resolution_length","type":"int64","value":1265},{"key":"span.kind","type":"string","value":"internal"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"bf9a7c0822397f20","operationName":"GET","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"feaea4fd2cd23027"}],"startTime":1788889853943613,"duration":17783,"tags":[{"key":"error","type":"bool","value":true},{"key":"http.method","type":"string","value":"GET"},{"key":"http.url","type":"string","value":"https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/services?lookback=1h"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"opentelemetry.instrumentation.httpx"},{"key":"otel.scope.version","type":"string","value":"0.55b1"},{"key":"otel.status_code","type":"string","value":"ERROR"},{"key":"otel.status_description","type":"string","value":"ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"span.kind","type":"string","value":"client"}],"logs":[{"timestamp":1788889853961384,"fields":[{"key":"event","type":"string","value":"exception"},{"key":"exception.escaped","type":"string","value":"False"},{"key":"exception.message","type":"string","value":"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"exception.stacktrace","type":"string","value":"Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"},{"key":"exception.type","type":"string","value":"httpx.ConnectError"}]}],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"26380d5344f029af","operationName":"GET","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"83a4847d85773b6a"}],"startTime":1788889876302864,"duration":13791,"tags":[{"key":"error","type":"bool","value":true},{"key":"http.method","type":"string","value":"GET"},{"key":"http.url","type":"string","value":"https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=finnone\u0026start=1788803476301187\u0026end=1788889876301187\u0026limit=100\u0026tags=%7B%22username%22%3A+%22locked%22%7D"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"opentelemetry.instrumentation.httpx"},{"key":"otel.scope.version","type":"string","value":"0.55b1"},{"key":"otel.status_code","type":"string","value":"ERROR"},{"key":"otel.status_description","type":"string","value":"ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"span.kind","type":"string","value":"client"}],"logs":[{"timestamp":1788889876316639,"fields":[{"key":"event","type":"string","value":"exception"},{"key":"exception.escaped","type":"string","value":"False"},{"key":"exception.message","type":"string","value":"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"exception.stacktrace","type":"string","value":"Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"},{"key":"exception.type","type":"string","value":"httpx.ConnectError"}]}],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"2541c6de88e8fd37","operationName":"send_update_to_servicenow_async","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"6c9e9385bc43c826"}],"startTime":1788889889769039,"duration":2518275,"tags":[{"key":"incident_id","type":"string","value":"0e00534897578714a082bb77f053af52"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"genai-de-incident-manager"},{"key":"question_length","type":"int64","value":1265},{"key":"resolution_length","type":"int64","value":0},{"key":"span.kind","type":"string","value":"internal"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"ff27fe6c2731d7f7","operationName":"initialize_and_classify","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"725d6e16226a15f9"}],"startTime":1788889802476742,"duration":17433970,"tags":[{"key":"incident_id","type":"string","value":"0e00534897578714a082bb77f053af52"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"genai-de-incident-manager"},{"key":"span.kind","type":"string","value":"internal"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"83a4847d85773b6a","operationName":"execute_jaeger_agent","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"feaea4fd2cd23027"}],"startTime":1788889868797215,"duration":16638768,"tags":[{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"issue_summary","type":"string","value":"A DB Down / DB user locked / Connectivity Issue alert has been fired for OracleDB (FinnOne) on serve"},{"key":"otel.scope.name","type":"string","value":"genai-de-incident-manager"},{"key":"span.kind","type":"string","value":"internal"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"3b31a293dc4445eb","operationName":"GET","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"83a4847d85773b6a"}],"startTime":1788889868800056,"duration":18732,"tags":[{"key":"error","type":"bool","value":true},{"key":"http.method","type":"string","value":"GET"},{"key":"http.url","type":"string","value":"https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788803468798408\u0026end=1788889868798408\u0026limit=100"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"opentelemetry.instrumentation.httpx"},{"key":"otel.scope.version","type":"string","value":"0.55b1"},{"key":"otel.status_code","type":"string","value":"ERROR"},{"key":"otel.status_description","type":"string","value":"ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"span.kind","type":"string","value":"client"}],"logs":[{"timestamp":1788889868818773,"fields":[{"key":"event","type":"string","value":"exception"},{"key":"exception.escaped","type":"string","value":"False"},{"key":"exception.message","type":"string","value":"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"exception.stacktrace","type":"string","value":"Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 67, in start_tls\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)\n"},{"key":"exception.type","type":"string","value":"httpx.ConnectError"}]}],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"680c5e116ec6ed12","operationName":"summary_agent","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"feaea4fd2cd23027"}],"startTime":1788889885436057,"duration":4331967,"tags":[{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"genai-de-incident-manager"},{"key":"span.kind","type":"string","value":"internal"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"feaea4fd2cd23027","operationName":"run_resolver","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"725d6e16226a15f9"}],"startTime":1788889853935407,"duration":35832674,"tags":[{"key":"app","type":"string","value":"finnone"},{"key":"incident_id","type":"string","value":"0e00534897578714a082bb77f053af52"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"genai-de-incident-manager"},{"key":"qa_pairs_count","type":"int64","value":0},{"key":"span.kind","type":"string","value":"internal"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"09e80b87d262577c","operationName":"gather_context","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"725d6e16226a15f9"}],"startTime":1788889819913753,"duration":34020970,"tags":[{"key":"incident_description_length","type":"int64","value":287},{"key":"incident_id","type":"string","value":"0e00534897578714a082bb77f053af52"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"genai-de-incident-manager"},{"key":"span.kind","type":"string","value":"internal"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"313f0d17124e27cb","operationName":"plan_agent","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"feaea4fd2cd23027"}],"startTime":1788889853961555,"duration":14835583,"tags":[{"key":"app","type":"string","value":"finnone"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"genai-de-incident-manager"},{"key":"span.kind","type":"string","value":"internal"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"896b5d7703d160cb","operationName":"POST","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"313f0d17124e27cb"}],"startTime":1788889858507591,"duration":3821789,"tags":[{"key":"http.method","type":"string","value":"POST"},{"key":"http.status_code","type":"int64","value":200},{"key":"http.url","type":"string","value":"https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"opentelemetry.instrumentation.httpx"},{"key":"otel.scope.version","type":"string","value":"0.55b1"},{"key":"span.kind","type":"string","value":"client"}],"logs":[],"processID":"p1","warnings":null},{"traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"fad59d080f024bb6","operationName":"GET","references":[{"refType":"CHILD_OF","traceID":"aea9a0006d420bac630d54f26c8039b0","spanID":"83a4847d85773b6a"}],"startTime":1788889868872827,"duration":7902,"tags":[{"key":"error","type":"bool","value":true},{"key":"http.method","type":"string","value":"GET"},{"key":"http.url","type":"string","value":"https://prod-jaeger-ui.obs.idfcfirstbank.com/jaeger/api/traces?service=\u0026start=1788371468871545\u0026end=1788457868871545\u0026limit=100"},{"key":"internal.span.format","type":"string","value":"otlp"},{"key":"otel.scope.name","type":"string","value":"opentelemetry.instrumentation.httpx"},{"key":"otel.scope.version","type":"string","value":"0.55b1"},{"key":"otel.status_code","type":"string","value":"ERROR"},{"key":"otel.status_description","type":"string","value":"ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"span.kind","type":"string","value":"client"}],"logs":[{"timestamp":1788889868880719,"fields":[{"key":"event","type":"string","value":"exception"},{"key":"exception.escaped","type":"string","value":"False"},{"key":"exception.message","type":"string","value":"[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: self-signed certificate in certificate chain (_ssl.c:1006)"},{"key":"exception.stacktrace","type":"string","value":"Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 156, in _connect\n    stream = await stream.start_tls(**kwargs)\n    
+{
+    "data": [
+        {
+            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+            "spans": [
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "f007f08bccec1943",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788263684123363,
+                    "duration": 45003544,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=\u0026start=1788177284121750\u0026end=1788263684121750\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788263729126885,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "c92e4c447f7079ef",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788264200210345,
+                    "duration": 45003924,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=otp-delivery-service\u0026start=1787832200208596\u0026end=1787918600208596\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788264245214249,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "4f03bdb016ba19f3",
+                    "operationName": "initialize_and_classify",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "773f8cfabc931ae4"
+                        }
+                    ],
+                    "startTime": 1788263543356367,
+                    "duration": 16792332,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e8ab3dbd9783035097aaf32de053af3c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "5ccef2943fc6745f",
+                    "operationName": "payload_to_incident_description",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "4f03bdb016ba19f3"
+                        }
+                    ],
+                    "startTime": 1788263543356423,
+                    "duration": 22,
+                    "tags": [
+                        {
+                            "key": "description_length",
+                            "type": "int64",
+                            "value": 151
+                        },
+                        {
+                            "key": "individualUCIC",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "short_description_length",
+                            "type": "int64",
+                            "value": 35
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "3ffca6b8d550e256",
+                    "operationName": "logic_router",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "773f8cfabc931ae4"
+                        }
+                    ],
+                    "startTime": 1788263560149254,
+                    "duration": 1796,
+                    "tags": [
+                        {
+                            "key": "intent",
+                            "type": "string",
+                            "value": "additional_info"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "sop_exists",
+                            "type": "bool",
+                            "value": false
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "957efd3ad7f64f66",
+                    "operationName": "run_resolver",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "773f8cfabc931ae4"
+                        }
+                    ],
+                    "startTime": 1788263630936748,
+                    "duration": 728203654,
+                    "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": "communication hub"
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e8ab3dbd9783035097aaf32de053af3c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "qa_pairs_count",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "114dc9e56cec67ae",
+                    "operationName": "plan_agent",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "957efd3ad7f64f66"
+                        }
+                    ],
+                    "startTime": 1788263660949623,
+                    "duration": 23170827,
+                    "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": "communication hub"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "59bf028febab5845",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788263962665691,
+                    "duration": 45002931,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=\u0026start=1787659162663897\u0026end=1787745562663897\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788264007668605,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "046b75a2ee4acbd1",
+                    "operationName": "send_update_to_servicenow_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "9c112464d0203343"
+                        }
+                    ],
+                    "startTime": 1788264359141502,
+                    "duration": 2055847,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e8ab3dbd9783035097aaf32de053af3c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "question_length",
+                            "type": "int64",
+                            "value": 362
+                        },
+                        {
+                            "key": "resolution_length",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "34bf60c3b54f2bb8",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788264065187541,
+                    "duration": 45007693,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=otp-delivery-service\u0026start=1788091265185721\u0026end=1788177665185721\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788264110195216,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "ca42c1631b38ea1d",
+                    "operationName": "update_servicenow",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "773f8cfabc931ae4"
+                        }
+                    ],
+                    "startTime": 1788264359141398,
+                    "duration": 2089888,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e8ab3dbd9783035097aaf32de053af3c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "resolution_result",
+                            "type": "string",
+                            "value": "no"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "ef2d50f0e4ca69b6",
+                    "operationName": "_run_incident_context_crew_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "f511c8ffa0516ce7"
+                        }
+                    ],
+                    "startTime": 1788263560153595,
+                    "duration": 70782387,
+                    "tags": [
+                        {
+                            "key": "application",
+                            "type": "string",
+                            "value": "Communication Hub"
+                        },
+                        {
+                            "key": "incident_description",
+                            "type": "string",
+                            "value": "\nIncident Summary:\n- Application: Communication Hub\n- Problem Category: mfa_issue\n\nCustomer Identifi..."
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "8c96cb53797b5656",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "114dc9e56cec67ae"
+                        }
+                    ],
+                    "startTime": 1788263676766268,
+                    "duration": 3665804,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "c3807c6e27b2172a",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788263729130355,
+                    "duration": 45003154,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=\u0026start=1788090929128636\u0026end=1788177329128636\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788263774133487,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "ddafbc2a1267904b",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788263864149019,
+                    "duration": 53507048,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=\u0026start=1787831864147339\u0026end=1787918264147339\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788263917656015,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "8a915af12feca360",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788264110198412,
+                    "duration": 45002579,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=otp-delivery-service\u0026start=1788004910196598\u0026end=1788091310196598\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788264155200973,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "cee82d3fd42f963b",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788264155204288,
+                    "duration": 45003080,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=otp-delivery-service\u0026start=1787918555202271\u0026end=1788004955202271\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788264200207351,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "e964dcb923cecc10",
+                    "operationName": "summary_agent",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "957efd3ad7f64f66"
+                        }
+                    ],
+                    "startTime": 1788264345888226,
+                    "duration": 13252119,
+                    "tags": [
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "f511c8ffa0516ce7",
+                    "operationName": "gather_context",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "773f8cfabc931ae4"
+                        }
+                    ],
+                    "startTime": 1788263560151675,
+                    "duration": 70784402,
+                    "tags": [
+                        {
+                            "key": "incident_description_length",
+                            "type": "int64",
+                            "value": 219
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e8ab3dbd9783035097aaf32de053af3c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "cd046381cd15b556",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "957efd3ad7f64f66"
+                        }
+                    ],
+                    "startTime": 1788263630943719,
+                    "duration": 30005625,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/services?lookback=1h"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788263660949320,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "bee708d67a0d5fc2",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "114dc9e56cec67ae"
+                        }
+                    ],
+                    "startTime": 1788263660962220,
+                    "duration": 10420721,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "e7bf0de708001ba3",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "114dc9e56cec67ae"
+                        }
+                    ],
+                    "startTime": 1788263671387117,
+                    "duration": 5370257,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://llm-api.iservebetter.idfcfirstbank.com/minimax-m2-entauth/v1/chat/completions"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "9b70b88934f05aa5",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788263819142948,
+                    "duration": 45003154,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=\u0026start=1787918219141204\u0026end=1788004619141204\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788263864146083,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "92e5fed57d3a13d5",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788264245217494,
+                    "duration": 45003272,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=otp-delivery-service\u0026start=1787745845215596\u0026end=1787832245215596\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788264290220749,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "4651a473706cf45e",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "046b75a2ee4acbd1"
+                        }
+                    ],
+                    "startTime": 1788264359143378,
+                    "duration": 123131,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "http://pii-masking-service-svc:8080/pii-masking-service/api/v1/mask/batch"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "94482746c35bea74",
+                    "operationName": "execute_jaeger_agent",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "957efd3ad7f64f66"
+                        }
+                    ],
+                    "startTime": 1788263684120526,
+                    "duration": 661767627,
+                    "tags": [
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "issue_summary",
+                            "type": "string",
+                            "value": "Customer (ID: 6578097830) is not receiving OTPs for Net Banking. Based on historic similarity search"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "9c112464d0203343",
+                    "operationName": "send_question_to_servicenow_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "ca42c1631b38ea1d"
+                        }
+                    ],
+                    "startTime": 1788264359141474,
+                    "duration": 2055901,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e8ab3dbd9783035097aaf32de053af3c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "514315618ca6fe12",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "046b75a2ee4acbd1"
+                        }
+                    ],
+                    "startTime": 1788264359268797,
+                    "duration": 1927769,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://api.internal.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "43acba88617be9bd",
+                    "operationName": "crew_kickoff_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "ef2d50f0e4ca69b6"
+                        }
+                    ],
+                    "startTime": 1788263560160455,
+                    "duration": 70775399,
+                    "tags": [
+                        {
+                            "key": "incident_description",
+                            "type": "string",
+                            "value": "\nIncident Summary:\n- Application: Communication Hub\n- Problem Category: mfa_issue\n\nCustomer Identifiers:\n- customer_id: 6578097830\n\nLLM Analysis:\n- User Goal: Provide information related to a case where OTPs are not being received for Net Banking.\n- Issue Description: The user provided case details including case number, customer name, customer ID, mobile number, and account number related to the issue of non-receipt of OTPs for Net Banking.\n- Problem Summary: The customer is reporting that they are not receiving OTPs for Net Banking, and has provided relevant details such as case number, customer name, customer ID, mobile number, and account number.\n\nOriginal Description:\nShort Description: Non-Receipt of OTPs for Net Banking\nDescription: Case\r\n1163633298\r\nCustomer Name\r\nSAFE N CONNECT LOGISTICS PRIVATE LIMITED\r\nCustomer ID\r\n6578097830\r\nMobile\r\n(733) 832-1003\r\nAccount Number\r\n59845088885\n\nPlease investigate this issue starting with Similarity Search\nfor similar historic incidents, then check Jaeger traces to\nunderstand the current error context.\n..."
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "115e0edaa3894c1d",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788263774136738,
+                    "duration": 45003149,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=\u0026start=1788004574134899\u0026end=1788090974134899\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788263819139865,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "1ef0c8661202b556",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788264290223740,
+                    "duration": 45002782,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=otp-delivery-service\u0026start=1787659490222003\u0026end=1787745890222003\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788264335226500,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "773f8cfabc931ae4",
+                    "operationName": "process_message",
+                    "references": [],
+                    "startTime": 1788263543316893,
+                    "duration": 817919311,
+                    "tags": [
+                        {
+                            "key": "current_status",
+                            "type": "string",
+                            "value": "in_progress"
+                        },
+                        {
+                            "key": "event_type",
+                            "type": "string",
+                            "value": "new_incident"
+                        },
+                        {
+                            "key": "flow_module",
+                            "type": "string",
+                            "value": "new_flow.flow"
+                        },
+                        {
+                            "key": "flow_status",
+                            "type": "string",
+                            "value": "completed"
+                        },
+                        {
+                            "key": "flow_type",
+                            "type": "string",
+                            "value": "new_incident"
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "e8ab3dbd9783035097aaf32de053af3c"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "b2acde5b126afcfb",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788263917659070,
+                    "duration": 45003503,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=\u0026start=1787745517657501\u0026end=1787831917657501\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788263962662556,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                    "spanID": "09e9d7edd4fc91ca",
+                    "operationName": "GET",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "79ef785c957cb32c35ee2cf436c902fe",
+                            "spanID": "94482746c35bea74"
+                        }
+                    ],
+                    "startTime": 1788264020181949,
+                    "duration": 45002489,
+                    "tags": [
+                        {
+                            "key": "error",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "GET"
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://tracing.commhub.idfcbank.com/api/traces?service=otp-delivery-service\u0026start=1788177620180313\u0026end=1788264020180313\u0026limit=100\u0026tags=%7B%22customer_id%22%3A+%226578097830%22%7D"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "otel.status_code",
+                            "type": "string",
+                            "value": "ERROR"
+                        },
+                        {
+                            "key": "otel.status_description",
+                            "type": "string",
+                            "value": "ConnectTimeout: "
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [
+                        {
+                            "timestamp": 1788264065184423,
+                            "fields": [
+                                {
+                                    "key": "event",
+                                    "type": "string",
+                                    "value": "exception"
+                                },
+                                {
+                                    "key": "exception.escaped",
+                                    "type": "string",
+                                    "value": "False"
+                                },
+                                {
+                                    "key": "exception.message",
+                                    "type": "string",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "exception.stacktrace",
+                                    "type": "string",
+                                    "value": "Traceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 101, in map_httpcore_exceptions\n    yield\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 394, in handle_async_request\n    resp = await self._pool.handle_async_request(req)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 256, in handle_async_request\n    raise exc from None\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection_pool.py\", line 236, in handle_async_request\n    response = await connection.handle_async_request(\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 101, in handle_async_request\n    raise exc\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 78, in handle_async_request\n    stream = await self._connect(request)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_async/connection.py\", line 124, in _connect\n    stream = await self._network_backend.connect_tcp(**kwargs)\n             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/auto.py\", line 31, in connect_tcp\n    return await self._backend.connect_tcp(\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_backends/anyio.py\", line 113, in connect_tcp\n    with map_exceptions(exc_map):\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpcore/_exceptions.py\", line 14, in map_exceptions\n    raise to_exc(exc) from exc\nhttpcore.ConnectTimeout\n\nThe above exception was the direct cause of the following exception:\n\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/trace/__init__.py\", line 589, in use_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/sdk/trace/__init__.py\", line 1105, in start_as_current_span\n    yield span\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1134, in _handle_async_request_wrapper\n    raise exception.with_traceback(exception.__traceback__)\n  File \"/usr/local/lib/python3.11/site-packages/opentelemetry/instrumentation/httpx/__init__.py\", line 1100, in _handle_async_request_wrapper\n    response = await wrapped(*args, **kwargs)\n               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 393, in handle_async_request\n    with map_httpcore_exceptions():\n  File \"/usr/local/lib/python3.11/contextlib.py\", line 155, in __exit__\n    self.gen.throw(typ, value, traceback)\n  File \"/usr/local/lib/python3.11/site-packages/httpx/_transports/default.py\", line 118, in map_httpcore_exceptions\n    raise mapped_exc(message) from exc\nhttpx.ConnectTimeout\n"
+                                },
+                                {
+                                    "key": "exception.type",
+                                    "type": "string",
+                                    "value": "httpx.ConnectTimeout"
+                                }
+                            ]
+                        }
+                    ],
+                    "processID": "p1",
+                    "warnings": null
+                }
+            ],
+            "processes": {
+                "p1": {
+                    "serviceName": "genai-de-incident-manager",
+                    "tags": [
+                        {
+                            "key": "deployment.environment",
+                            "type": "string",
+                            "value": "prod"
+                        },
+                        {
+                            "key": "service.namespace",
+                            "type": "string",
+                            "value": "ai-platform"
+                        },
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.34.1"
+                        }
+                    ]
+                }
+            },
+            "warnings": null
+        }
+    ],
+    "total": 0,
+    "limit": 0,
+    "offset": 0,
+    "errors": null
+}
