@@ -1,0 +1,1741 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "datasource",
+          "uid": "grafana"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 37,
+  "links": [
+    {
+      "icon": "dashboard",
+      "tags": [],
+      "title": "Home Dashboard",
+      "tooltip": "Go Back to Home Dashboard",
+      "type": "link",
+      "url": "/d/AvBF-ejWz1/optimus-monitoring-dashboard?orgId=2&refresh=1m"
+    }
+  ],
+  "panels": [
+    {
+      "fieldConfig": {
+        "defaults": {},
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 2,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 41,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"background-color:#9d1d27;color: white;padding-top: 2px;padding-bottom: 2px;font-size:30px;\">\r\n\r\n<img src=\"/public/img/idfc_logo.png\" width=\"100\" height=\"40\" style=\"padding-left: 10px;margin-right: 25%;\"/>\r\n  \r\n$servicename's Operation Details\r\n\r\n<img src=\"/public/img/idfc_logo.png\" width=\"100\" height=\"40\" style=\"margin-left: 25%;\"/>   \r\n</div>",
+        "mode": "html"
+      },
+      "pluginVersion": "11.6.12",
+      "title": "",
+      "type": "text"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "Elasticsearch-jaeger-spans"
+      },
+      "description": "",
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Total Hits",
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-blue"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 0,
+        "y": 2
+      },
+      "id": 35,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "alias": "",
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": {
+                "interval": "$interval",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "field": "traceID",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "count"
+            }
+          ],
+          "query": "process.serviceName: $servicename AND operationName:  $operationname  and NOT operationName: *request\\/response*  AND tag.span@kind: $type",
+          "refId": "B",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "Elasticsearch-jaeger-spans"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "displayName": "Errors",
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "semi-dark-blue"
+              }
+            ]
+          },
+          "unit": "none"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 4,
+        "y": 2
+      },
+      "id": 37,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "horizontal",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "sum"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": {
+                "interval": "$interval",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "metrics": [
+            {
+              "field": "select field",
+              "id": "1",
+              "meta": {},
+              "settings": {},
+              "type": "count"
+            }
+          ],
+          "query": "tag.http@status_code: [400 TO 600] AND process.serviceName: $servicename AND operationName: $operationname  and NOT operationName: *request\\/response*  AND tag.span@kind: $type",
+          "refId": "B",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "Elasticsearch-jaeger-spans"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "decimals": 1,
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "text"
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 4,
+        "x": 8,
+        "y": 2
+      },
+      "id": 49,
+      "maxDataPoints": 100,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [],
+          "fields": "/^C$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "alias": "errors",
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": {
+                "interval": "1y",
+                "min_doc_count": "0",
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "tag.http@status_code: [400 TO 600] AND process.serviceName: $servicename AND operationName: $operationname  AND NOT operationName: *request\\/response*  AND tag.span@kind: $type",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        },
+        {
+          "alias": "totalcount",
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": {
+                "interval": "1y",
+                "min_doc_count": "0",
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "type": "count"
+            }
+          ],
+          "query": "process.serviceName: $servicename AND operationName: $operationname  and NOT operationName: *request\\/response*  AND tag.span@kind: $type",
+          "refId": "B",
+          "timeField": "startTimeMillis"
+        },
+        {
+          "datasource": {
+            "name": "Expression",
+            "type": "__expr__",
+            "uid": "__expr__"
+          },
+          "expression": "100-(($A/$B)*100)",
+          "hide": false,
+          "refId": "C",
+          "type": "math"
+        }
+      ],
+      "title": "Success Rate",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "Elasticsearch-jaeger-spans"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "decimals": 2,
+          "mappings": [
+            {
+              "options": {
+                "match": "null",
+                "result": {
+                  "text": "N/A"
+                }
+              },
+              "type": "special"
+            }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "yellow",
+                "value": 3000000
+              },
+              {
+                "color": "red",
+                "value": 5000000
+              }
+            ]
+          },
+          "unit": "µs"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 3,
+        "w": 12,
+        "x": 12,
+        "y": 2
+      },
+      "id": 39,
+      "options": {
+        "colorMode": "background",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "vertical",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "mean"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "alias": "{{metric}}",
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": {
+                "interval": "$interval",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "metrics": [
+            {
+              "field": "duration",
+              "id": "1",
+              "meta": {
+                "avg": true,
+                "count": false,
+                "max": false,
+                "min": false,
+                "std_deviation_bounds_lower": false,
+                "std_deviation_bounds_upper": false
+              },
+              "settings": {
+                "missing": 0
+              },
+              "type": "extended_stats"
+            },
+            {
+              "field": "duration",
+              "id": "3",
+              "meta": {},
+              "settings": {
+                "missing": 0,
+                "percents": [
+                  "95",
+                  "99"
+                ]
+              },
+              "type": "percentiles"
+            }
+          ],
+          "query": "process.serviceName: $servicename AND operationName: $operationname  and NOT operationName: *request\\/response* process.serviceName: $servicename AND operationName: $operationname  and NOT operationName: *request\\/response*  AND tag.span@kind: $type",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "Elasticsearch-jaeger-spans"
+      },
+      "description": "This graph shows the Load (Total hits) vs Response Time trend along with the errors if any.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "Hits",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "points",
+            "fillOpacity": 30,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "spanNulls": true,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "links": [],
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "short"
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Average"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg. Response Time"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Count"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Errors"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-red",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Response"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-blue",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Hits"
+            },
+            "properties": [
+              {
+                "id": "color",
+                "value": {
+                  "fixedColor": "dark-green",
+                  "mode": "fixed"
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Avg. Response Time"
+            },
+            "properties": [
+              {
+                "id": "custom.lineWidth",
+                "value": 0
+              },
+              {
+                "id": "unit",
+                "value": "µs"
+              },
+              {
+                "id": "custom.axisLabel",
+                "value": "Response Time"
+              },
+              {
+                "id": "custom.drawStyle",
+                "value": "line"
+              },
+              {
+                "id": "custom.lineWidth",
+                "value": 1
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Total Hits"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 100
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Errors"
+            },
+            "properties": [
+              {
+                "id": "custom.drawStyle",
+                "value": "bars"
+              },
+              {
+                "id": "custom.fillOpacity",
+                "value": 100
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 7,
+        "w": 24,
+        "x": 0,
+        "y": 5
+      },
+      "id": 43,
+      "interval": "20s",
+      "options": {
+        "legend": {
+          "calcs": [
+            "mean",
+            "lastNotNull",
+            "max"
+          ],
+          "displayMode": "table",
+          "placement": "right",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "alias": "Total Hits",
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": {
+                "interval": "$interval",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "field": "select field",
+              "id": "3",
+              "type": "count"
+            }
+          ],
+          "query": "process.serviceName: $servicename AND operationName: $operationname  and NOT operationName: *request\\/response*  AND tag.span@kind: $type",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        },
+        {
+          "alias": "Avg. Response Time",
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": {
+                "interval": "$interval",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "field": "duration",
+              "id": "3",
+              "meta": {},
+              "settings": {},
+              "type": "avg"
+            }
+          ],
+          "query": "process.serviceName: $servicename AND operationName: $operationname  and NOT operationName: *request\\/response*  AND tag.span@kind: $type",
+          "refId": "B",
+          "timeField": "startTimeMillis"
+        },
+        {
+          "alias": "Errors",
+          "bucketAggs": [
+            {
+              "field": "startTimeMillis",
+              "id": "2",
+              "settings": {
+                "interval": "$interval",
+                "min_doc_count": 0,
+                "trimEdges": 0
+              },
+              "type": "date_histogram"
+            }
+          ],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "field": "select field",
+              "id": "3",
+              "type": "count"
+            }
+          ],
+          "query": "tag.http@status_code: [400 TO 600] AND process.serviceName: $servicename AND operationName: $operationname  and NOT operationName: *request\\/response*  AND tag.span@kind: $type",
+          "refId": "C",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Transaction Hits vs/ Response Time",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 12
+      },
+      "id": 100,
+      "panels": [],
+      "title": "Trace Details",
+      "type": "row"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "Elasticsearch-jaeger-spans"
+      },
+      "description": "Provides the individual transaction information including timestamp, response time and HTTP status code (Success / Failure). Click on Trace ID to drill down for more trace level details.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "traceID"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Trace ID"
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Drill Down ==>",
+                    "url": "https://tracing.prod-opt.idfcfirstbank.com/trace/${__data.fields.traceID}?uiEmbed=v0"
+                  }
+                ]
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Unique Count"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Count"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tag.http@status_code"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status Code"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(50, 172, 45, 0.97)"
+                    },
+                    {
+                      "color": "rgba(237, 129, 40, 0.89)",
+                      "value": 201
+                    },
+                    {
+                      "color": "rgba(245, 54, 54, 0.9)",
+                      "value": 499
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "duration"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Response Time"
+              },
+              {
+                "id": "unit",
+                "value": "µs"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.align"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(50, 172, 45, 0.97)"
+                    },
+                    {
+                      "color": "rgba(237, 129, 40, 0.89)",
+                      "value": 2000000
+                    },
+                    {
+                      "color": "rgba(245, 54, 54, 0.9)",
+                      "value": 5000000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "startTimeMillis"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Start Time"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "unit",
+                "value": "time: YYYY-MM-DD HH:mm:ss"
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tag.http@url"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "URL"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 13
+      },
+      "id": 29,
+      "interval": "30s",
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": true,
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Status Code"
+          }
+        ]
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "hide": false,
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "limit": "50"
+              },
+              "type": "logs"
+            }
+          ],
+          "query": "process.serviceName: $servicename AND operationName: $operationname  and NOT operationName: *request\\/response*  AND tag.span@kind: $type AND (tag.http@url: *)",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Trace Details",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_source": true,
+              "_type": true,
+              "duration": false,
+              "highlight": true,
+              "id": true,
+              "logs": true,
+              "operationName": true,
+              "process.serviceName": true,
+              "process.tag.hostname": true,
+              "process.tag.opencensus@corelibversion": true,
+              "process.tag.opencensus@exporterversion": true,
+              "process.tag.opencensus@language": true,
+              "process.tag.pid": true,
+              "process.tag.start@time": true,
+              "process.tags": true,
+              "qk_apdex_rating": true,
+              "qk_frontendapi_transaction_url": true,
+              "references": true,
+              "sort": true,
+              "spanID": true,
+              "startTime": true,
+              "tag.account_number": true,
+              "tag.app_version": true,
+              "tag.customer_id": true,
+              "tag.customer_id_source": true,
+              "tag.db@system": true,
+              "tag.device_info": true,
+              "tag.event_name": true,
+              "tag.http@host": true,
+              "tag.http@method": true,
+              "tag.http@path": true,
+              "tag.http@user_agent": true,
+              "tag.internal@span@format": true,
+              "tag.kafka_producer_trace_id": true,
+              "tag.redis@cmd": true,
+              "tag.session_access_token_hash": true,
+              "tag.session_tracing_id": true,
+              "tag.span@kind": true,
+              "tag.sql@query": true,
+              "tags": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "_id": 5,
+              "_index": 6,
+              "_type": 7,
+              "duration": 3,
+              "logs": 8,
+              "operationName": 9,
+              "process.serviceName": 10,
+              "process.tag.hostname": 11,
+              "process.tag.opencensus@corelibversion": 12,
+              "process.tag.opencensus@exporterversion": 13,
+              "process.tag.opencensus@language": 14,
+              "process.tag.pid": 15,
+              "process.tag.start@time": 16,
+              "process.tags": 17,
+              "qk_apdex_rating": 18,
+              "qk_frontendapi_transaction_url": 19,
+              "references": 20,
+              "spanID": 21,
+              "startTime": 22,
+              "startTimeMillis": 2,
+              "tag.app_version": 23,
+              "tag.customer_id": 24,
+              "tag.customer_id_source": 25,
+              "tag.db@system": 26,
+              "tag.device_info": 27,
+              "tag.event_name": 28,
+              "tag.http@host": 29,
+              "tag.http@method": 30,
+              "tag.http@path": 31,
+              "tag.http@status_code": 4,
+              "tag.http@url": 0,
+              "tag.http@user_agent": 32,
+              "tag.internal@span@format": 33,
+              "tag.kafka_producer_trace_id": 34,
+              "tag.redis@cmd": 35,
+              "tag.session_access_token_hash": 36,
+              "tag.session_tracing_id": 37,
+              "tag.span@kind": 38,
+              "tag.sql@query": 39,
+              "tags": 40,
+              "traceID": 1
+            },
+            "orderByMode": "manual",
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "elasticsearch",
+        "uid": "Elasticsearch-jaeger-spans"
+      },
+      "description": "Provides the individual transaction failure information including timestamp, response time and HTTP status code. Click on Trace ID to drill down for more trace level details.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "filterable": true,
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green"
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "traceID"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Trace ID"
+              },
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "targetBlank": true,
+                    "title": "Drill Down ==>",
+                    "url": "https://tracing.prod-opt.idfcfirstbank.com/trace/${__data.fields.traceID}?uiEmbed=v0"
+                  }
+                ]
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Unique Count"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Count"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tag.http@status_code"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Status Code"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.align",
+                "value": "center"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(50, 172, 45, 0.97)"
+                    },
+                    {
+                      "color": "rgba(237, 129, 40, 0.89)",
+                      "value": 201
+                    },
+                    {
+                      "color": "rgba(245, 54, 54, 0.9)",
+                      "value": 499
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "duration"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Response Time"
+              },
+              {
+                "id": "unit",
+                "value": "µs"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.cellOptions",
+                "value": {
+                  "type": "color-text"
+                }
+              },
+              {
+                "id": "custom.align"
+              },
+              {
+                "id": "thresholds",
+                "value": {
+                  "mode": "absolute",
+                  "steps": [
+                    {
+                      "color": "rgba(50, 172, 45, 0.97)"
+                    },
+                    {
+                      "color": "rgba(237, 129, 40, 0.89)",
+                      "value": 2000000
+                    },
+                    {
+                      "color": "rgba(245, 54, 54, 0.9)",
+                      "value": 5000000
+                    }
+                  ]
+                }
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "startTimeMillis"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "Start Time"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "unit",
+                "value": "time: YYYY-MM-DD HH:mm:ss"
+              },
+              {
+                "id": "custom.align"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "tag.http@url"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "URL"
+              },
+              {
+                "id": "unit",
+                "value": "short"
+              },
+              {
+                "id": "decimals",
+                "value": 2
+              },
+              {
+                "id": "custom.align",
+                "value": "left"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 48,
+      "interval": "20s",
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": true,
+        "footer": {
+          "countRows": false,
+          "enablePagination": true,
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": [
+          {
+            "desc": true,
+            "displayName": "Start Time"
+          }
+        ]
+      },
+      "pluginVersion": "11.6.12",
+      "targets": [
+        {
+          "bucketAggs": [],
+          "datasource": {
+            "type": "elasticsearch",
+            "uid": "Elasticsearch-jaeger-spans"
+          },
+          "metrics": [
+            {
+              "id": "1",
+              "settings": {
+                "limit": "50"
+              },
+              "type": "logs"
+            }
+          ],
+          "query": "tag.http@status_code: [400 TO 600] AND process.serviceName: $servicename AND operationName: $operationname  and NOT operationName: *request\\/response*  AND tag.span@kind: $type",
+          "refId": "A",
+          "timeField": "startTimeMillis"
+        }
+      ],
+      "title": "Error Traces Details",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {
+              "_id": true,
+              "_index": true,
+              "_source": true,
+              "_type": true,
+              "highlight": true,
+              "id": true,
+              "logs": true,
+              "operationName": true,
+              "process.serviceName": true,
+              "process.tag.hostname": true,
+              "process.tag.opencensus@corelibversion": true,
+              "process.tag.opencensus@exporterversion": true,
+              "process.tag.opencensus@language": true,
+              "process.tag.pid": true,
+              "process.tag.start@time": true,
+              "process.tags": true,
+              "qk_apdex_rating": true,
+              "qk_frontendapi_transaction_url": true,
+              "references": true,
+              "sort": true,
+              "spanID": true,
+              "startTime": true,
+              "startTimeMillis": false,
+              "tag.customer_id": true,
+              "tag.customer_id_source": true,
+              "tag.http@host": true,
+              "tag.http@method": true,
+              "tag.http@path": true,
+              "tag.http@status_code": false,
+              "tag.http@user_agent": true,
+              "tag.internal@span@format": true,
+              "tag.session_access_token_hash": true,
+              "tag.session_tracing_id": true,
+              "tag.span@kind": true,
+              "tags": true
+            },
+            "includeByName": {},
+            "indexByName": {
+              "_id": 5,
+              "_index": 6,
+              "_type": 7,
+              "duration": 3,
+              "logs": 8,
+              "operationName": 9,
+              "process.serviceName": 10,
+              "process.tag.hostname": 11,
+              "process.tag.opencensus@corelibversion": 12,
+              "process.tag.opencensus@exporterversion": 13,
+              "process.tag.opencensus@language": 14,
+              "process.tag.pid": 15,
+              "process.tag.start@time": 16,
+              "process.tags": 17,
+              "qk_apdex_rating": 18,
+              "qk_frontendapi_transaction_url": 19,
+              "references": 20,
+              "spanID": 21,
+              "startTime": 22,
+              "startTimeMillis": 2,
+              "tag.customer_id": 23,
+              "tag.customer_id_source": 24,
+              "tag.http@host": 25,
+              "tag.http@method": 26,
+              "tag.http@path": 27,
+              "tag.http@status_code": 4,
+              "tag.http@url": 0,
+              "tag.http@user_agent": 28,
+              "tag.internal@span@format": 29,
+              "tag.session_access_token_hash": 30,
+              "tag.session_tracing_id": 31,
+              "tag.span@kind": 32,
+              "tags": 33,
+              "traceID": 1
+            },
+            "renameByName": {}
+          }
+        }
+      ],
+      "type": "table"
+    }
+  ],
+  "preload": false,
+  "refresh": "",
+  "schemaVersion": 41,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "auto": true,
+        "auto_count": 300,
+        "auto_min": "5m",
+        "current": {
+          "text": "1m",
+          "value": "1m"
+        },
+        "name": "interval",
+        "options": [
+          {
+            "selected": false,
+            "text": "1s",
+            "value": "1s"
+          },
+          {
+            "selected": true,
+            "text": "1m",
+            "value": "1m"
+          },
+          {
+            "selected": false,
+            "text": "10m",
+            "value": "10m"
+          },
+          {
+            "selected": false,
+            "text": "30m",
+            "value": "30m"
+          },
+          {
+            "selected": false,
+            "text": "1h",
+            "value": "1h"
+          },
+          {
+            "selected": false,
+            "text": "6h",
+            "value": "6h"
+          },
+          {
+            "selected": false,
+            "text": "12h",
+            "value": "12h"
+          },
+          {
+            "selected": false,
+            "text": "1d",
+            "value": "1d"
+          },
+          {
+            "selected": false,
+            "text": "7d",
+            "value": "7d"
+          },
+          {
+            "selected": false,
+            "text": "14d",
+            "value": "14d"
+          },
+          {
+            "selected": false,
+            "text": "30d",
+            "value": "30d"
+          }
+        ],
+        "query": "1s,1m,10m,30m,1h,6h,12h,1d,7d,14d,30d",
+        "refresh": 2,
+        "type": "interval"
+      },
+      {
+        "allValue": "*",
+        "allowCustomValue": false,
+        "current": {
+          "text": "FX-API",
+          "value": "FX-API"
+        },
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "Elasticsearch-jaeger-spans"
+        },
+        "definition": "{\"find\": \"terms\", \"field\": \"process.serviceName\"}",
+        "includeAll": false,
+        "label": "Service",
+        "name": "servicename",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"process.serviceName\"}",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": "*",
+        "allowCustomValue": false,
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "Elasticsearch-jaeger-spans"
+        },
+        "definition": "{\"find\": \"terms\", \"field\": \"tag.span@kind\", \"query\":\"process.serviceName: $servicename\"}",
+        "includeAll": true,
+        "label": "Request Type",
+        "multi": true,
+        "name": "type",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"tag.span@kind\", \"query\":\"process.serviceName: $servicename\"}",
+        "refresh": 2,
+        "regex": "",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "allValue": "*",
+        "allowCustomValue": false,
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "datasource": {
+          "type": "elasticsearch",
+          "uid": "Elasticsearch-jaeger-spans"
+        },
+        "definition": "{\"find\": \"terms\", \"field\": \"operationName\", \"query\":\"process.serviceName: $servicename  AND tag.span@kind: $type AND NOT operationName: sql*\"}",
+        "includeAll": true,
+        "label": "Operation",
+        "multi": true,
+        "name": "operationname",
+        "options": [],
+        "query": "{\"find\": \"terms\", \"field\": \"operationName\", \"query\":\"process.serviceName: $servicename  AND tag.span@kind: $type AND NOT operationName: sql*\"}",
+        "refresh": 2,
+        "regex": "(?!.*request/response)^.*$",
+        "sort": 1,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "prod",
+          "value": "prod"
+        },
+        "hide": 2,
+        "name": "env",
+        "query": "prod",
+        "skipUrlSync": true,
+        "type": "constant"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-12h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Service API wise Traces Details",
+  "uid": "XitgecDGk",
+  "version": 7
+}
