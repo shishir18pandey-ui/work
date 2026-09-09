@@ -1,0 +1,352 @@
+import utils.minimax_tool_call_patch
+import os
+import json
+import logging
+import importlib
+
+from utils.oracle_connection import close_oracle_async_pool
+from utils.observability import init_telemetry, get_tracer
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
+
+telemetry_endpoint = os.getenv("TELEMETRY_ENDPOINT")
+
+if telemetry_endpoint:
+    try:
+
+        init_telemetry()
+
+        logger.info("OpenTelemetry initialized for incident-manager worker")
+    except Exception as e:
+        logger.warning(f"Failed to initialize OpenTelemetry: {e}")
+else:
+    logger.warning("TELEMETRY_ENDPOINT not set — running without tracing")
+
+
+import asyncio
+import signal
+import threading
+import time
+from confluent_kafka import Consumer, KafkaError, KafkaException
+from dotenv import load_dotenv
+
+load_dotenv()
+
+KAFKA_BROKER   = os.getenv("KAFKA_BROKER_URL")
+KAFKA_TOPIC    = os.getenv("KAFKA_TOPIC", "GEN-AI-DE-INCIDENT-EVENTS")
+KAFKA_GROUP_ID = os.getenv("KAFKA_GROUP_ID", "gen-ai-de-incident-managers")
+KAFKA_USERNAME = os.getenv("KAFKA_USERNAME")
+KAFKA_PASSWORD = os.getenv("KAFKA_PASSWORD")
+
+
+USE_NEW_FLOW = os.getenv("USE_NEW_FLOW", "false").lower() == "true"
+
+# USE_FLOW selects the pipeline explicitly and takes precedence when set:
+#   old        -> flow.py                 (declarative JSON tools, tier1)
+#   new        -> new_flow/flow.py        (Jaeger-first window scan)
+#   elk_search -> elk_search_flow/flow.py (ELK-first span keyword search)
+# USE_NEW_FLOW is still honoured when USE_FLOW is unset, so existing
+# deployments keep working unchanged.
+_FLOW_MODULES = {
+    "old": "flow",
+    "new": "new_flow.flow",
+    "elk_search": "elk_search_flow.flow",
+}
+USE_FLOW = os.getenv("USE_FLOW", "").strip().lower()
+
+if USE_FLOW:
+    if USE_FLOW not in _FLOW_MODULES:
+        raise ValueError(
+            f"USE_FLOW={USE_FLOW!r} is not one of {sorted(_FLOW_MODULES)}"
+        )
+    FLOW_MODULE = _FLOW_MODULES[USE_FLOW]
+else:
+    FLOW_MODULE = "new_flow.flow" if USE_NEW_FLOW else "flow"
+
+# ─────────────────────────────────────────────────────────────────────────
+# FIX: import llm_config from whichever module actually matches the flow
+# that will run. utils.llm and new_flow.utils.llm are TWO SEPARATE FILES
+# with two separate LLMConfig() singletons — refreshing the wrong one
+# leaves the flow that actually runs with llm_config.token == None forever.
+# elk_search_flow reuses new_flow's crews, so it needs new_flow's singleton.
+# ─────────────────────────────────────────────────────────────────────────
+if FLOW_MODULE == "flow":
+    from utils.llm import llm_config
+else:
+    from new_flow.utils.llm import llm_config
+
+running = True
+semaphore = None
+active_tasks = {}  # {task: (incident_id, payload, start_time)}
+TIMEOUT_SECONDS = 3600  # 1 hour
+print(telemetry_endpoint,"tetsing1")
+logger.info(f"Worker config loaded")
+logger.info(f"  KAFKA_BROKER    : {KAFKA_BROKER}")
+logger.info(f"  KAFKA_TOPIC     : {KAFKA_TOPIC}")
+logger.info(f"  KAFKA_GROUP_ID  : {KAFKA_GROUP_ID}")
+logger.info(f"  USE_NEW_FLOW    : {USE_NEW_FLOW} (module: {FLOW_MODULE})")
+logger.info(f"  llm_config from : {llm_config.__class__.__module__}")
+
+
+def get_kafka_consumer():
+    config = {
+        'bootstrap.servers': KAFKA_BROKER,
+        'group.id': KAFKA_GROUP_ID,
+        'auto.offset.reset': 'earliest',
+        'enable.auto.commit': False,
+        'security.protocol': 'SASL_SSL',
+        'sasl.mechanism': 'SCRAM-SHA-512',
+        'sasl.username': KAFKA_USERNAME,
+        'sasl.password': KAFKA_PASSWORD,
+        'session.timeout.ms': 60000,
+        'max.poll.interval.ms': 7200000,
+    }
+    return Consumer(config)
+
+
+async def process_message(incident_id: str, event_type: str, payload: dict):
+    import time
+    from utils.incident_db_async import get_incident_status_async, upsert_incident_payload_async
+
+    tracer = get_tracer(__name__)
+    process_start_time = time.time()
+    error_count = 0
+
+    async with semaphore:
+        with tracer.start_as_current_span("process_message") as span:
+            span.set_attribute("incident_id", incident_id)
+            span.set_attribute("event_type", event_type)
+            span.set_attribute("flow_module", FLOW_MODULE)
+
+            logger.info(f"→ Processing | incident={incident_id} event={event_type} module={FLOW_MODULE}")
+
+            send_rejection_to_servicenow_async = None  # populated once the module import succeeds
+
+            try:
+                current_status = await get_incident_status_async(incident_id)
+                logger.info(f"  DB status | incident={incident_id} status={current_status}")
+                span.set_attribute("current_status", current_status or "unknown")
+
+                if event_type == "new_incident" and current_status in ['resolved', 'rejected']:
+                    logger.info(f"  Skipping | incident={incident_id} reason=already_{current_status}")
+                    span.set_attribute("skipped", True)
+                    return
+
+                if event_type == "additional_comments" and current_status not in ['in_progress']:
+                    logger.info(f"  Skipping | incident={incident_id} reason=status_{current_status}_not_in_progress")
+                    span.set_attribute("skipped", True)
+                    return
+
+                # Load whichever flow is active — everything from here on (success AND
+                # fallback rejection) stays inside this one module. Nothing from the
+                # other flow is ever touched.
+                flow_module = importlib.import_module(FLOW_MODULE)
+                IncidentManagementFlow = flow_module.IncidentManagementFlow
+                send_rejection_to_servicenow_async = flow_module.send_rejection_to_servicenow_async
+
+                flow = IncidentManagementFlow()
+                flow.state.incident_id = incident_id
+                flow.state.payload = payload
+
+                if event_type == "additional_comments":
+                    flow.state.current_comment = payload.get("additionalComments", "")
+                    logger.info(f"  Flow type | incident={incident_id} type=additional_comments")
+                    span.set_attribute("flow_type", "additional_comments")
+                else:
+                    logger.info(f"  Flow type | incident={incident_id} type=new_incident")
+                    span.set_attribute("flow_type", "new_incident")
+
+                await flow.akickoff()
+                logger.info(f"✓ Flow completed | incident={incident_id}")
+                span.set_attribute("flow_status", "completed")
+                # Set processing time and error count on success
+                processing_time_ms = int((time.time() - process_start_time) * 1000)
+                span.set_attribute("processing_time_ms", processing_time_ms)
+                span.set_attribute("error_count", error_count)
+
+            except asyncio.CancelledError:
+                # timeout_checker_thread already sent rejection — just log + update DB
+                logger.error(f"Task cancelled (timeout) | incident={incident_id}")
+                span.set_attribute("flow_status", "cancelled")
+                # Set processing time and error count on cancel
+                processing_time_ms = int((time.time() - process_start_time) * 1000)
+                span.set_attribute("processing_time_ms", processing_time_ms)
+                span.set_attribute("error_count", error_count)
+                try:
+                    await upsert_incident_payload_async(
+                        incident_id,
+                        json.dumps(payload),
+                        'Failed - Timeout'
+                    )
+                except Exception as db_err:
+                    logger.error(f"DB update failed after cancel | incident={incident_id} error={db_err}")
+                raise  # re-raise so asyncio knows the task was cancelled
+
+            except Exception as e:
+                # Catches EVERYTHING else — including the module import itself
+                # failing (e.g. flow_v2 missing/broken in this pod).
+                error_count += 1
+                logger.error(f"✗ Flow FAILED | incident={incident_id} module={FLOW_MODULE} error={e}", exc_info=e)
+                span.set_attribute("flow_status", "failed")
+                span.set_attribute("error", str(e)[:500])
+                span.set_attribute("error_count", error_count)
+                span.record_exception(e)
+
+                if send_rejection_to_servicenow_async is not None:
+                    try:
+                        (status, info), _ = await send_rejection_to_servicenow_async(payload)
+                        payload.setdefault('__agent_data', {}).setdefault('snow_logs', []).append({
+                            "type": "rejection", "status": status, "response": info
+                        })
+                        logger.info(f"  Fallback rejection sent | incident={incident_id}")
+                    except Exception as reject_err:
+                        logger.error(f"  Rejection send also failed | incident={incident_id} error={reject_err}")
+                else:
+                    logger.error(f"  Skipped rejection send | incident={incident_id} reason=flow_module_import_failed")
+
+                try:
+                    await upsert_incident_payload_async(
+                        incident_id,
+                        json.dumps(payload),
+                        'on_hold'
+                    )
+                except Exception as db_err:
+                    logger.error(f"  DB update failed after flow failure | incident={incident_id} error={db_err}")
+
+
+def timeout_checker_thread():
+    global active_tasks, running
+    while running:
+        time.sleep(10)
+        now = time.time()
+        for task, (incident_id, payload, start_time) in list(active_tasks.items()):
+            if task not in active_tasks:
+                continue
+            if task.done():
+                continue
+            if now - start_time > TIMEOUT_SECONDS:
+                logger.error(f"Timeout | incident={incident_id} - sending rejection")
+                if task in active_tasks:
+                    del active_tasks[task]
+                task.cancel()
+                logger.info(f"Task cancelled for timeout | incident={incident_id}")
+
+
+async def run_consumer():
+    global semaphore, active_tasks
+
+    asyncio.create_task(llm_config.refresh_loop())
+    logger.info("LLM config initialized")
+
+    semaphore = asyncio.Semaphore(10)
+    active_tasks = {}
+
+    tracer = get_tracer(__name__)
+    consumer = get_kafka_consumer()
+
+    timeout_thread = threading.Thread(target=timeout_checker_thread, daemon=True)
+    timeout_thread.start()
+    logger.info("Timeout checker thread started")
+
+    try:
+        consumer.subscribe([KAFKA_TOPIC])
+        logger.info(f"✓ Worker started")
+        logger.info(f"  Topic    : {KAFKA_TOPIC}")
+        logger.info(f"  Group    : {KAFKA_GROUP_ID}")
+        logger.info(f"  Broker   : {KAFKA_BROKER}")
+
+        while running:
+            msg = await asyncio.get_event_loop().run_in_executor(
+                None, lambda: consumer.poll(1.0)
+            )
+
+            if msg is None:
+                continue
+
+            if msg.error():
+                if msg.error().code() == KafkaError._PARTITION_EOF:
+                    logger.debug(f"End of partition {msg.partition()}")
+                    continue
+                else:
+                    logger.error(f"Kafka error: {msg.error()}")
+                    raise KafkaException(msg.error())
+
+            incident_id = None
+            try:
+                raw = msg.value().decode('utf-8')
+                data = json.loads(raw)
+
+                incident_id = data.get("incident_id")
+                event_type  = data.get("event_type", "new_incident")
+                payload     = data.get("payload", {})
+
+                logger.info(f"→ Message received | incident={incident_id} event={event_type} partition={msg.partition()} offset={msg.offset()}")
+
+                if not incident_id:
+                    logger.warning("Message missing incident_id, skipping")
+                    consumer.commit(message=msg)
+                    continue
+
+                with tracer.start_as_current_span("kafka_message_received") as span:
+                    span.set_attribute("incident_id", incident_id)
+                    span.set_attribute("event_type", event_type)
+                    span.set_attribute("partition", msg.partition())
+                    span.set_attribute("offset", msg.offset())
+
+                task = asyncio.create_task(process_message(incident_id, event_type, payload))
+                active_tasks[task] = (incident_id, payload, time.time())
+
+                # Auto-remove from event loop when done, and surface any exception
+                # that would otherwise be silently dropped by fire-and-forget tasks.
+                def cleanup_done(t, _incident_id=incident_id):
+                    if t in active_tasks:
+                        del active_tasks[t]
+                    if t.cancelled():
+                        return
+                    exc = t.exception()
+                    if exc:
+                        logger.error(
+                            f"✗ Unhandled task exception | incident={_incident_id} error={exc}",
+                            exc_info=exc
+                        )
+                task.add_done_callback(cleanup_done)
+
+                consumer.commit(message=msg)
+                logger.info(f"✓ Offset committed | incident={incident_id}")
+
+            except Exception as e:
+                logger.error(f"✗ Message handling FAILED | incident={incident_id} error={e}")
+                await asyncio.sleep(5)
+
+    except KeyboardInterrupt:
+        logger.info("Worker interrupted")
+    finally:
+        logger.info("Closing consumer...")
+        consumer.close()
+        logger.info("Consumer closed cleanly")
+
+
+def handle_shutdown(signum, frame):
+    global running
+    logger.info(f"Shutdown signal {signum} received...")
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            loop.call_soon(lambda: asyncio.create_task(close_oracle_async_pool()))
+        else:
+            asyncio.run(close_oracle_async_pool())
+    except RuntimeError:
+        asyncio.run(close_oracle_async_pool())
+    running = False
+
+
+if __name__ == "__main__":
+    signal.signal(signal.SIGTERM, handle_shutdown)
+    signal.signal(signal.SIGINT, handle_shutdown)
+
+    logger.info("Starting incident-manager worker...")
+    asyncio.run(run_consumer())
