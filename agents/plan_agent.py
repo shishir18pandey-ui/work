@@ -1,13 +1,41 @@
 import os
+import logging
 from typing import Dict, Optional
 from pydantic import BaseModel, Field
 
 os.environ["OTEL_SDK_DISABLED"] = "true"
 
+# Enhanced observability for better span handling (backward compatible)
+# Can be disabled via ENHANCED_OTEL_ENABLED=false environment variable
+_ENHANCED_OTEL_ENABLED = os.getenv("ENHANCED_OTEL_ENABLED", "true").lower() == "true"
+
+if _ENHANCED_OTEL_ENABLED:
+    try:
+        from new_flow.utils.observability_enhanced import (
+            create_span,
+            end_span,
+            set_span_attribute,
+            record_span_event,
+        )
+        _ENHANCED_OTEL_AVAILABLE = True
+    except ImportError:
+        _ENHANCED_OTEL_AVAILABLE = False
+        create_span = None
+        end_span = None
+        set_span_attribute = None
+        record_span_event = None
+else:
+    _ENHANCED_OTEL_AVAILABLE = False
+    create_span = None
+    end_span = None
+    set_span_attribute = None
+    record_span_event = None
+
 from crewai import Agent, Task, Crew, LLM
-from utils.llm import llm_config
-from tools.query_tools import JaegerTraceTool
-from tools.app_config import get_app_config
+from new_flow.utils.llm import llm_config
+from new_flow.tools.app_config import get_app_config
+from new_flow.tools.service_prompts import get_service_selection_context
+logger = logging.getLogger(__name__)
 
 
 class PlanOutput(BaseModel):
@@ -41,6 +69,20 @@ async def run_plan_agent_async(
     incident_context: str = "",
     discovered_services: str = "",
 ) -> PlanOutput:
+    # === ENHANCED OTEL: Create plan agent span ===
+    plan_agent_span = None
+    if _ENHANCED_OTEL_AVAILABLE and create_span:
+        _, plan_agent_span = create_span(
+            name="agent:plan_agent",
+            as_type="agent",
+            input_data={
+                "app": app,
+                "problem_category": problem_category,
+                "enriched_prompt": enriched_prompt[:200] if enriched_prompt else "",
+                "has_incident_context": bool(incident_context),
+                "discovered_services_count": len(discovered_services.splitlines()) if discovered_services else 0
+            }
+        )
 
     llm = LLM(
         model="openai/" + os.environ.get('OPENAI_MODEL_NAME'),
@@ -48,33 +90,33 @@ async def run_plan_agent_async(
         base_url=llm_config.url,
         api_key=llm_config.token
     )
-    
+
     try:
         app_config = get_app_config(app)
-        default_service = app_config.default_jaeger_service
+        default_service = app_config.default_jaeger_service or None
     except ValueError:
         default_service = None
-    
-    # Initialize Jaeger tool - LLM will decide when and how to use it
-    jaeger_tool = JaegerTraceTool()
-    
+
     similarity_result = incident_context if incident_context else "No similar incidents found."
-    
-    # Build customer identifiers string for LLM
-    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
-    
+
+    identifiers_text = (
+        "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items())
+        if customer_identifiers else "  None provided"
+    )
+
     analysis_agent = Agent(
         role="Triage Analyst",
         goal="Analyze investigation results and create a plan for resolution",
         backstory=(
             "You are a senior incident analyst. Your job is to analyze "
-            "Similarity Search results and Jaeger traces to understand "
-            "what the issue is and guide the next steps.\n\n"
-            "You have access to tools to fetch additional data when needed.\n\n"
+            "Similarity Search results and the list of available services "
+            "to understand what the issue likely is and recommend which "
+            "service should be investigated next.\n\n"
             "You must determine:\n"
-            "1. Is the issue clear from the data?\n"
-            "2. If yes, what's the next step (ELK or DB)?\n"
-            "3. If no, use tools to gather more info"
+            "1. Is the issue clear enough from the similarity search context?\n"
+            "2. Which service (from the AVAILABLE JAEGER SERVICES list) is "
+            "most likely responsible, based on historic incidents and problem category?\n"
+            "3. If identifiers or context are missing, what should be asked?"
         ),
         tools=[],
         verbose=True,
@@ -85,14 +127,12 @@ async def run_plan_agent_async(
         reasoning=True,
         max_reasoning_attempts=3
     )
-    
-    identifiers_text = "\n".join(f"  - {k}: {v}" for k, v in customer_identifiers.items()) if customer_identifiers else "  None provided"
-    
-    # Add discovered services to context if available
+
     services_section = ""
     if discovered_services:
         services_section = f"\n=== AVAILABLE JAEGER SERVICES ===\n{discovered_services}\n"
-    
+    service_guide= get_service_selection_context(app)
+    service_guide_section= f"\n=== SERVICE SELECTION GUIDE ===\n{service_guide}\n" if service_guide else ""
     analysis_task = Task(
         description=(
             f"Analyze the following investigation results and create a plan:\n\n"
@@ -102,107 +142,124 @@ async def run_plan_agent_async(
             f"Application: {app}\n"
             f"Problem Category: {problem_category}\n"
             f"Customer Identifiers:\n{identifiers_text}\n"
+            f"{service_guide_section}\n"
             f"{services_section}\n"
-            f"You have access to a Jaeger tracing tool. If you need more information about "
-            f"service calls, latency issues, or distributed traces, use the tool to fetch data.\n\n"
-            f"IMPORTANT: When you use the Jaeger tool, include the key findings in your response below.\n\n"
-            f"Provide your analysis in this format:\n"
+            f"Do NOT call any tools. Do not attempt a tool call of any kind. Take reference and help from service_guide_section to choose service  "
+            f"Based only on the text above, output your analysis in this exact format:\n\n"
             f"ISSUE_UNDERSTOOD: yes/no\n"
-            f"ISSUE_SUMMARY: [brief description of what the issue is - include any Jaeger trace findings here]\n"
-            f"JAEGER_FINDINGS: [you MUST use the Jaeger tool to fetch traces - summarize the key trace data including service names, errors, latency issues, etc. NEVER write 'NOT_USED' - always fetch and analyze traces]\n"
-            f"NEXT_STEPS: [what Execute Agent should do next]\n"
+            f"ISSUE_SUMMARY: [brief description of what the issue likely is, based on similarity search]\n"
+            f"SERVICE: [pick the single most relevant service name, copied EXACTLY as written you can Take reference and help from service_guide_section to choose service"
+            f"from the AVAILABLE JAEGER SERVICES list above. If the list is empty or none apply, write NONE]\n"
+            f"NEXT_STEPS: [what Execute Agent should investigate]\n"
             f"NEEDS_MORE_INFO: yes/no\n"
             f"QUESTION_FOR_USER: [if needs more info, what to ask]\n"
         ),
         agent=analysis_agent,
         expected_output=(
-            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, JAEGER_FINDINGS, "
-            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields."
+            "Structured analysis with ISSUE_UNDERSTOOD, ISSUE_SUMMARY, SERVICE, "
+            "NEXT_STEPS, NEEDS_MORE_INFO, and QUESTION_FOR_USER fields. No tool calls."
         )
     )
-    
+
     crew = Crew(
         agents=[analysis_agent],
         tasks=[analysis_task],
         verbose=False
     )
-    
+
     result = await crew.akickoff()
     result_text = str(result)
-    
-    return _parse_plan_output(
+
+    plan_output = _parse_plan_output(
         result_text,
-        {},
         customer_identifiers,
-        default_service
+        default_service,
+        discovered_services
     )
+
+    # === ENHANCED OTEL: End plan agent span ===
+    if _ENHANCED_OTEL_AVAILABLE and end_span and plan_agent_span:
+        end_span(plan_agent_span, output={
+            "issue_identified": plan_output.issue_identified,
+            "suggested_service": plan_output.suggested_service or "",
+            "needs_more_info": plan_output.needs_more_info,
+            "question_for_user": plan_output.question_for_user[:200] if plan_output.question_for_user else "",
+            "customer_identifiers_count": len(plan_output.customer_identifiers) if plan_output.customer_identifiers else 0
+        })
+
+    return plan_output
 
 
 def _parse_plan_output(
     llm_response: str,
-    jaeger_results: Dict,
     customer_identifiers: Dict[str, str],
-    default_service: str
+    default_service: Optional[str],
+    discovered_services: str = ""
 ) -> PlanOutput:
-    
-    issue_understood = "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower() if "ISSUE_UNDERSTOOD:" in llm_response else "no"
-    
+
+    issue_understood = (
+        "yes" in llm_response.lower().split("ISSUE_UNDERSTOOD:")[-1].split("\n")[0].lower()
+        if "ISSUE_UNDERSTOOD:" in llm_response else "no"
+    )
+
     issue_summary = ""
     if "ISSUE_SUMMARY:" in llm_response:
         summary_part = llm_response.split("ISSUE_SUMMARY:")[-1]
-        next_section = summary_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in summary_part else summary_part
+        next_section = summary_part.split("SERVICE:")[0] if "SERVICE:" in summary_part else summary_part
         issue_summary = next_section.strip()
-    
-    # Parse JAEGER_FINDINGS from LLM response
-    jaeger_findings = ""
-    if "JAEGER_FINDINGS:" in llm_response:
-        findings_part = llm_response.split("JAEGER_FINDINGS:")[-1]
-        # Find the next field
-        next_field_match = findings_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in findings_part else findings_part
-        jaeger_findings = next_field_match.strip()
-    
-    # Build jaeger_results from LLM findings
-    # CRITICAL: Jaeger MUST be used - if NOT_USED, force re-investigation
-    if jaeger_findings and jaeger_findings.upper() != "NOT_USED":
-        parsed_jaeger = {
-            "raw": jaeger_findings,
-            "has_errors": "error" in jaeger_findings.lower() or "failed" in jaeger_findings.lower() or "exception" in jaeger_findings.lower(),
-            "trace_count": 0,
-            "used": True
-        }
-        # Try to extract trace count
-        import re
-        match = re.search(r"(\d+)\s*traces?", jaeger_findings, re.IGNORECASE)
-        if match:
-            parsed_jaeger["trace_count"] = int(match.group(1))
-        jaeger_results = parsed_jaeger
-    else:
-        # CRITICAL: Jaeger was NOT used - this is a failure!
-        # Force the issue to be marked as not understood so Execute Agent will use Jaeger
-        issue_understood = "no"
-        issue_summary = "Jaeger traces not fetched - investigation incomplete. Execute Agent must fetch Jaeger traces."
-        jaeger_results = {"used": False, "raw": "", "trace_count": 0, "has_errors": False, "error": "Jaeger not used by Plan Agent"}
-    
+
+    llm_service = ""
+    if "SERVICE:" in llm_response:
+        service_part = llm_response.split("SERVICE:")[-1]
+        next_part = service_part.split("NEXT_STEPS:")[0] if "NEXT_STEPS:" in service_part else service_part
+        llm_service = next_part.strip().split("\n")[0].strip()
+
+    # ── Validate the chosen service against the actual discovered list ──
+    # Prevents hallucinated / near-miss / wrong-cased service names from
+    # silently slipping through to the executor.
+    valid_services = set()
+    for line in discovered_services.splitlines():
+        line = line.strip()
+        if line.startswith("- "):
+            valid_services.add(line[2:].strip())
+
+    chosen_service = ""
+    if llm_service and llm_service.upper() != "NONE":
+        if llm_service in valid_services:
+            chosen_service = llm_service
+        else:
+            lower_map = {s.lower(): s for s in valid_services}
+            if llm_service.lower() in lower_map:
+                chosen_service = lower_map[llm_service.lower()]
+            else:
+                logger.warning(
+                    f"[PlanAgent] LLM chose service '{llm_service}' not found in "
+                    f"discovered list ({len(valid_services)} known) — "
+                    f"falling back to default '{default_service}'"
+                )
+
     next_steps = ""
     if "NEXT_STEPS:" in llm_response:
         steps_part = llm_response.split("NEXT_STEPS:")[-1]
         next_section = steps_part.split("NEEDS_MORE_INFO:")[0] if "NEEDS_MORE_INFO:" in steps_part else steps_part
         next_steps = next_section.strip()
-    
-    needs_more_info = "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower() if "NEEDS_MORE_INFO:" in llm_response else False
-    
+
+    needs_more_info = (
+        "yes" in llm_response.lower().split("NEEDS_MORE_INFO:")[-1].split("\n")[0].lower()
+        if "NEEDS_MORE_INFO:" in llm_response else False
+    )
+
     question = None
     if "QUESTION_FOR_USER:" in llm_response:
-        question_part = llm_response.split("QUESTION_FOR_USER:")[-1]
-        question = question_part.strip()
-    
+        question = llm_response.split("QUESTION_FOR_USER:")[-1].strip()
+
     return PlanOutput(
         issue_identified=issue_understood == "yes",
         issue_summary=issue_summary or "Unable to determine issue from initial investigation",
-        jaeger_results=jaeger_results,
-        next_steps=next_steps or "Use ELK or DB queries based on findings",
+        jaeger_results={},
+        next_steps=next_steps or "Investigate via Jaeger traces based on findings",
         needs_more_info=needs_more_info,
         question_for_user=question,
-        suggested_service=default_service,
+        suggested_service=chosen_service or default_service,
         customer_identifiers=customer_identifiers
     )
