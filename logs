@@ -1,9 +1,884 @@
-shishir.pandey_tho@0325LTPB0124444 incident-manager % ls
-Dockerfile              elk_first_flow          new_flow_2              utils
-IDFCBANKCA.pem          elk_search_flow         requirements.txt        venv
-Makefile                flow.py                 schema.sql              worker.py
-__pycache__             incident_index.py       test_script.py
-agents                  new_flow                tools
-shishir.pandey_tho@0325LTPB0124444 incident-manager % ls elk_search_flow 
-__init__.py     agents          flow.py         tests           tools
-shishir.pandey_tho@0325LTPB0124444 incident-manager % 
+{
+    "data": [
+        {
+            "traceID": "73887afc7a08507a846167dc6a59624d",
+            "spans": [
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "13e0883d2e5f0f6e",
+                    "operationName": "crew_kickoff_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "440fa945ed0c78b9"
+                        }
+                    ],
+                    "startTime": 1789021250225650,
+                    "duration": 492251713,
+                    "tags": [
+                        {
+                            "key": "incident_description",
+                            "type": "string",
+                            "value": "\nIncident Summary:\n- Application: \n- Problem Category: loan_issue\n\nCustomer Identifiers:\n- loan_account_number: 502384833\n\nLLM Analysis:\n- User Goal: Provide details related to a loan application, including stage, sub-stage, and requested loan amount.\n- Issue Description: The user has provided information about a loan application, including the stage as 'Underwriting', sub-stage as 'Underwriting Pending', and a requested loan amount of 4,500,000.\n- Problem Summary: The user is sharing details of a loan application process, specifically the current stage and requested loan amount, which may be part of providing additional information for processing.\n\nOriginal Description:\nShort Description: ook\nDescription: Description\n Stage - Underwriting\n Sub Stage - Underwriting Pending\n Requested Loan Amount - 4500000\n\nPlease investigate this issue starting with Similarity Search\nfor similar historic incidents, then check Jaeger traces to\nunderstand the current error context.\n..."
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "517abc48af98e233",
+                    "operationName": "context_only_summary",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "2941c9654542a1fa"
+                        }
+                    ],
+                    "startTime": 1789021742478462,
+                    "duration": 65455714,
+                    "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": "sfdc asset org 2"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "e04b8e0df54fb2c6",
+                    "operationName": "process_message",
+                    "references": [],
+                    "startTime": 1789021193756561,
+                    "duration": 616794015,
+                    "tags": [
+                        {
+                            "key": "current_status",
+                            "type": "string",
+                            "value": "in_progress"
+                        },
+                        {
+                            "key": "error_count",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
+                            "key": "event_type",
+                            "type": "string",
+                            "value": "new_incident"
+                        },
+                        {
+                            "key": "flow_module",
+                            "type": "string",
+                            "value": "elk_search_flow.flow"
+                        },
+                        {
+                            "key": "flow_status",
+                            "type": "string",
+                            "value": "completed"
+                        },
+                        {
+                            "key": "flow_type",
+                            "type": "string",
+                            "value": "new_incident"
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "d55643a42b5f0f10ea06f771fe91bf45"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "processing_time_ms",
+                            "type": "int64",
+                            "value": 616794
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "7258c6809caafc87",
+                    "operationName": "send_question_to_servicenow_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "51f7f8c2ae29ce36"
+                        }
+                    ],
+                    "startTime": 1789021807935155,
+                    "duration": 2577773,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "d55643a42b5f0f10ea06f771fe91bf45"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "question_length",
+                            "type": "int64",
+                            "value": 179
+                        },
+                        {
+                            "key": "question_sent",
+                            "type": "string",
+                            "value": "What is the specific issue or expected outcome for this loan application? For example, is the case stuck and needs to be moved to the next stage, or is there a data entry problem?"
+                        },
+                        {
+                            "key": "responded_with",
+                            "type": "string",
+                            "value": "question"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "ceed1361312aeb15",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "723d4e9d9a6dba24"
+                        }
+                    ],
+                    "startTime": 1789021807938556,
+                    "duration": 16101,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "http://pii-masking-service-svc:8080/pii-masking-service/api/v1/mask/batch"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "e4513f13c3fbacfa",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "cb99dbc380ffea09"
+                        }
+                    ],
+                    "startTime": 1789021226507989,
+                    "duration": 64143,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://app.auth.idfcfirstbank.com/api/session-management/v1/token"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.requests"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "f59cc18634dc654a",
+                    "operationName": "logic_router",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "e04b8e0df54fb2c6"
+                        }
+                    ],
+                    "startTime": 1789021246537429,
+                    "duration": 228,
+                    "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "intent",
+                            "type": "string",
+                            "value": "additional_info"
+                        },
+                        {
+                            "key": "interaction_counter",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "needs_user_input",
+                            "type": "bool",
+                            "value": false
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "problem_category",
+                            "type": "string",
+                            "value": "loan_issue"
+                        },
+                        {
+                            "key": "sop_exists",
+                            "type": "bool",
+                            "value": false
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "440fa945ed0c78b9",
+                    "operationName": "_run_incident_context_deterministic_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "1a20cacd4daba0d4"
+                        }
+                    ],
+                    "startTime": 1789021246538333,
+                    "duration": 495939181,
+                    "tags": [
+                        {
+                            "key": "application",
+                            "type": "string",
+                            "value": "SFDC Asset Org 2"
+                        },
+                        {
+                            "key": "incident_description",
+                            "type": "string",
+                            "value": "\nIncident Summary:\n- Application: \n- Problem Category: loan_issue\n\nCustomer Identifiers:\n- loan_acco..."
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "2941c9654542a1fa",
+                    "operationName": "run_resolver",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "e04b8e0df54fb2c6"
+                        }
+                    ],
+                    "startTime": 1789021742478219,
+                    "duration": 65456090,
+                    "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "has_historic_context",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "d55643a42b5f0f10ea06f771fe91bf45"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "problem_category",
+                            "type": "string",
+                            "value": "loan_issue"
+                        },
+                        {
+                            "key": "qa_pairs_count",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "51f7f8c2ae29ce36",
+                    "operationName": "update_servicenow",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "e04b8e0df54fb2c6"
+                        }
+                    ],
+                    "startTime": 1789021807935074,
+                    "duration": 2610398,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "d55643a42b5f0f10ea06f771fe91bf45"
+                        },
+                        {
+                            "key": "incident_status",
+                            "type": "string",
+                            "value": "on_hold"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "questions_count",
+                            "type": "int64",
+                            "value": 1
+                        },
+                        {
+                            "key": "resolution_result",
+                            "type": "string",
+                            "value": "no"
+                        },
+                        {
+                            "key": "response_type",
+                            "type": "string",
+                            "value": "clarification"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "87407158106d2f0a",
+                    "operationName": "payload_to_incident_description",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "cb99dbc380ffea09"
+                        }
+                    ],
+                    "startTime": 1789021209821495,
+                    "duration": 22,
+                    "tags": [
+                        {
+                            "key": "description_length",
+                            "type": "int64",
+                            "value": 100
+                        },
+                        {
+                            "key": "individualUCIC",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "short_description_length",
+                            "type": "int64",
+                            "value": 3
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "1a20cacd4daba0d4",
+                    "operationName": "gather_context",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "e04b8e0df54fb2c6"
+                        }
+                    ],
+                    "startTime": 1789021246538196,
+                    "duration": 495939396,
+                    "tags": [
+                        {
+                            "key": "app",
+                            "type": "string",
+                            "value": ""
+                        },
+                        {
+                            "key": "has_historic_context",
+                            "type": "bool",
+                            "value": true
+                        },
+                        {
+                            "key": "incident_description_length",
+                            "type": "int64",
+                            "value": 136
+                        },
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "d55643a42b5f0f10ea06f771fe91bf45"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "problem_category",
+                            "type": "string",
+                            "value": "loan_issue"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "b61e94a24c4da4ad",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "440fa945ed0c78b9"
+                        }
+                    ],
+                    "startTime": 1789021246542574,
+                    "duration": 3680635,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "http://jira-conf-rag-api-svc:8000/api/jira-conf-rag/semantic-search"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "723d4e9d9a6dba24",
+                    "operationName": "send_update_to_servicenow_async",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "7258c6809caafc87"
+                        }
+                    ],
+                    "startTime": 1789021807935188,
+                    "duration": 2577714,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "d55643a42b5f0f10ea06f771fe91bf45"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "question_length",
+                            "type": "int64",
+                            "value": 179
+                        },
+                        {
+                            "key": "resolution_length",
+                            "type": "int64",
+                            "value": 0
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "cca789c7130b9ddd",
+                    "operationName": "POST",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "723d4e9d9a6dba24"
+                        }
+                    ],
+                    "startTime": 1789021807957108,
+                    "duration": 2555026,
+                    "tags": [
+                        {
+                            "key": "http.method",
+                            "type": "string",
+                            "value": "POST"
+                        },
+                        {
+                            "key": "http.status_code",
+                            "type": "int64",
+                            "value": 200
+                        },
+                        {
+                            "key": "http.url",
+                            "type": "string",
+                            "value": "https://api.aws-uat.idfcfirstbank.com/snow-incident-mgmt-sys/api/v1/update-incident"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "opentelemetry.instrumentation.httpx"
+                        },
+                        {
+                            "key": "otel.scope.version",
+                            "type": "string",
+                            "value": "0.55b1"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "client"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                },
+                {
+                    "traceID": "73887afc7a08507a846167dc6a59624d",
+                    "spanID": "cb99dbc380ffea09",
+                    "operationName": "initialize_and_classify",
+                    "references": [
+                        {
+                            "refType": "CHILD_OF",
+                            "traceID": "73887afc7a08507a846167dc6a59624d",
+                            "spanID": "e04b8e0df54fb2c6"
+                        }
+                    ],
+                    "startTime": 1789021209821428,
+                    "duration": 36715478,
+                    "tags": [
+                        {
+                            "key": "incident_id",
+                            "type": "string",
+                            "value": "d55643a42b5f0f10ea06f771fe91bf45"
+                        },
+                        {
+                            "key": "internal.span.format",
+                            "type": "string",
+                            "value": "otlp"
+                        },
+                        {
+                            "key": "otel.scope.name",
+                            "type": "string",
+                            "value": "genai-de-incident-manager"
+                        },
+                        {
+                            "key": "span.kind",
+                            "type": "string",
+                            "value": "internal"
+                        }
+                    ],
+                    "logs": [],
+                    "processID": "p1",
+                    "warnings": null
+                }
+            ],
+            "processes": {
+                "p1": {
+                    "serviceName": "genai-de-incident-manager",
+                    "tags": [
+                        {
+                            "key": "deployment.environment",
+                            "type": "string",
+                            "value": "uat"
+                        },
+                        {
+                            "key": "service.namespace",
+                            "type": "string",
+                            "value": "ai-platform"
+                        },
+                        {
+                            "key": "telemetry.sdk.language",
+                            "type": "string",
+                            "value": "python"
+                        },
+                        {
+                            "key": "telemetry.sdk.name",
+                            "type": "string",
+                            "value": "opentelemetry"
+                        },
+                        {
+                            "key": "telemetry.sdk.version",
+                            "type": "string",
+                            "value": "1.34.1"
+                        }
+                    ]
+                }
+            },
+            "warnings": null
+        }
+    ],
+    "total": 0,
+    "limit": 0,
+    "offset": 0,
+    "errors": null
+}
