@@ -12,10 +12,12 @@ from new_flow.agents.intent_classifier import run_classifier_with_enrichment_asy
 from new_flow.agents.plan_agents import run_plan_agent_async
 from new_flow.agents.execute_agent_jaeger import run_jaeger_only_async
 from new_flow.agents.summary_agent import run_summary_agent_async, run_context_only_summary_async
+from new_flow.agents.execute_agent_elk import run_elk_context_crew
 from new_flow.agents.self_critique import run_self_critique_async, should_escalate
 from new_flow.utils.llm import run_crew_with_retry_async
 from new_flow.tools.discovery_tools import discover_jaeger_services_impl
-from new_flow.tools.app_config import app_has_observability
+from new_flow.tools.app_config import app_has_observability, get_app_config_safe
+from utils.pii_masking_integration import mask_payload_output
 
 
 load_dotenv()
@@ -38,6 +40,38 @@ EXEPEMPTED_PAYLOAD_KEYS = [
 
 import logging
 from utils.observability import get_tracer
+# Also import enhanced observability for better span handling (backward compatible)
+# Can be disabled via ENHANCED_OTEL_ENABLED=false environment variable
+_ENHANCED_OTEL_ENABLED = os.getenv("ENHANCED_OTEL_ENABLED", "true").lower() == "true"
+
+if _ENHANCED_OTEL_ENABLED:
+    try:
+        from new_flow.utils.observability_enhanced import (
+            get_tracer as get_tracer_enhanced,
+            create_span,
+            start_incident_span,
+            end_span,
+            set_span_attribute,
+            record_span_event,
+            record_span_exception,
+        )
+        _ENHANCED_OTEL_AVAILABLE = True
+    except ImportError:
+        _ENHANCED_OTEL_AVAILABLE = False
+        create_span = None
+        start_incident_span = None
+        end_span = None
+        set_span_attribute = None
+        record_span_event = None
+        record_span_exception = None
+else:
+    _ENHANCED_OTEL_AVAILABLE = False
+    create_span = None
+    start_incident_span = None
+    end_span = None
+    set_span_attribute = None
+    record_span_event = None
+    record_span_exception = None
 
 logger = logging.getLogger(__name__)
 
@@ -127,6 +161,8 @@ async def send_update_to_servicenow_async(payload: Dict, question: str, resoluti
        
         request_payload = {k: v for k, v in request_payload.items() if v is not None}
 
+        request_payload = mask_payload_output(request_payload, question, resolution)
+
         headers.update({
             "Authorization": f"Basic {os.environ['SNOW_TOKEN']}",
         })
@@ -139,6 +175,9 @@ async def send_update_to_servicenow_async(payload: Dict, question: str, resoluti
                 async with httpx.AsyncClient(timeout=60.0) as client:
                     print(f"Request - url:{url} json:{request_payload} headers:{headers}")
                     response = await client.post(url, json=request_payload, headers=headers)
+                    
+                    # Track HTTP status code
+                    span.set_attribute("http_status_code", response.status_code)
 
                     if response.status_code == 200:
                         print(f"Successfully updated incident {incident_id} in ServiceNow")
@@ -155,6 +194,9 @@ async def send_update_to_servicenow_async(payload: Dict, question: str, resoluti
                             return False,{"status_code":response.status_code,"response_text":response.text}
 
             except Exception as e:
+                span.set_attribute("http_status_code", 0)
+                span.set_attribute("error_message", str(e))
+                span.record_exception(e)
                 logger.error(f"Error calling ServiceNow API for incident {incident_id}: {str(e)}")
                 return False,{"status_code": 0 ,"response_text":"Exception : "+str(e)}
         else:
@@ -169,6 +211,8 @@ async def send_rejection_to_servicenow_async(payload, additonal_comment: str = '
     tracer = get_tracer(__name__)
     with tracer.start_as_current_span("send_rejection_to_servicenow_async") as span:
         span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("additional_comment", additonal_comment[:500] if additonal_comment else "")
+        span.set_attribute("responded_with", "rejection")
         payload.update({"state": "On Hold","cause": "Bot is unable to resolve Assign to an Engineer."})
         result = await send_update_to_servicenow_async(payload, additonal_comment, '')
         return result, 'rejected'        
@@ -178,6 +222,9 @@ async def send_question_to_servicenow_async(payload, question):
     tracer = get_tracer(__name__)
     with tracer.start_as_current_span("send_question_to_servicenow_async") as span:
         span.set_attribute("incident_id", payload.get("incidentId"))
+        span.set_attribute("question_sent", question[:500] if question else "")
+        span.set_attribute("responded_with", "question")
+        span.set_attribute("question_length", len(question) if question else 0)
         payload.update({"state": "On Hold", "onHoldReason": "User Action Required"})
         result = await send_update_to_servicenow_async(payload, question, '')
         return result, 'on_hold'         
@@ -188,6 +235,8 @@ async def send_resolution_to_servicenow_async(payload, resolution):
     with tracer.start_as_current_span("send_resolution_to_servicenow_async") as span:
         span.set_attribute("incident_id", payload.get("incidentId"))
         span.set_attribute("resolution_length", len(resolution) if resolution else 0)
+        span.set_attribute("responded_with", "diagnosis")
+        span.set_attribute("diagnosis", resolution[:500] if resolution else "")
         payload.update({
             "state":"On Hold",
             "onHoldReason": "User Action Required"
@@ -222,11 +271,42 @@ class IncidentManagementFlow(Flow[IncidentState]):
 
     @start()
     async def initialize_and_classify(self):
+        # Variables for enhanced span tracking
+        root_span = None
+        phase_span = None
+        
         tracer = get_tracer(__name__)
         with tracer.start_as_current_span("initialize_and_classify") as span:
             span.set_attribute("incident_id", self.state.incident_id)
 
+            # Get ServiceNow incident number for tracing
+            incident_no = self.state.payload.get("incidentNumber") if self.state.payload else None
+
+            # === ENHANCED OTEL: Create incident root span ===
+            if _ENHANCED_OTEL_AVAILABLE and create_span:
+                enhanced_tracer, root_span = create_span(
+                    name=f"incident:{self.state.incident_id}",
+                    incident_id=self.state.incident_id,
+                    incident_no=incident_no,
+                    event_type="new_incident",
+                    as_type="agent",
+                    input_data=self.state.incident_description[:500] if self.state.incident_description else None
+                )
+
             self.state.incident_description, self.state.ucic = payload_to_incident_description(self.state.payload)
+            
+            # Add description length after getting it
+            span.set_attribute("incident_description_length", len(self.state.incident_description) if self.state.incident_description else 0)
+
+            # === ENHANCED OTEL: Add phase span for classification ===
+            if _ENHANCED_OTEL_AVAILABLE and create_span:
+                _, phase_span = create_span(
+                    name="phase:classification",
+                    incident_id=self.state.incident_id,
+                    incident_no=incident_no,
+                    as_type="phase",
+                    input_data={"intent": "unknown", "app": self.state.app}
+                )
 
             if '__agent_data' not in self.state.payload:
                 self.state.payload['__agent_data'] = {
@@ -266,6 +346,14 @@ class IncidentManagementFlow(Flow[IncidentState]):
             
             print(f"Enhanced classifier | incident={self.state.incident_id} | app={self.state.app} | category={self.state.problem_category}")
             
+            # === ENHANCED OTEL: End phase span with classifier results ===
+            if _ENHANCED_OTEL_AVAILABLE and end_span and phase_span:
+                end_span(phase_span, output={"intent": self.state.intent, "app": self.state.app, "problem_category": self.state.problem_category})
+            
+            # === ENHANCED OTEL: End incident root span ===
+            if _ENHANCED_OTEL_AVAILABLE and end_span and root_span:
+                end_span(root_span, output={"status": "classified", "intent": self.state.intent})
+            
             print(f"Initialized and classified incident {self.state.incident_id} with intent: {self.state.intent}")
             return self.state.intent
 
@@ -273,9 +361,17 @@ class IncidentManagementFlow(Flow[IncidentState]):
     async def start_process(self):
         tracer = get_tracer(__name__)
         with tracer.start_as_current_span("logic_router") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
             span.set_attribute("intent", self.state.intent)
             span.set_attribute("sop_exists", self.state.payload['__agent_data'].get('sop') is not None)
             span.set_attribute("sop_value", self.state.payload['__agent_data'].get('sop'))
+            span.set_attribute("problem_category", self.state.problem_category)
+            span.set_attribute("app", self.state.app)
+            
+            # Add needs_user_input attribute from classifier
+            classifier_data = self.state.payload.get('__agent_data', {}).get('classifier_output', {})
+            span.set_attribute("needs_user_input", classifier_data.get('needs_user_input', False))
+            span.set_attribute("interaction_counter", self.state.payload.get("interaction_counter", 0))
 
             counter = self.state.payload.get("interaction_counter", 0)
             self.state.payload["interaction_counter"] = counter + 1
@@ -314,6 +410,8 @@ class IncidentManagementFlow(Flow[IncidentState]):
         with tracer.start_as_current_span("gather_context") as span:
             span.set_attribute("incident_id", self.state.incident_id)
             span.set_attribute("incident_description_length", len(self.state.incident_description))
+            span.set_attribute("app", self.state.app)
+            span.set_attribute("problem_category", self.state.problem_category)
 
             desc = self.state.enriched_prompt
             app_raw = self.state.payload.get("businessService", "CBS")
@@ -328,6 +426,10 @@ class IncidentManagementFlow(Flow[IncidentState]):
                     lambda: run_incident_context_deterministic_async(desc, application=app_raw)
                 )
             self.state.incident_context = incident_context if incident_context else "No context found"
+            
+            # Track semantic search results
+            has_historic_context = bool(incident_context and incident_context != "No context found")
+            span.set_attribute("has_historic_context", has_historic_context)
 
             return 'run_resolver'
 
@@ -338,10 +440,16 @@ class IncidentManagementFlow(Flow[IncidentState]):
         with tracer.start_as_current_span("run_resolver") as span:
             span.set_attribute("incident_id", self.state.incident_id)
             span.set_attribute("qa_pairs_count", len(self.state.user_qa_pairs))
+            span.set_attribute("app", self.state.app)
+            span.set_attribute("problem_category", self.state.problem_category)
+            span.set_attribute("has_historic_context", bool(self.state.incident_context))
+            
+            # NEW: Add more context attributes
+            span.set_attribute("intent", self.state.intent)
+            span.set_attribute("customer_identifiers_count", len(self.state.customer_identifiers) if self.state.customer_identifiers else 0)
 
             app = self.state.payload.get("businessService", "cbs").lower().strip()
             self.state.app = app
-            span.set_attribute("app", app)
             logger.info(f"Resolver | incident={self.state.incident_id} app={app}")
 
             return await self._run_agentic_resolver(app)
@@ -351,7 +459,7 @@ class IncidentManagementFlow(Flow[IncidentState]):
 
         customer_ids = self.state.customer_identifiers if hasattr(self.state, 'customer_identifiers') else {}
         problem_cat = self.state.problem_category if hasattr(self.state, 'problem_category') else ""
-        
+
         if not app_has_observability(app):
             logger.info(f"No Jaeger/ELK config for app={app} - resolving from similarity search context only")
             with tracer.start_as_current_span("context_only_summary") as span:
@@ -380,7 +488,20 @@ class IncidentManagementFlow(Flow[IncidentState]):
             logger.warning(f"Failed to discover services: {e}")
             self.state.discovered_services = "Service discovery unavailable"
 
+        # === ENHANCED OTEL: Create phase span for planning ===
+        incident_no = self.state.payload.get("incidentNumber") if self.state.payload else None
+        plan_span = None
+        if _ENHANCED_OTEL_AVAILABLE and create_span:
+            _, plan_span = create_span(
+                name="phase:planning",
+                incident_id=self.state.incident_id,
+                incident_no=incident_no,
+                as_type="phase",
+                input_data={"app": app, "problem_category": problem_cat}
+            )
+
         with tracer.start_as_current_span("plan_agent") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
             span.set_attribute("app", app)
             plan_output = await run_crew_with_retry_async(
                 lambda: run_plan_agent_async(
@@ -393,6 +514,11 @@ class IncidentManagementFlow(Flow[IncidentState]):
                 )
             )
             self.state.plan_output = plan_output.model_dump() if hasattr(plan_output, 'model_dump') else plan_output
+            
+            # === ENHANCED OTEL: End planning phase span ===
+            if _ENHANCED_OTEL_AVAILABLE and end_span and plan_span:
+                end_span(plan_span, output={"needs_more_info": plan_output.needs_more_info if hasattr(plan_output, 'needs_more_info') else None})
+            
             print(f"Plan Agent completed for incident {self.state.incident_id}")
         
         if plan_output.needs_more_info:
@@ -404,7 +530,21 @@ class IncidentManagementFlow(Flow[IncidentState]):
             }
             return "update_servicenow"
         
+        # === ENHANCED OTEL: Create phase span for execution ===
+        incident_no = self.state.payload.get("incidentNumber") if self.state.payload else None
+        execution_span = None
+        if _ENHANCED_OTEL_AVAILABLE and create_span:
+            _, execution_span = create_span(
+                name="phase:execution",
+                incident_id=self.state.incident_id,
+                incident_no=incident_no,
+                as_type="phase",
+                input_data={"app": app, "issue_summary": plan_output.issue_summary[:200] if plan_output.issue_summary else ""}
+            )
+
         with tracer.start_as_current_span("execute_jaeger_agent") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            span.set_attribute("app", app)
             span.set_attribute("issue_summary", plan_output.issue_summary[:100] if plan_output.issue_summary else "")
             execution_result = await run_crew_with_retry_async(
                 lambda: run_jaeger_only_async(
@@ -419,7 +559,52 @@ class IncidentManagementFlow(Flow[IncidentState]):
                 )
             )
             self.state.execution_result = execution_result.model_dump() if hasattr(execution_result, 'model_dump') else execution_result
+            
+            # Track execution result confidence
+            if hasattr(execution_result, 'confidence'):
+                span.set_attribute("confidence", execution_result.confidence)
+            if hasattr(execution_result, 'diagnosis'):
+                span.set_attribute("diagnosis", execution_result.diagnosis[:500] if execution_result.diagnosis else "")
+            if hasattr(execution_result, 'solution'):
+                span.set_attribute("solution", execution_result.solution[:500] if execution_result.solution else "")
+            
+            # Track Jaeger execution details
+            if hasattr(execution_result, 'resolved'):
+                span.set_attribute("jaeger_resolved", execution_result.resolved)
+            if hasattr(execution_result, 'iterations_completed'):
+                span.set_attribute("jaeger_iterations_completed", execution_result.iterations_completed)
+            if hasattr(execution_result, 'tool_calls'):
+                span.set_attribute("jaeger_tool_call_count", len(execution_result.tool_calls))
+            
+            # Track Jaeger trace info from plan_output if available
+            if plan_output.jaeger_results:
+                jaeger_data = plan_output.jaeger_results
+                span.set_attribute("jaeger_trace_count", jaeger_data.get('trace_count', 0))
+                span.set_attribute("jaeger_has_errors", jaeger_data.get('has_errors', False))
+            
+            # === ENHANCED OTEL: End execution phase span ===
+            if _ENHANCED_OTEL_AVAILABLE and end_span and execution_span:
+                end_span(execution_span, output={
+                    "resolved": execution_result.resolved if hasattr(execution_result, 'resolved') else None,
+                    "confidence": execution_result.confidence if hasattr(execution_result, 'confidence') else None
+                })
+                
             print(f"Execute Agent completed for incident {self.state.incident_id}")
+
+            if hasattr(execution_result, 'confidence') and execution_result.confidence < 0.3:
+                logger.info(f"JEAGER CONTEXT CONFIDENCE: {execution_result.confidence}")
+                logger.info("Triggering Elasticsearch Context Generation")
+
+                desc = self.state.enriched_prompt
+                app_raw = self.state.payload.get("businessService", "None")
+                app_key = app_raw.lower().strip()
+                app_config = get_app_config_safe(app_key)
+                custom_identifiers = self.state.customer_identifiers
+                elk_context = await run_crew_with_retry_async(
+                                    lambda: run_elk_context_crew(app_config, desc, custom_identifiers)
+                                )
+                self.state.payload["__agent_data"]["elk_context"] = elk_context
+                logger.info(f"ELK Context -\n\n{elk_context}")
 
             if hasattr(execution_result, 'confidence') and execution_result.confidence < 0.3:
                 escalation_msg = execution_result.escalation_reason or "BOT unable to resolve - assigning to L2 Engineer"
@@ -436,6 +621,16 @@ class IncidentManagementFlow(Flow[IncidentState]):
                 })
                 print(f"Escalated incident {self.state.incident_id} due to low confidence: {execution_result.confidence}")
         
+        # === ENHANCED OTEL: Create phase span for summary ===
+        summary_span = None
+        if _ENHANCED_OTEL_AVAILABLE and create_span:
+            _, summary_span = create_span(
+                name="phase:summary",
+                incident_id=self.state.incident_id,
+                as_type="phase",
+                input_data={"execution_result": str(execution_result)[:200]}
+            )
+
         with tracer.start_as_current_span("summary_agent") as span:
             summary_output = await run_crew_with_retry_async(
                 lambda: run_summary_agent_async(
@@ -455,9 +650,18 @@ class IncidentManagementFlow(Flow[IncidentState]):
             "questions": summary_output.questions
         }
         
+        # === ENHANCED OTEL: End summary phase span ===
+        if _ENHANCED_OTEL_AVAILABLE and end_span and summary_span:
+            end_span(summary_span, output={"resolved": summary_output.resolved if hasattr(summary_output, 'resolved') else None})
+
         return "update_servicenow"
 
-   
+    # ── FIX: distinct trigger names, no possible overlap ──
+    # start_process (router) emits "send_clarification" for the needs-user-input
+    # short-circuit. _run_agentic_resolver returns "update_servicenow" as an
+    # ordinary return value (only meaningful via @listen(run_resolver_crew)
+    # matching method completion). These two strings never collide, so exactly
+    # one listener fires per incident.
     @listen('send_clarification')
     async def handle_needs_more_info(self):
         await self._send_agent_output_to_servicenow()
@@ -471,11 +675,15 @@ class IncidentManagementFlow(Flow[IncidentState]):
         with tracer.start_as_current_span("update_servicenow") as span:
             span.set_attribute("incident_id", self.state.incident_id)
             span.set_attribute("resolution_result", self.state.agent_output.get("resolved", "unknown"))
-
+            
+            # Add response type tracking
             res = self.state.agent_output
             incident_status = 'in_progress'
-
+            
             if res.get("resolved") == 'yes':
+                span.set_attribute("response_type", "resolution")
+                span.set_attribute("diagnosis", res.get('diagnosis', '')[:500])
+                span.set_attribute("solution", res.get('solution', '')[:500])
                 msg = f"Diagnosis:\n{res['diagnosis']}\n\nSolution:\n{res['solution']}"
                 (status, info), incident_status = await send_resolution_to_servicenow_async(self.state.payload, msg)
                 self.state.payload['__agent_data']['snow_logs'].append({
@@ -484,6 +692,8 @@ class IncidentManagementFlow(Flow[IncidentState]):
                 print(f"Resolution sent for incident {self.state.incident_id}")
 
             elif res.get("questions"):
+                span.set_attribute("response_type", "clarification")
+                span.set_attribute("questions_count", len(res.get("questions", [])))
                 msg = "\n".join(res["questions"])
                 (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
                 self.state.payload['__agent_data']['snow_logs'].append({
@@ -492,6 +702,9 @@ class IncidentManagementFlow(Flow[IncidentState]):
                 print(f"Question sent for incident {self.state.incident_id}")
 
             else:
+                span.set_attribute("response_type", "clarification")
+                span.set_attribute("diagnosis", res.get('diagnosis', '')[:500])
+                span.set_attribute("solution", res.get('solution', '')[:500])
                 msg = f"Diagnosis:\n{res.get('diagnosis')}\n\nSolution:\n{res['solution']}"
                 (status, info), incident_status = await send_question_to_servicenow_async(self.state.payload, msg)
                 self.state.payload['__agent_data']['snow_logs'].append({
@@ -507,6 +720,7 @@ class IncidentManagementFlow(Flow[IncidentState]):
                 json.dumps(payload_copy),
                 incident_status
             )
+            span.set_attribute("incident_status", incident_status)
             print(f"DB updated for incident {self.state.incident_id} status={incident_status}")
 
     @listen('handle_rebuttal')
