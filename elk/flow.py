@@ -330,7 +330,7 @@ class IncidentManagementFlow(Flow[IncidentState]):
             self.state.problem_category = classifier_output.problem_category
             self.state.app = classifier_output.app
             self.state.enriched_prompt = classifier_output.enriched_prompt
-            
+
             self.state.payload['__agent_data']['classifier_output'] = classifier_output.model_dump()
             
             print(f"Enhanced classifier | incident={self.state.incident_id} | app={self.state.app} | category={self.state.problem_category}")
@@ -621,9 +621,11 @@ class IncidentManagementFlow(Flow[IncidentState]):
             span.set_attribute(
                 "locate_pivot_tags", ",".join(str(t) for t in (locate.get("pivot_tags") or []))
             )
-            # "" (not run) / healthy / never_called. Records that the service the
-            # plan agent expected to be broken was actually checked - the
-            # difference between "we found nothing" and "it was working".
+            # "" (not run) / healthy / failing / never_called. Records that the
+            # service the plan agent expected to be broken was actually checked -
+            # the difference between "we found nothing" and "it was working". A
+            # `failing` verdict here alongside a `search_stage` of `span_tree` on
+            # some other service is the FD-defect signature.
             span.set_attribute("planned_service_state", execution_result.planned_service_state)
             deepen = next(
                 (c for c in execution_result.tool_calls if c.get("stage") == "deepen"), {}
@@ -631,9 +633,42 @@ class IncidentManagementFlow(Flow[IncidentState]):
             span.set_attribute(
                 "success_payload_spans", int(deepen.get("success_payload_spans") or 0)
             )
+            # Jaeger rejected 47% of trace fetches on 16-Sep and the loss was
+            # invisible: a trace we could not read produced the same downstream
+            # evidence as a trace with no errors in it. Both numbers, so the ratio
+            # is readable per incident without joining to the logs.
+            span.set_attribute("traces_requested", int(deepen.get("traces_requested") or 0))
+            span.set_attribute("traces_unfetched", int(deepen.get("traces_unfetched") or 0))
+            # Errors found but ruled unrelated to the report. Non-empty here with a
+            # confidence of CONF_AMBIENT_ONLY is the honest "no relevant failure"
+            # outcome; non-empty with a resolve is the reply we used to send.
+            span.set_attribute("ambient_errors", int(deepen.get("ambient_errors") or 0))
+            span.set_attribute(
+                "ambient_codes", ",".join(str(c) for c in (deepen.get("ambient_codes") or []))
+            )
             # Empty unless the span search never ran; a wrong cluster otherwise
             # reads in the trace like an incident that left no spans.
             span.set_attribute("locate_skipped_reason", execution_result.locate_skipped_reason)
+            # Customer-app trace index (optimus only). "" is "not configured or not
+            # run", which is NOT `no_activity` - otherwise indistinguishable here.
+            span.set_attribute("frontend_state", execution_result.frontend_state)
+            # Non-zero means DEEPEN fetched traces LOCATE could not have found.
+            span.set_attribute("frontend_trace_ids", len(execution_result.frontend_trace_ids))
+            frontend = next(
+                (c for c in execution_result.tool_calls
+                 if c.get("stage") == "locate_frontend"),
+                {},
+            )
+            span.set_attribute("frontend_hits", int(frontend.get("hits") or 0))
+            span.set_attribute("frontend_filter_scope", str(frontend.get("filter_scope") or ""))
+            span.set_attribute("frontend_time_bucket", str(frontend.get("time_bucket") or ""))
+            # Empty with hits present means the result rests on text alone.
+            span.set_attribute(
+                "frontend_pinned_tags",
+                ",".join(str(t) for t in (frontend.get("pinned_tags") or [])),
+            )
+            # A transport error, not an empty result - the two read alike otherwise.
+            span.set_attribute("frontend_error", str(frontend.get("error") or ""))
 
             print(f"Investigation completed for incident {self.state.incident_id} stage={execution_result.search_stage}")
             if execution_result.locate_skipped_reason:
