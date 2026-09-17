@@ -122,7 +122,22 @@ async def run_summary_agent_async(
                 "or field values exactly as found (e.g. 'Error code: ACCOUNT_FROZEN', 'HTTP 403 Forbidden', "
                 "'Exception: InsufficientBalanceException'). Do not paraphrase or omit these - quote them "
                 "verbatim inside your explanation. Explain what the error means in plain language, then state "
-                "the exact code/message as supporting evidence."
+                "the exact code/message as supporting evidence.\n"
+                "CRITICAL - quote verbatim, but only an error that is ABOUT THE REPORTED "
+                "PROBLEM. A customer's session touches many parts of the app, and some "
+                "of those report that a thing is simply absent - no matching record, "
+                "nothing to show for a feature the customer does not use. Those are "
+                "normal on working sessions. Apply one test before citing any error: is "
+                "it about the same feature or journey the person described? If the "
+                "report is about one feature and the only error found concerns a "
+                "different, unmentioned one, that error is NOT the cause - say no "
+                "relevant failure was found instead of naming it. Never connect an "
+                "unrelated error to the reported symptom with a guess about how they "
+                "might be linked. A findings section headed 'NOT ABOUT THE REPORTED "
+                "PROBLEM' or 'NO ERROR MATCHING THE REPORTED PROBLEM' must not be "
+                "presented as the cause at all. This test is about relevance only - a "
+                "malfunction (a 5xx, a timeout, an exception) is always worth reporting "
+                "even when its link to the symptom is unclear; say the link is unclear."
             ),
             verbose=False,
             allow_delegation=False,
@@ -134,25 +149,39 @@ async def run_summary_agent_async(
             description=(
                 f"Create a final resolution for a bank customer issue.\n\n"
                 f"=== INCIDENT ===\n{incident_description}\n\n"
-                f"=== INVESTIGATION FINDINGS ===\n"
-                f"Root Cause: {execution_result.diagnosis}\n"
-                f"Resolution: {execution_result.solution}\n"
-                f"{tool_calls_text}\n\n"
+                f"=== ROOT CAUSE ===\n{execution_result.diagnosis}\n\n"
                 f"=== HISTORIC SIMILAR INCIDENTS ===\n{historic_context}\n\n"
+                f"=== INVESTIGATION EVIDENCE ===\n{tool_calls_text}\n\n"
                 f"=== USER Q&A ===\n{qa_text}\n\n"
                 "IMPORTANT: Write your response as a bank support engineer would speak to a branch employee. "
                 "Do NOT mention which system or tool was used to investigate (no 'Jaeger', 'ELK', 'trace', 'span'). "
                 "DO include the exact error code, HTTP status, or error message found in the investigation "
                 "findings above, quoted exactly as-is - this is required, not optional. Explain what it means "
                 "in simple terms immediately after stating it, but never drop the raw code/message itself. "
+                "BUT quote only an error that is about the SAME feature or journey as the reported problem. "
+                "Errors under a heading such as 'NOT ABOUT THE REPORTED PROBLEM' or 'NO ERROR MATCHING THE "
+                "REPORTED PROBLEM' are absent-record notices from parts of the app this incident never "
+                "mentions - do not cite them as the cause, and do not invent a link between them and the "
+                "symptom. If every error found is unrelated to what was reported, say plainly that no failure "
+                "explaining this issue was found.\n\n"
+                "DECISION REQUIRED:\n"
+                "Compare ROOT CAUSE with HISTORIC SIMILAR INCIDENTS:\n"
+                "- If ROOT CAUSE matches historic incidents (same error, same service, same root cause, multiple same feild) → HIGH CORRELATION\n"
+                "- If historic context is sparse, different root cause, or no match → LOW/NO CORRELATION\n\n"
+                "IF HIGH CORRELATION:\n"
+                "→ Include solution in output: solution: \"step 1 | step 2 | step 3\"\n\n"
+                "IF LOW/NO CORRELATION:\n"
+                "→ Set solution to empty string: solution: \"\"\n\n"
                 "If the investigation evidence above notes that some errors were omitted or unclear, and the "
-                "root cause is genuinely uncertain, say so honestly rather than inventing a cause.\n\n"
-                f"Format the output as JSON:\n"
+                "root cause is genuinely uncertain, say reply with honest reposne .\n\n"
+                "NOTE : Never generate the error code or message on your own"
+                f"Format  the output as JSON:\n"
                 f'{{"diagnosis": "...", "solution": "...", "questions": [], "resolved": "yes"}}'
             ),
             agent=summary_agent,
-            expected_output="JSON with diagnosis, solution, questions, and resolved fields"
+            expected_output="JSON with diagnosis, solution, questions, and resolved fields if solution is empty don't return it "
         )
+
 
         crew = Crew(
             agents=[summary_agent],
@@ -162,6 +191,13 @@ async def run_summary_agent_async(
 
         result = await crew.akickoff()
         summary_output = _parse_summary_result(str(result))
+
+        # Override: Bot never asks questions - always proceed with diagnosis
+        summary_output.questions = []
+        # Fallback: if solution is empty, provide a default message
+        if not summary_output.solution or not summary_output.solution.strip():
+            summary_output.solution = "Unable to provide solution. Please refer to the diagnosis above."
+ 
 
         # === ENHANCED OTEL: End summary agent span ===
         if _ENHANCED_OTEL_AVAILABLE and end_span and summary_agent_span:
@@ -211,10 +247,33 @@ async def run_summary_agent_async(
     return summary_output
 
 
+_THINK_BLOCK = re.compile(r"<think>[\s\S]*?</think>\s*", re.I)
+# An unterminated block: the model started reasoning and the response was cut
+# off, so everything from the tag onward is reasoning.
+_THINK_OPEN = re.compile(r"<think>[\s\S]*\Z", re.I)
+
+
+def _strip_reasoning(text: str) -> str:
+    """Remove the model's own reasoning from text that will reach ServiceNow.
+
+    Qwen emits `<think>...</think>` before its answer. When the JSON parse
+    succeeds this never matters, but the fallback below returns the whole raw
+    response as `diagnosis` - so on 9 of 71 replies measured on 16-Sep the branch
+    received the model thinking aloud, including its uncertainty about the very
+    answer it then gave. Stripped rather than the fallback removed: a malformed
+    response still carries the finding, and dropping it entirely would replace a
+    usable answer with nothing.
+    """
+    cleaned = _THINK_BLOCK.sub("", text or "")
+    cleaned = _THINK_OPEN.sub("", cleaned)
+    return cleaned.strip()
+
+
 def _parse_summary_result(result_text: str) -> SummaryOutput:
     """Parse LLM response into SummaryOutput."""
     import json
-    
+
+    result_text = _strip_reasoning(result_text)
     json_match = re.search(r'\{[\s\S]*\}', result_text)
     if json_match:
         try:
@@ -246,10 +305,12 @@ def create_simple_summary(
     execution_result: JaegerExecutionResult
 ) -> SummaryOutput:
     if execution_result.resolved:
+        # Use solution if available, otherwise fallback message
+        solution = execution_result.solution if execution_result.solution else "Unable to provide solution. Please refer to the diagnosis above."
         return SummaryOutput(
             diagnosis=execution_result.diagnosis,
-            solution=execution_result.solution,
-            questions=execution_result.questions,
+            solution=solution,
+            questions=[],
             resolved="yes"
         )
 
@@ -262,13 +323,21 @@ def create_simple_summary(
         )
 
     diagnosis = execution_result.diagnosis or plan_output.issue_summary or "Investigation incomplete"
-    solution = execution_result.solution or "Manual investigation required"
+    
+    # If there's no solution (low correlation), say unable to provide solution
+    if execution_result.solution:
+        solution = execution_result.solution
+    else:
+        solution = "Unable to provide solution. Please refer to the diagnosis above."
+
+    # If there's a diagnosis, mark as resolved
+    final_resolved = "yes" if diagnosis else "no"
 
     return SummaryOutput(
         diagnosis=diagnosis,
         solution=solution,
         questions=[],
-        resolved="no"
+        resolved=final_resolved
     )
 
 
@@ -340,15 +409,15 @@ async def run_context_only_summary_async(
             "that incident's resolution as the diagnosis/solution directly. Do not ask any "
             "question.\n\n"
             "TIER 2 - MEDIUM CONFIDENCE (50% <= score < 75%):\n"
-            "The match is plausible but not certain. Set RESOLVED=no and QUESTIONS=[] (empty — "
-            "do NOT ask a question). Instead, present the most likely diagnosis and solution "
+            "The match is plausible but certain. Set RESOLVED=yes (there's a diagnosis, so "
+            "present it to the user). QUESTIONS=[] (empty). Present the diagnosis and solution "
             "from the closest matching historic incident(s), clearly phrased as a probable cause "
             "(e.g. 'This is most likely caused by...'). This will be shown to the user directly "
             "as information, not as a question.\n\n"
             "TIER 3 - LOW CONFIDENCE (score < 50%):\n"
-            "No historic incident is a reliable match. Set RESOLVED=no and ask ONE specific "
-            "clarifying question (in QUESTIONS) that would help identify which scenario applies. "
-            "Keep DIAGNOSIS brief (e.g. 'Unable to determine exact cause from history alone').\n\n"
+            "No historic match is reliable. Set RESOLVED=yes (there's a diagnosis, so present "
+            "it to the user). QUESTIONS=[] (empty). Present the diagnosis based on available "
+            "information. Keep it brief but informative.\n\n"
             "Do not mention any technical tools.\n"
             "Mask all PII and avoid backend technical jargon — the person raising this incident "
             "is a bank branch employee, not a direct customer.\n"
@@ -369,6 +438,14 @@ async def run_context_only_summary_async(
     logger.info(f"[ContextOnlySummary] CREW KICKOFF DONE | output_len={len(str(result))}")
 
     parsed = _parse_summary_result(str(result))
+    
+    # Override: Bot never asks questions - always proceed with diagnosis
+    parsed.questions = []
+    # Fallback: if solution is empty, provide a default message
+    # Fallback: if solution is empty, provide a default message
+    if not parsed.solution or not parsed.solution.strip():
+       parsed.solution = "Unable to provide solution. Please refer to the diagnosis above."
+     
     logger.info(
         f"[ContextOnlySummary] PARSED | resolved={parsed.resolved} "
         f"has_questions={bool(parsed.questions)} diagnosis_preview={parsed.diagnosis[:150]}"
