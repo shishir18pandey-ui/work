@@ -11,6 +11,12 @@ wording is effectively unfindable.
 Here the wide, cheap step is a keyword query against the span index in ES:
 
   1. LOCATE   keyword-search spans -> candidate trace IDs (ES relevance order)
+  1c. FRONTEND search the customer-app trace index (`prod-socket-trace-v1-*`,
+              optimus only) -> what the customer's own app recorded, plus more
+              trace IDs. Its `description` field is the ONLY analyzed field in
+              either cluster, and its `additional_tags.http@traceId` is a real
+              Jaeger `traceID` (measured 40/40 resolvable), so it contributes
+              traces LOCATE structurally cannot find.
   2. DEEPEN   fetch those traces by ID -> parent/child tree -> ranked evidence
   3. FALLBACK only if LOCATE is dry and we hold an identifier, run the old
               window scan, which remains the better tool in exactly that case
@@ -27,6 +33,12 @@ from typing import Dict, List, Optional, Tuple
 from pydantic import BaseModel, Field
 
 from new_flow.tools.app_config import AppConfig, get_app_config_safe
+from elk_search_flow.tools.frontend_search import (
+    FrontendSearcher,
+    is_frontend_index,
+    render_hits as render_frontend_hits,
+    split_index_patterns,
+)
 from elk_search_flow.tools.service_discovery import format_discovered, service_names
 from elk_search_flow.tools.span_search import (
     SpanSearcher,
@@ -57,6 +69,13 @@ CONF_SEMANTIC_FAILURE = 0.55
 # some words, not that we found the cause.
 CONF_KEYWORD_ONLY = 0.25
 CONF_NOTHING = 0.10
+# The customer's app saw the HTTP failure itself - exact status and error body,
+# their actual experience. Below CONF_ROOT_LEVEL because it says what broke from
+# outside, not which dependency caused it.
+CONF_FRONTEND_FAILURE = 0.65
+# Their app made calls and every one came back OK: a checked absence, not a
+# finding, so it must escalate. 0.29 not 0.30 - the test is `confidence < 0.3`.
+CONF_FRONTEND_NO_FAILURE = 0.29
 # The planned service handled this customer's requests without error, or was
 # never called at all. Both are real, checkable observations about the right
 # service - stronger than a keyword coincidence, and they rule out the thing the
@@ -71,6 +90,13 @@ CONF_NO_FAULT_FOUND = 0.45
 # the probe alone. Still not `resolved`: reading whether an empty list or a stale
 # field is *wrong* needs someone who knows the product.
 CONF_SUCCESS_PAYLOAD = 0.50
+# Errors were found, but every one of them is the kind that appears on healthy
+# customers too (no offer in the datamart, no wealth holdings, an empty lookup) and
+# none relates to what was reported. Above CONF_KEYWORD_ONLY because the errors are
+# real and this customer's, but *below* the 0.30 escalation line: reporting an
+# unrelated error as the cause is what the branch rejected 11 times on 16-Sep, and
+# escalating is the honest outcome. See tools/relevance.py.
+CONF_AMBIENT_ONLY = 0.28
 
 
 class InvestigationResult(BaseModel):
@@ -92,9 +118,18 @@ class InvestigationResult(BaseModel):
     locate_skipped_reason: str = ""
     escalation_reason: str = ""
     # Activity-probe outcome on the planned service: "" (not run) / "healthy" /
-    # "never_called". Records that the expected service was actually checked,
-    # which is otherwise invisible when the evidence came from somewhere else.
+    # "failing" / "never_called". Records that the expected service was actually
+    # checked, which is otherwise invisible when the evidence came from elsewhere.
     planned_service_state: str = ""
+    # Codes present in the traces but set aside as unrelated to the report, for the
+    # audit trail: a reply that omits an error someone can see in the trace has to
+    # be explainable after the fact.
+    ambient_codes: List[str] = Field(default_factory=list)
+    # "" (not run) / "failing" / "no_failure" / "no_activity" - so a reply resting
+    # on backend evidence alone is distinguishable from one where the app was
+    # never checked.
+    frontend_state: str = ""
+    frontend_trace_ids: List[str] = Field(default_factory=list)
 
 
 def build_search_text(incident_description: str, problem_category: str, plan_output=None) -> str:
@@ -127,9 +162,81 @@ def _searcher_for(config: AppConfig, app: str) -> Tuple[Optional[SpanSearcher], 
         logger.warning(f"[Investigate] {reason}")
         return None, reason
 
-    patterns = span_index_patterns(app, _configured_span_index(config, app))
-    logger.info(f"[Investigate] app={app} span_endpoints={endpoints} span_indices={patterns}")
+    # Guard, not routing: `SPAN_ES_INDEX` is free text, and a frontend pattern
+    # reaching SpanSearcher means Jaeger-shaped queries against a schema sharing
+    # not one field name - 259/260 shards skipped, zero hits, no error raised.
+    configured = _configured_span_index(config, app)
+    all_patterns = span_index_patterns(app, configured)
+    patterns, frontend = split_index_patterns(all_patterns)
+    if frontend:
+        logger.warning(
+            f"[Investigate] app={app}: dropped frontend pattern(s) {frontend} from the "
+            f"span search - set `frontend_trace_index` (or FRONTEND_TRACE_INDEX_<APP>) "
+            f"instead of putting them in span_es_index/SPAN_ES_INDEX"
+        )
+    if not patterns:
+        patterns = span_index_patterns(app, None)
+    logger.info(
+        f"[Investigate] app={app} span_endpoints={endpoints} span_indices={patterns}"
+    )
     return SpanSearcher(endpoints=endpoints, auth_header=auth_token, index_patterns=patterns), ""
+
+
+def _configured_frontend_index(config: AppConfig, app: str) -> str:
+    """The app's customer-app trace pattern, or `""` for "this app has none".
+
+    Opt-in per app: only optimus has a mobile app emitting these, and the index
+    holds optimus's customers. Its own config field rather than a second pattern in
+    `span_es_index`, because that one has a GLOBAL `SPAN_ES_INDEX` override which
+    would switch the capability on for all ~25 apps at once - hence no bare
+    `FRONTEND_TRACE_INDEX` global here either.
+    """
+    slug = re.sub(r"[^A-Z0-9]+", "_", (app or "").upper()).strip("_")
+    override = os.getenv(f"FRONTEND_TRACE_INDEX_{slug}", "")
+    if override.strip():
+        return override.strip()
+    return str(config.frontend_trace_index or "").strip()
+
+
+def _frontend_searcher_for(
+    config: AppConfig, app: str
+) -> Tuple[Optional[FrontendSearcher], str]:
+    """The frontend trace index, when this app has one configured.
+
+    Same cluster and credential as the span searcher; only the index family and
+    query shape differ. `(None, reason)` for every app without
+    `frontend_trace_index` - today all of them but optimus.
+    """
+    configured = _configured_frontend_index(config, app)
+    frontend = [p.strip() for p in configured.split(";") if p.strip()]
+    if not frontend:
+        return None, f"no frontend trace index configured for app={app}"
+
+    # A span pattern here would be queried with frontend field names: zero docs,
+    # nothing raised. Refuse it loudly instead.
+    wrong_family = [p for p in frontend if not is_frontend_index(p)]
+    if wrong_family:
+        reason = (
+            f"frontend_trace_index for app={app} names non-frontend pattern(s) "
+            f"{wrong_family} - a frontend-shaped query against a span index matches "
+            f"zero docs silently"
+        )
+        logger.error(f"[Investigate] {reason}")
+        return None, reason
+
+    endpoints = _span_endpoints(config, app)
+    if not endpoints:
+        return None, f"no span ES endpoint configured for app={app}"
+
+    auth_env = _span_auth_env(config)
+    auth_token = os.getenv(auth_env) if auth_env else None
+    if not auth_token:
+        return None, f"no span ES credential in env {auth_env!r} for app={app}"
+
+    logger.info(f"[Investigate] app={app} frontend_indices={frontend}")
+    return FrontendSearcher(
+        endpoints=endpoints, auth_header=auth_token, index_patterns=frontend
+    ), ""
 
 
 def _span_endpoints(config: AppConfig, app: str) -> List[str]:
@@ -321,9 +428,15 @@ def candidate_services(
 
 
 def _confidence(jaeger_result: Dict) -> float:
+    total = int(jaeger_result.get("total_errors") or 0)
+    # `total_errors` counts only errors that could explain the complaint. When it
+    # is 0 but errors were found, every one of them reported something absent in a
+    # part of the app this incident never mentions - real, but not an answer, so it
+    # escalates instead of resolving on unrelated evidence.
+    if not total and int(jaeger_result.get("ambient_errors") or 0):
+        return CONF_AMBIENT_ONLY
     if jaeger_result.get("has_root_level_error"):
         return CONF_ROOT_LEVEL
-    total = int(jaeger_result.get("total_errors") or 0)
     if total >= 3:
         return CONF_MANY_ERRORS
     if total >= 1:
@@ -331,6 +444,29 @@ def _confidence(jaeger_result: Dict) -> float:
     if int(jaeger_result.get("total_traces_scanned") or 0) > 0:
         return CONF_TRACES_NO_ERRORS
     return CONF_NOTHING
+
+
+def _has_frontend_failure(hits: List[Dict]) -> bool:
+    """Did the customer's app record an HTTP failure?
+
+    The status code is the test, NOT `level`: 500/422/401 events arrive at
+    `level: info`, and `level: error` is mostly client-side log noise.
+    """
+    for hit in hits or []:
+        source = hit.get("_source", hit) or {}
+        tags = source.get("additional_tags") or {}
+        if not isinstance(tags, dict):
+            continue
+        try:
+            if int(tags.get("http@statusCode") or 0) >= 400:
+                return True
+        except (TypeError, ValueError):
+            pass
+        if str(tags.get("http@type") or "") == "RESPONSE_ERROR":
+            return True
+        if str(source.get("category") or "") == "exception":
+            return True
+    return False
 
 
 async def run_investigation_async(
@@ -441,6 +577,7 @@ async def run_investigation_async(
             activity = await searcher.search_activity(tags, services)
             planned_service_state = {
                 "success": "healthy",
+                "failing": "failing",
                 "no_activity": "never_called",
             }.get(activity.get("status", ""), "")
             tool_calls.append({
@@ -449,6 +586,8 @@ async def run_investigation_async(
                 "status": activity.get("status"),
                 "services": services,
                 "hits": len(activity.get("hits") or []),
+                "failing_statuses": activity.get("failing_statuses") or [],
+                "capped": activity.get("capped", False),
                 "operations": [
                     f"{r['service']} {r['operation']} x{r['count']}"
                     for r in (activity.get("operations") or [])
@@ -457,13 +596,27 @@ async def run_investigation_async(
 
     activity_text = render_activity(activity, services) if planned_service_state else ""
 
+    # Set by stage 1c below, read by `_with_activity` at call time; initialised
+    # here so an early return cannot leave the closure unbound.
+    frontend_text = ""
+    frontend_state = ""
+    frontend_trace_ids: List[str] = []
+
     def _with_activity(text: str) -> str:
         """Probe text goes FIRST - it rules out the expected cause, so the summary
         agent must read it before whatever error was found elsewhere. Without the
-        ordering the off-service error reads as the answer again."""
-        if not activity_text:
-            return text
-        return f"{activity_text}\n\n{text}" if text else activity_text
+        ordering the off-service error reads as the answer again.
+
+        The frontend block is appended LAST (stage 1c), here rather than at each
+        `return`: there are eight return paths and one that forgot the call would
+        silently drop the customer-app evidence.
+        """
+        combined = text
+        if activity_text:
+            combined = f"{activity_text}\n\n{text}" if text else activity_text
+        if not frontend_text:
+            return combined
+        return f"{combined}\n\n{frontend_text}" if combined else frontend_text
 
     def _no_fault_result(weaker: str = "") -> InvestigationResult:
         """The probe is the strongest thing we have: no failure anywhere for this
@@ -494,6 +647,8 @@ async def run_investigation_async(
             iterations_completed=1,
             evidence_text=text,
             trace_ids=trace_ids,
+            frontend_state=frontend_state,
+            frontend_trace_ids=frontend_trace_ids,
             search_stage="no_fault_on_planned_service",
             planned_service_state=planned_service_state,
             escalation_reason=(
@@ -504,6 +659,89 @@ async def run_investigation_async(
         )
 
     trace_ids = located.get("trace_ids") or []
+
+    # The probe's own traces are the planned service's traces for THIS customer,
+    # and when it saw failures they are a better answer than whatever the widened
+    # search turned up on some other service. They were collected and dropped
+    # before, which is how a located failure on the right service went missing
+    # while an unrelated 404 elsewhere became the diagnosis. Ordered first so
+    # `max_traces` truncation keeps them.
+    activity_ids = [t for t in (activity.get("trace_ids") or []) if t not in trace_ids]
+    if activity_ids:
+        if planned_service_state == "failing":
+            trace_ids = activity_ids + trace_ids
+        else:
+            # Healthy probe: still worth fetching, because the successful bodies
+            # are the evidence for a "wrong data shown" incident - but ranked
+            # after anything the keyword search located.
+            trace_ids = trace_ids + activity_ids
+        logger.info(
+            f"[Investigate] merged {len(activity_ids)} activity trace ids "
+            f"(planned_service_state={planned_service_state}) total={len(trace_ids)}"
+        )
+
+    # ── Stage 1c: what did the CUSTOMER'S APP record? ─────────────────────
+    # Additive and non-fatal, and a no-op for every app but optimus. It sees what
+    # LOCATE structurally cannot: real full-text on `description`, the status the
+    # app actually SAW (a gateway 502 over a backend 200), and trace IDs that feed
+    # DEEPEN. See CLAUDE.md, "The frontend trace index".
+    frontend_searcher, frontend_skip = _frontend_searcher_for(config, app_key)
+    if frontend_searcher is not None:
+        try:
+            found = await frontend_searcher.search(search_text, customer_identifiers)
+            hits = found.get("hits") or []
+            frontend_trace_ids = found.get("trace_ids") or []
+            if hits:
+                frontend_text = render_frontend_hits(hits)
+                frontend_state = (
+                    "failing" if _has_frontend_failure(hits) else "no_failure"
+                )
+            else:
+                frontend_state = "no_activity"
+            tool_calls.append({
+                "stage": "locate_frontend",
+                "tool": "frontend_trace_search",
+                "status": found.get("status"),
+                "hits": len(hits),
+                "trace_ids": frontend_trace_ids,
+                "time_bucket": found.get("time_bucket", ""),
+                "filter_scope": found.get("filter_scope", ""),
+                "pinned_tags": found.get("pinned_tags") or [],
+                "state": frontend_state,
+                # `_run` swallows transport errors, so a 401 would otherwise arrive
+                # as `no_activity` - this separates "the app did nothing" from "we
+                # could not ask".
+                "error": frontend_searcher.last_error if not hits else "",
+            })
+            logger.info(
+                f"[Investigate] frontend search incident={incident_id} "
+                f"state={frontend_state} hits={len(hits)} "
+                f"trace_ids={len(frontend_trace_ids)}"
+            )
+        except Exception as exc:
+            # Never fatal - secondary index; recorded so the absence is explainable.
+            logger.warning(f"[Investigate] frontend search failed incident={incident_id}: {exc}")
+            tool_calls.append({
+                "stage": "locate_frontend", "tool": "frontend_trace_search",
+                "error": f"{type(exc).__name__}: {exc}",
+            })
+    elif frontend_skip:
+        logger.debug(f"[Investigate] frontend search not run: {frontend_skip}")
+
+    # First when the app saw a failure: `fetch_traces_by_id` truncates at
+    # `max_traces`, and a trace known to have failed for this customer outranks one
+    # the keyword search merely ranked highly.
+    new_frontend_ids = [t for t in frontend_trace_ids if t not in trace_ids]
+    if new_frontend_ids:
+        if frontend_state == "failing":
+            trace_ids = new_frontend_ids + trace_ids
+        else:
+            trace_ids = trace_ids + new_frontend_ids
+        logger.info(
+            f"[Investigate] merged {len(new_frontend_ids)} frontend trace ids "
+            f"(frontend_state={frontend_state}) total={len(trace_ids)}"
+        )
+
 
     # An ES transport failure returns [] exactly like a genuine miss, so without
     # this a timed-out sweep reads downstream as "this incident never happened".
@@ -520,7 +758,8 @@ async def run_investigation_async(
         # the response body is the only evidence there is - the error extractor
         # drops it by design. Scoped to the planned service to bound the volume.
         traced = await fetch_traces_by_id(
-            app_key, trace_ids, payload_services=services or fallback_services[:1]
+            app_key, trace_ids, payload_services=services or fallback_services[:1],
+            search_text=search_text,
         )
         tool_calls.append({
             "stage": "deepen",
@@ -529,6 +768,15 @@ async def run_investigation_async(
             "total_errors": traced.get("total_errors", 0),
             "has_root_level_error": traced.get("has_root_level_error", False),
             "success_payload_spans": traced.get("payload_spans", 0),
+            # Errors found but ruled unrelated to the complaint - the reason a
+            # visible error may be absent from the reply.
+            "ambient_errors": traced.get("ambient_errors", 0),
+            "ambient_codes": traced.get("ambient_codes") or [],
+            # A trace we could not read is not a trace with no errors. Jaeger
+            # rejected 47% of these fetches on 16-Sep and the loss was invisible
+            # downstream, so it is recorded on the span alongside the findings.
+            "traces_requested": traced.get("traces_requested", 0),
+            "traces_unfetched": traced.get("traces_unfetched", 0),
         })
 
         evidence = traced.get("evidence_text") or ""
@@ -539,11 +787,28 @@ async def run_investigation_async(
                 f"[Investigate] resolved from span tree incident={incident_id} "
                 f"confidence={confidence} errors={traced.get('total_errors')}"
             )
+            # When the planned service was healthy, the error came from somewhere
+            # else - so what the planned service actually RETURNED is the more
+            # likely cause and must travel with the error rather than being
+            # dropped at this return (it was, until now: the `if payload_text:`
+            # branch below is unreachable whenever any error exists anywhere).
+            body = (
+                payload_text
+                if payload_text and planned_service_state == "healthy"
+                else ""
+            )
+            text = _with_activity(f"{body}\n\n{evidence}" if body else evidence)
+            ambient_only = confidence == CONF_AMBIENT_ONLY
             return InvestigationResult(
                 resolved=confidence >= CONF_SOME_ERRORS,
-                diagnosis=_with_activity(evidence),
+                diagnosis=text,
                 solution=(
-                    "Action the ranked root-level failure above on the failing "
+                    "Every error found reports something absent in a part of the "
+                    "app the incident does not mention, and none is a malfunction. Do "
+                    "not present them as the cause - this needs a data or "
+                    "business-logic check, or more detail from the branch."
+                    if ambient_only
+                    else "Action the ranked root-level failure above on the failing "
                     "dependency. Note the failure is NOT on the service expected "
                     "for this symptom - confirm the two are actually related "
                     "before acting."
@@ -551,12 +816,26 @@ async def run_investigation_async(
                     else "Action the ranked root-level failure above on the failing dependency."
                 ),
                 tool_calls=tool_calls,
-                final_state="Span tree located by keyword search",
+                final_state=(
+                    "Only errors unrelated to the reported problem in the located traces"
+                    if ambient_only
+                    else "Span tree located by keyword search"
+                ),
+                ambient_codes=traced.get("ambient_codes") or [],
+                escalation_reason=(
+                    f"Errors found but none about the reported problem "
+                    f"({', '.join(traced.get('ambient_codes') or [])}) - no failure "
+                    f"explains the symptom"
+                    if ambient_only
+                    else ""
+                ),
                 confidence=confidence,
                 iterations_completed=1,
-                evidence_text=_with_activity(evidence),
+                evidence_text=text,
                 trace_ids=trace_ids,
-                search_stage="span_tree",
+                frontend_state=frontend_state,
+                frontend_trace_ids=frontend_trace_ids,
+                search_stage="ambient_only" if ambient_only else "span_tree",
                 planned_service_state=planned_service_state,
             )
 
@@ -588,6 +867,8 @@ async def run_investigation_async(
                 iterations_completed=1,
                 evidence_text=_with_activity(outcome),
                 trace_ids=trace_ids,
+                frontend_state=frontend_state,
+                frontend_trace_ids=frontend_trace_ids,
                 search_stage="semantic_failure",
                 planned_service_state=planned_service_state,
             )
@@ -616,6 +897,8 @@ async def run_investigation_async(
                 iterations_completed=1,
                 evidence_text=text,
                 trace_ids=trace_ids,
+                frontend_state=frontend_state,
+                frontend_trace_ids=frontend_trace_ids,
                 search_stage="success_payload",
                 planned_service_state=planned_service_state,
                 escalation_reason=(
@@ -650,9 +933,43 @@ async def run_investigation_async(
                 iterations_completed=1,
                 evidence_text=hit_summary,
                 trace_ids=trace_ids,
+                frontend_state=frontend_state,
+                frontend_trace_ids=frontend_trace_ids,
                 search_stage="keyword_only",
                 escalation_reason="Keyword matches found but no failing span could be confirmed",
             )
+
+    # ── Stage 2b: the customer's app is the only witness ──────────────────
+    # No backend evidence, but the app recorded an HTTP failure - the exact status
+    # and error body it received. Before the Jaeger fallback on purpose: that is a
+    # broad window scan, this is a direct observation of the reported symptom.
+    if frontend_state == "failing" and frontend_text:
+        logger.info(
+            f"[Investigate] frontend failure is the only evidence "
+            f"incident={incident_id} trace_ids={len(frontend_trace_ids)}"
+        )
+        text = _with_activity("")
+        return InvestigationResult(
+            resolved=True,
+            diagnosis=text,
+            solution=(
+                "The customer's app recorded the failing request above, including "
+                "the exact status and error returned to it. No matching backend "
+                "failure was found for the same request, so treat the endpoint and "
+                "status shown as the starting point - the failure may be at the "
+                "gateway or edge rather than inside the service."
+            ),
+            tool_calls=tool_calls,
+            final_state="Failure recorded by the customer's app; no matching backend span",
+            confidence=CONF_FRONTEND_FAILURE,
+            iterations_completed=1,
+            evidence_text=text,
+            trace_ids=trace_ids,
+            search_stage="frontend_failure",
+            planned_service_state=planned_service_state,
+            frontend_state=frontend_state,
+            frontend_trace_ids=frontend_trace_ids,
+        )
 
     # ── Stage 3: FALLBACK to the tag-based window scan ────────────────────
     if tags:
@@ -705,6 +1022,8 @@ async def run_investigation_async(
             confidence=fallback_confidence,
             iterations_completed=int(getattr(fallback, "iterations_completed", 0) or 0),
             evidence_text=_with_activity(diagnosis),
+            frontend_state=frontend_state,
+            frontend_trace_ids=frontend_trace_ids,
             search_stage="jaeger_fallback",
             planned_service_state=planned_service_state,
             locate_skipped_reason=skip_reason,
@@ -722,6 +1041,43 @@ async def run_investigation_async(
     )
     if skip_reason:
         reason = f"{reason} (LOCATE skipped: {skip_reason})"
+
+    # Calls made, all successful. Not "nothing happened" - it rules out the request
+    # never leaving the phone and the app being shown an error - so it must not
+    # report as CONF_NOTHING with a bare "assign to an engineer". It still escalates.
+    if frontend_state == "no_failure" and frontend_text:
+        logger.info(
+            f"[Investigate] frontend activity with no failure incident={incident_id}"
+        )
+        text = _with_activity("")
+        return InvestigationResult(
+            resolved=False,
+            diagnosis=text,
+            solution=(
+                "The customer's app made the requests above and every one of them "
+                "came back successfully - so the request did reach the bank and the "
+                "app was not shown an error. Check WHAT came back (an empty list, a "
+                "stale value, a wrong flag) rather than whether the call failed, or "
+                "ask the branch exactly what the customer saw on screen."
+            ),
+            tool_calls=tool_calls,
+            final_state="Customer's app recorded successful requests only; no failure anywhere",
+            confidence=CONF_FRONTEND_NO_FAILURE,
+            iterations_completed=1,
+            evidence_text=text,
+            trace_ids=trace_ids,
+            search_stage="frontend_no_failure",
+            planned_service_state=planned_service_state,
+            frontend_state=frontend_state,
+            frontend_trace_ids=frontend_trace_ids,
+            locate_skipped_reason=skip_reason,
+            escalation_reason=(
+                "No failure recorded by the customer's app or on any backend span - "
+                "needs a payload-level or business-logic check, or more detail from "
+                "the branch"
+            ),
+        )
+
     logger.info(f"[Investigate] exhausted incident={incident_id}: {reason}")
     return InvestigationResult(
         resolved=False,
@@ -731,6 +1087,8 @@ async def run_investigation_async(
         final_state=reason,
         confidence=CONF_NOTHING,
         iterations_completed=1,
+        frontend_state=frontend_state,
+        frontend_trace_ids=frontend_trace_ids,
         search_stage="exhausted",
         locate_skipped_reason=skip_reason,
         escalation_reason=reason,
