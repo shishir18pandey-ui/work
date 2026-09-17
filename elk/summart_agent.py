@@ -1,0 +1,376 @@
+import os
+import re
+import logging
+from typing import Dict, List
+from pydantic import BaseModel, Field
+
+os.environ["OTEL_SDK_DISABLED"] = "true"
+
+# Enhanced observability for better span handling (backward compatible)
+# Can be disabled via ENHANCED_OTEL_ENABLED=false environment variable
+_ENHANCED_OTEL_ENABLED = os.getenv("ENHANCED_OTEL_ENABLED", "true").lower() == "true"
+
+if _ENHANCED_OTEL_ENABLED:
+    try:
+        from new_flow.utils.observability_enhanced import (
+            create_span,
+            end_span,
+            set_span_attribute,
+            record_span_event,
+        )
+        _ENHANCED_OTEL_AVAILABLE = True
+    except ImportError:
+        _ENHANCED_OTEL_AVAILABLE = False
+        create_span = None
+        end_span = None
+        set_span_attribute = None
+        record_span_event = None
+else:
+    _ENHANCED_OTEL_AVAILABLE = False
+    create_span = None
+    end_span = None
+    set_span_attribute = None
+    record_span_event = None
+
+from crewai import Agent, Task, Crew, LLM
+from new_flow.utils.llm import llm_config
+from new_flow.agents.execute_agent_jaeger import JaegerExecutionResult
+from new_flow.agents.plan_agents import PlanOutput
+
+logger = logging.getLogger(__name__)
+
+
+class SummaryOutput(BaseModel):
+    diagnosis: str = Field(description="Root cause analysis")
+    solution: str = Field(description="Resolution steps")
+    questions: List[str] = Field(
+        default_factory=list,
+        description="Clarification questions if needed"
+    )
+    resolved: str = Field(description="yes/no")
+
+
+def _normalize_resolved(value) -> str:
+    if isinstance(value, bool):
+        return "yes" if value else "no"
+    
+    str_value = str(value).lower().strip()
+    if str_value in ("yes", "true"):
+        return "yes"
+    return "no"
+
+
+async def run_summary_agent_async(
+    incident_description: str,
+    execution_result: JaegerExecutionResult,
+    historic_context: str = "",
+    user_qa_pairs: List[Dict] = None
+) -> SummaryOutput:
+    # === ENHANCED OTEL: Create summary agent span ===
+    summary_agent_span = None
+    if _ENHANCED_OTEL_AVAILABLE and create_span:
+        _, summary_agent_span = create_span(
+            name="agent:summary_agent",
+            as_type="agent",
+            input_data={
+                "incident_description": incident_description[:200] if incident_description else "",
+                "has_execution_result": execution_result is not None,
+                "has_historic_context": bool(historic_context),
+                "user_qa_pairs_count": len(user_qa_pairs) if user_qa_pairs else 0
+            }
+        )
+
+    llm = LLM(
+        model="openai/" + llm_config.model_name,
+        temperature=0.0,
+        base_url=llm_config.url,
+        api_key=llm_config.token
+    )
+
+    # Only the LAST tool call is used as supporting evidence. Its output is
+    # already the ranked, budgeted, structured evidence built by query_tools.py
+    # (headers for every distinct error always kept; payload bodies of the
+    # lowest-ranked records dropped only if genuinely oversized, and disclosed
+    # when they are). Re-attaching all N historical calls here was the actual
+    # cause of previous context-window overflows, since each one repeats a
+    # large chunk of raw trace text - the final call already carries everything
+    # meaningful the earlier ones did.
+    tool_calls_text = ""
+    if execution_result.tool_calls:
+        last_call = execution_result.tool_calls[-1]
+        tool_calls_text = "\n=== INVESTIGATION EVIDENCE ===\n" + last_call.get("output", "")
+
+    qa_text = ""
+    if user_qa_pairs:
+        qa_text = "\n=== USER Q&A ===\n"
+        for qa in user_qa_pairs:
+            qa_text += f"Q: {qa.get('question', '')}\nA: {qa.get('answer', '')}\n"
+
+    if execution_result.resolved:
+        summary_agent = Agent(
+            role="L1/L2 Bank Support Engineer",
+            goal="Create a customer-friendly resolution response",
+            backstory=(
+                "You are a senior bank support engineer responding to a customer issue. "
+                "Your response should be professional, clear, and actionable. "
+                "IMPORTANT: Never mention the NAMES of technical tools or systems used to investigate "
+                "(do not say 'Jaeger', 'ELK', 'database query', 'trace', 'span', 'API call', or similar). "
+                "Never mention internal process details either - no 'iteration', 'time range', "
+                "'attempt number', 'retry', or how many times something was checked. "
+                "However, you MUST preserve and explicitly state any concrete technical findings from the "
+                "investigation - exact error codes, HTTP status codes, error messages, exception names, "
+                "or field values exactly as found (e.g. 'Error code: ACCOUNT_FROZEN', 'HTTP 403 Forbidden', "
+                "'Exception: InsufficientBalanceException'). Do not paraphrase or omit these - quote them "
+                "verbatim inside your explanation. Explain what the error means in plain language, then state "
+                "the exact code/message as supporting evidence."
+            ),
+            verbose=False,
+            allow_delegation=False,
+            llm=llm,
+            temperature=0
+        )
+
+        format_task = Task(
+            description=(
+                f"Create a final resolution for a bank customer issue.\n\n"
+                f"=== INCIDENT ===\n{incident_description}\n\n"
+                f"=== INVESTIGATION FINDINGS ===\n"
+                f"Root Cause: {execution_result.diagnosis}\n"
+                f"Resolution: {execution_result.solution}\n"
+                f"{tool_calls_text}\n\n"
+                f"=== HISTORIC SIMILAR INCIDENTS ===\n{historic_context}\n\n"
+                f"=== USER Q&A ===\n{qa_text}\n\n"
+                "IMPORTANT: Write your response as a bank support engineer would speak to a branch employee. "
+                "Do NOT mention which system or tool was used to investigate (no 'Jaeger', 'ELK', 'trace', 'span'). "
+                "DO include the exact error code, HTTP status, or error message found in the investigation "
+                "findings above, quoted exactly as-is - this is required, not optional. Explain what it means "
+                "in simple terms immediately after stating it, but never drop the raw code/message itself. "
+                "If the investigation evidence above notes that some errors were omitted or unclear, and the "
+                "root cause is genuinely uncertain, say so honestly rather than inventing a cause.\n\n"
+                f"Format the output as JSON:\n"
+                f'{{"diagnosis": "...", "solution": "...", "questions": [], "resolved": "yes"}}'
+            ),
+            agent=summary_agent,
+            expected_output="JSON with diagnosis, solution, questions, and resolved fields"
+        )
+
+        crew = Crew(
+            agents=[summary_agent],
+            tasks=[format_task],
+            verbose=False
+        )
+
+        result = await crew.akickoff()
+        summary_output = _parse_summary_result(str(result))
+
+        # === ENHANCED OTEL: End summary agent span ===
+        if _ENHANCED_OTEL_AVAILABLE and end_span and summary_agent_span:
+            end_span(summary_agent_span, output={
+                "resolved": summary_output.resolved,
+                "diagnosis": summary_output.diagnosis[:200] if summary_output.diagnosis else "",
+                "solution": summary_output.solution[:200] if summary_output.solution else "",
+                "questions_count": len(summary_output.questions) if summary_output.questions else 0
+            })
+
+        return summary_output
+
+    # ── UNRESOLVED: try historic context first, using the existing tiered logic ──
+    if historic_context and historic_context.strip() and historic_context != "No context found":
+        result = await run_context_only_summary_async(
+            incident_description=incident_description,
+            historic_context=historic_context,
+            user_qa_pairs=user_qa_pairs
+        )
+
+        # === ENHANCED OTEL: End summary agent span ===
+        if _ENHANCED_OTEL_AVAILABLE and end_span and summary_agent_span:
+            end_span(summary_agent_span, output={
+                "resolved": result.resolved,
+                "diagnosis": result.diagnosis[:200] if result.diagnosis else "",
+                "source": "historic_context"
+            })
+
+        return result
+
+    # ── Nothing worked at all: no logs, no historic match ──
+    summary_output = SummaryOutput(
+        diagnosis="BOT is unable to resolve, assign to an Engineer",
+        solution="BOT is unable to resolve, assign to an Engineer",
+        questions=[],
+        resolved="no"
+    )
+
+    # === ENHANCED OTEL: End summary agent span ===
+    if _ENHANCED_OTEL_AVAILABLE and end_span and summary_agent_span:
+        end_span(summary_agent_span, output={
+            "resolved": "no",
+            "diagnosis": "BOT is unable to resolve",
+            "source": "fallback"
+        })
+
+    return summary_output
+
+
+def _parse_summary_result(result_text: str) -> SummaryOutput:
+    """Parse LLM response into SummaryOutput."""
+    import json
+    
+    json_match = re.search(r'\{[\s\S]*\}', result_text)
+    if json_match:
+        try:
+            data = json.loads(json_match.group())
+            resolved_value = _normalize_resolved(data.get("resolved", "no"))
+            
+            return SummaryOutput(
+                diagnosis=data.get("diagnosis", ""),
+                solution=data.get("solution", ""),
+                questions=data.get("questions", []),
+                resolved=resolved_value
+            )
+        except:
+            pass
+    
+    # Fallback: parse from text when JSON parsing fails
+    resolved = "yes" if "yes" in result_text.lower().split("resolved")[-1].split("}")[0].lower() else "no"
+    
+    return SummaryOutput(
+        diagnosis=result_text,
+        solution="See diagnosis",
+        resolved=resolved
+    )
+
+
+
+def create_simple_summary(
+    plan_output: PlanOutput,
+    execution_result: JaegerExecutionResult
+) -> SummaryOutput:
+    if execution_result.resolved:
+        return SummaryOutput(
+            diagnosis=execution_result.diagnosis,
+            solution=execution_result.solution,
+            questions=execution_result.questions,
+            resolved="yes"
+        )
+
+    if plan_output.needs_more_info:
+        return SummaryOutput(
+            diagnosis="Additional information needed",
+            solution="Waiting for user response",
+            questions=[plan_output.question_for_user or "Please provide more details"],
+            resolved="no"
+        )
+
+    diagnosis = execution_result.diagnosis or plan_output.issue_summary or "Investigation incomplete"
+    solution = execution_result.solution or "Manual investigation required"
+
+    return SummaryOutput(
+        diagnosis=diagnosis,
+        solution=solution,
+        questions=[],
+        resolved="no"
+    )
+
+
+def _extract_top_confidence(historic_context: str) -> float:
+    """Pulls the highest 'Similarity: XX.XX%' value already embedded in the
+    historic_context text (written by format_incidents_for_llm in context_builder.py).
+    Returns 0.0 if none found — no new params/return values needed anywhere else."""
+    matches = re.findall(r'Similarity:\s*([\d.]+)%', historic_context)
+    if not matches:
+        return 0.0
+    return max(float(m) for m in matches)
+
+
+async def run_context_only_summary_async(
+    incident_description: str,
+    historic_context: str = "",
+    user_qa_pairs: List[Dict] = None
+) -> SummaryOutput:
+    """
+    Used when the app has no Jaeger/ELK config, or when live investigation
+    found nothing conclusive. Uses the top similarity score (already embedded
+    in historic_context) to decide:
+      - HIGH  (>=75%): resolve fully — diagnosis+solution, resolved=yes
+      - MEDIUM (50-75%): present the likely diagnosis/solution WITHOUT asking
+        a question — resolved=no, questions=[]
+      - LOW   (<50%): ask one specific clarifying question — resolved=no, questions=[...]
+    """
+    confidence_pct = _extract_top_confidence(historic_context)
+    logger.info(f"[ContextOnlySummary] extracted top confidence = {confidence_pct:.1f}%")
+
+    llm = LLM(
+        model="openai/" + llm_config.model_name,
+        temperature=0.0,
+        base_url=llm_config.url,
+        api_key=llm_config.token
+    )
+
+    qa_text = ""
+    if user_qa_pairs:
+        qa_text = "\n=== USER Q&A ===\n"
+        for qa in user_qa_pairs:
+            qa_text += f"Q: {qa.get('question', '')}\nA: {qa.get('answer', '')}\n"
+
+    agent = Agent(
+        role="L1/L2 Bank Support Engineer",
+        goal="Resolve or clarify a customer issue using only historic incident precedent",
+        backstory=(
+            "You are a senior bank support engineer. No live system logs are available "
+            "for this application, so you must rely only on similar past incidents. "
+            "IMPORTANT: Never mention technical tools like Jaeger, ELK, or database queries. "
+            "Explain things in simple terms a branch employee can understand."
+        ),
+        verbose=False,
+        allow_delegation=False,
+        llm=llm,
+        temperature=0
+    )
+
+    task = Task(
+        description=(
+            f"=== CURRENT INCIDENT ===\n{incident_description}\n\n"
+            f"=== SIMILAR HISTORIC INCIDENTS ===\n{historic_context}\n\n"
+            f"=== USER Q&A ===\n{qa_text}\n\n"
+            f"=== TOP MATCH CONFIDENCE SCORE: {confidence_pct:.1f}% ===\n\n"
+            "No live logs are available for this application. Use the confidence score "
+            "above to decide how to respond:\n\n"
+            "TIER 1 - HIGH CONFIDENCE (score >= 75%):\n"
+            "The top historic match is a strong, reliable match. Set RESOLVED=yes and state "
+            "that incident's resolution as the diagnosis/solution directly. Do not ask any "
+            "question.\n\n"
+            "TIER 2 - MEDIUM CONFIDENCE (50% <= score < 75%):\n"
+            "The match is plausible but not certain. Set RESOLVED=no and QUESTIONS=[] (empty — "
+            "do NOT ask a question). Instead, present the most likely diagnosis and solution "
+            "from the closest matching historic incident(s), clearly phrased as a probable cause "
+            "(e.g. 'This is most likely caused by...'). This will be shown to the user directly "
+            "as information, not as a question.\n\n"
+            "TIER 3 - LOW CONFIDENCE (score < 50%):\n"
+            "No historic incident is a reliable match. Set RESOLVED=no and ask ONE specific "
+            "clarifying question (in QUESTIONS) that would help identify which scenario applies. "
+            "Keep DIAGNOSIS brief (e.g. 'Unable to determine exact cause from history alone').\n\n"
+            "Do not mention any technical tools.\n"
+            "Mask all PII and avoid backend technical jargon — the person raising this incident "
+            "is a bank branch employee, not a direct customer.\n"
+            "Do not repeat the same diagnosis again if the user's latest input is just a simple "
+            "follow-up answer.\n"
+            "If a Service Request (SR) needs to be raised, clearly state 'An SR needs to be "
+            "raised' — do NOT claim one has already been raised.\n\n"
+            'Format the output as JSON: {"diagnosis": "...", "solution": "...", "questions": [], "resolved": "yes/no"}'
+        ),
+        agent=agent,
+        expected_output="JSON with diagnosis, solution, questions, and resolved fields"
+    )
+
+    crew = Crew(agents=[agent], tasks=[task], verbose=True)
+
+    logger.info("[ContextOnlySummary] CREW KICKOFF START")
+    result = await crew.akickoff()
+    logger.info(f"[ContextOnlySummary] CREW KICKOFF DONE | output_len={len(str(result))}")
+
+    parsed = _parse_summary_result(str(result))
+    logger.info(
+        f"[ContextOnlySummary] PARSED | resolved={parsed.resolved} "
+        f"has_questions={bool(parsed.questions)} diagnosis_preview={parsed.diagnosis[:150]}"
+    )
+    return parsed
