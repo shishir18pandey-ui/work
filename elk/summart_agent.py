@@ -109,10 +109,10 @@ async def run_summary_agent_async(
     if execution_result.resolved:
         summary_agent = Agent(
             role="L1/L2 Bank Support Engineer",
-            goal="Create a customer-friendly resolution response",
+            goal="Create a customer-friendly diagnosis of the reported issue",
             backstory=(
                 "You are a senior bank support engineer responding to a customer issue. "
-                "Your response should be professional, clear, and actionable. "
+                "Your response should be professional, clear, and factual. "
                 "IMPORTANT: Never mention the NAMES of technical tools or systems used to investigate "
                 "(do not say 'Jaeger', 'ELK', 'database query', 'trace', 'span', 'API call', or similar). "
                 "Never mention internal process details either - no 'iteration', 'time range', "
@@ -137,7 +137,9 @@ async def run_summary_agent_async(
                 "PROBLEM' or 'NO ERROR MATCHING THE REPORTED PROBLEM' must not be "
                 "presented as the cause at all. This test is about relevance only - a "
                 "malfunction (a 5xx, a timeout, an exception) is always worth reporting "
-                "even when its link to the symptom is unclear; say the link is unclear."
+                "even when its link to the symptom is unclear; say the link is unclear.\n"
+                "IMPORTANT: You only produce a DIAGNOSIS. You never produce a solution, "
+                "fix, workaround, or next-step recommendation of any kind."
             ),
             verbose=False,
             allow_delegation=False,
@@ -147,7 +149,7 @@ async def run_summary_agent_async(
 
         format_task = Task(
             description=(
-                f"Create a final resolution for a bank customer issue.\n\n"
+                f"Create a diagnosis for a bank customer issue.\n\n"
                 f"=== INCIDENT ===\n{incident_description}\n\n"
                 f"=== ROOT CAUSE ===\n{execution_result.diagnosis}\n\n"
                 f"=== HISTORIC SIMILAR INCIDENTS ===\n{historic_context}\n\n"
@@ -164,24 +166,17 @@ async def run_summary_agent_async(
                 "mentions - do not cite them as the cause, and do not invent a link between them and the "
                 "symptom. If every error found is unrelated to what was reported, say plainly that no failure "
                 "explaining this issue was found.\n\n"
-                "DECISION REQUIRED:\n"
-                "Compare ROOT CAUSE with HISTORIC SIMILAR INCIDENTS:\n"
-                "- If ROOT CAUSE matches historic incidents (same error, same service, same root cause, multiple same feild) → HIGH CORRELATION\n"
-                "- If historic context is sparse, different root cause, or no match → LOW/NO CORRELATION\n\n"
-                "IF HIGH CORRELATION:\n"
-                "→ Include solution in output: solution: \"step 1 | step 2 | step 3\"\n\n"
-                "IF LOW/NO CORRELATION:\n"
-                "→ Set solution to empty string: solution: \"\"\n\n"
+                "DO NOT propose any fix, workaround, next step, or recommendation of any kind. Only describe "
+                "what was found - the diagnosis alone.\n\n"
                 "If the investigation evidence above notes that some errors were omitted or unclear, and the "
-                "root cause is genuinely uncertain, say reply with honest reposne .\n\n"
-                "NOTE : Never generate the error code or message on your own"
-                f"Format  the output as JSON:\n"
-                f'{{"diagnosis": "...", "solution": "...", "questions": [], "resolved": "yes"}}'
+                "root cause is genuinely uncertain, reply with an honest response.\n\n"
+                "NOTE: Never generate an error code or message on your own.\n\n"
+                f"Format the output as JSON:\n"
+                f'{{"diagnosis": "..."}}'
             ),
             agent=summary_agent,
-            expected_output="JSON with diagnosis, solution, questions, and resolved fields if solution is empty don't return it "
+            expected_output="JSON with a single diagnosis field. No solution field."
         )
-
 
         crew = Crew(
             agents=[summary_agent],
@@ -192,19 +187,20 @@ async def run_summary_agent_async(
         result = await crew.akickoff()
         summary_output = _parse_summary_result(str(result))
 
-        # Override: Bot never asks questions - always proceed with diagnosis
+        # Override: diagnosis-only response - never send a solution, never ask a
+        # question, and always route as resolved (the diagnosis IS the resolution;
+        # the model's own "resolved" verdict was previously trusted and sometimes
+        # wrote "no" even with a full diagnosis, which routed a good answer into
+        # the question branch in flow.py).
+        summary_output.solution = ""
         summary_output.questions = []
-        # Fallback: if solution is empty, provide a default message
-        if not summary_output.solution or not summary_output.solution.strip():
-            summary_output.solution = "Unable to provide solution. Please refer to the diagnosis above."
- 
+        summary_output.resolved = "yes"
 
         # === ENHANCED OTEL: End summary agent span ===
         if _ENHANCED_OTEL_AVAILABLE and end_span and summary_agent_span:
             end_span(summary_agent_span, output={
                 "resolved": summary_output.resolved,
                 "diagnosis": summary_output.diagnosis[:200] if summary_output.diagnosis else "",
-                "solution": summary_output.solution[:200] if summary_output.solution else "",
                 "questions_count": len(summary_output.questions) if summary_output.questions else 0
             })
 
@@ -231,7 +227,7 @@ async def run_summary_agent_async(
     # ── Nothing worked at all: no logs, no historic match ──
     summary_output = SummaryOutput(
         diagnosis="BOT is unable to resolve, assign to an Engineer",
-        solution="BOT is unable to resolve, assign to an Engineer",
+        solution="",
         questions=[],
         resolved="no"
     )
@@ -294,7 +290,7 @@ def _parse_summary_result(result_text: str) -> SummaryOutput:
     
     return SummaryOutput(
         diagnosis=result_text,
-        solution="See diagnosis",
+        solution="",
         resolved=resolved
     )
 
@@ -305,11 +301,9 @@ def create_simple_summary(
     execution_result: JaegerExecutionResult
 ) -> SummaryOutput:
     if execution_result.resolved:
-        # Use solution if available, otherwise fallback message
-        solution = execution_result.solution if execution_result.solution else "Unable to provide solution. Please refer to the diagnosis above."
         return SummaryOutput(
             diagnosis=execution_result.diagnosis,
-            solution=solution,
+            solution="",
             questions=[],
             resolved="yes"
         )
@@ -317,27 +311,18 @@ def create_simple_summary(
     if plan_output.needs_more_info:
         return SummaryOutput(
             diagnosis="Additional information needed",
-            solution="Waiting for user response",
+            solution="",
             questions=[plan_output.question_for_user or "Please provide more details"],
             resolved="no"
         )
 
     diagnosis = execution_result.diagnosis or plan_output.issue_summary or "Investigation incomplete"
-    
-    # If there's no solution (low correlation), say unable to provide solution
-    if execution_result.solution:
-        solution = execution_result.solution
-    else:
-        solution = "Unable to provide solution. Please refer to the diagnosis above."
-
-    # If there's a diagnosis, mark as resolved
-    final_resolved = "yes" if diagnosis else "no"
 
     return SummaryOutput(
         diagnosis=diagnosis,
-        solution=solution,
+        solution="",
         questions=[],
-        resolved=final_resolved
+        resolved="no"
     )
 
 
@@ -359,11 +344,8 @@ async def run_context_only_summary_async(
     """
     Used when the app has no Jaeger/ELK config, or when live investigation
     found nothing conclusive. Uses the top similarity score (already embedded
-    in historic_context) to decide:
-      - HIGH  (>=75%): resolve fully — diagnosis+solution, resolved=yes
-      - MEDIUM (50-75%): present the likely diagnosis/solution WITHOUT asking
-        a question — resolved=no, questions=[]
-      - LOW   (<50%): ask one specific clarifying question — resolved=no, questions=[...]
+    in historic_context) to decide how confident the diagnosis is - but in all
+    cases the output is diagnosis only, no solution, no question.
     """
     confidence_pct = _extract_top_confidence(historic_context)
     logger.info(f"[ContextOnlySummary] extracted top confidence = {confidence_pct:.1f}%")
@@ -383,12 +365,14 @@ async def run_context_only_summary_async(
 
     agent = Agent(
         role="L1/L2 Bank Support Engineer",
-        goal="Resolve or clarify a customer issue using only historic incident precedent",
+        goal="Diagnose a customer issue using only historic incident precedent",
         backstory=(
             "You are a senior bank support engineer. No live system logs are available "
             "for this application, so you must rely only on similar past incidents. "
             "IMPORTANT: Never mention technical tools like Jaeger, ELK, or database queries. "
-            "Explain things in simple terms a branch employee can understand."
+            "Explain things in simple terms a branch employee can understand. "
+            "You only produce a DIAGNOSIS. You never produce a solution, fix, workaround, "
+            "or next-step recommendation of any kind."
         ),
         verbose=False,
         allow_delegation=False,
@@ -403,32 +387,28 @@ async def run_context_only_summary_async(
             f"=== USER Q&A ===\n{qa_text}\n\n"
             f"=== TOP MATCH CONFIDENCE SCORE: {confidence_pct:.1f}% ===\n\n"
             "No live logs are available for this application. Use the confidence score "
-            "above to decide how to respond:\n\n"
+            "above to write the diagnosis:\n\n"
             "TIER 1 - HIGH CONFIDENCE (score >= 75%):\n"
-            "The top historic match is a strong, reliable match. Set RESOLVED=yes and state "
-            "that incident's resolution as the diagnosis/solution directly. Do not ask any "
-            "question.\n\n"
+            "The top historic match is a strong, reliable match. State that incident's "
+            "root cause as the diagnosis directly.\n\n"
             "TIER 2 - MEDIUM CONFIDENCE (50% <= score < 75%):\n"
-            "The match is plausible but certain. Set RESOLVED=yes (there's a diagnosis, so "
-            "present it to the user). QUESTIONS=[] (empty). Present the diagnosis and solution "
-            "from the closest matching historic incident(s), clearly phrased as a probable cause "
-            "(e.g. 'This is most likely caused by...'). This will be shown to the user directly "
-            "as information, not as a question.\n\n"
+            "The match is plausible but not certain. Present the likely cause from the "
+            "closest matching historic incident(s), clearly phrased as a probable cause "
+            "(e.g. 'This is most likely caused by...').\n\n"
             "TIER 3 - LOW CONFIDENCE (score < 50%):\n"
-            "No historic match is reliable. Set RESOLVED=yes (there's a diagnosis, so present "
-            "it to the user). QUESTIONS=[] (empty). Present the diagnosis based on available "
-            "information. Keep it brief but informative.\n\n"
+            "No historic match is reliable. State plainly that the cause could not be "
+            "determined from available information. Keep it brief.\n\n"
             "Do not mention any technical tools.\n"
             "Mask all PII and avoid backend technical jargon — the person raising this incident "
             "is a bank branch employee, not a direct customer.\n"
             "Do not repeat the same diagnosis again if the user's latest input is just a simple "
             "follow-up answer.\n"
-            "If a Service Request (SR) needs to be raised, clearly state 'An SR needs to be "
-            "raised' — do NOT claim one has already been raised.\n\n"
-            'Format the output as JSON: {"diagnosis": "...", "solution": "...", "questions": [], "resolved": "yes/no"}'
+            "DO NOT propose any fix, workaround, next step, or recommendation of any kind. "
+            "DO NOT ask any question. Only describe the likely cause.\n\n"
+            'Format the output as JSON: {"diagnosis": "..."}'
         ),
         agent=agent,
-        expected_output="JSON with diagnosis, solution, questions, and resolved fields"
+        expected_output="JSON with a single diagnosis field. No solution, no questions."
     )
 
     crew = Crew(agents=[agent], tasks=[task], verbose=True)
@@ -438,14 +418,14 @@ async def run_context_only_summary_async(
     logger.info(f"[ContextOnlySummary] CREW KICKOFF DONE | output_len={len(str(result))}")
 
     parsed = _parse_summary_result(str(result))
-    
-    # Override: Bot never asks questions - always proceed with diagnosis
+
+    # Override: diagnosis-only response - never send a solution, never ask a
+    # question, and always route as resolved (a diagnosis was produced from
+    # historic precedent, so this counts as an answer, not a pending question).
+    parsed.solution = ""
     parsed.questions = []
-    # Fallback: if solution is empty, provide a default message
-    # Fallback: if solution is empty, provide a default message
-    if not parsed.solution or not parsed.solution.strip():
-       parsed.solution = "Unable to provide solution. Please refer to the diagnosis above."
-     
+    parsed.resolved = "yes"
+
     logger.info(
         f"[ContextOnlySummary] PARSED | resolved={parsed.resolved} "
         f"has_questions={bool(parsed.questions)} diagnosis_preview={parsed.diagnosis[:150]}"
