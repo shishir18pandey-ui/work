@@ -13,6 +13,7 @@ copied, so a fix there reaches this flow too. Nothing here mutates `new_flow`.
 
 from pydantic import BaseModel
 from typing import List, Optional, Dict
+import asyncio
 import httpx
 import os
 import json
@@ -21,7 +22,12 @@ from dotenv import load_dotenv
 from crewai.flow.flow import Flow, start, listen, router
 from new_flow.utils.incident_db_async import upsert_incident_payload_async
 from new_flow.agents.context_builder import run_incident_context_crew_async, run_incident_context_deterministic_async
-from new_flow.agents.intent_classifier import run_classifier_with_enrichment_async
+from new_flow.agents.intent_classifier import (
+    run_classifier_with_enrichment_async,
+    extract_identifiers,
+    guess_problem_category,
+    get_app_from_payload,
+)
 from new_flow.agents.plan_agents import run_plan_agent_async
 from new_flow.agents.summary_agent import run_summary_agent_async, run_context_only_summary_async
 from new_flow.utils.llm import run_crew_with_retry_async
@@ -125,7 +131,11 @@ class IncidentState(BaseModel):
 async def send_update_to_servicenow_async(payload: Dict, question: str, resolution: str):
     tracer = get_tracer(__name__)
     with tracer.start_as_current_span("send_update_to_servicenow_async") as span:
-        span.set_attribute("incident_id", payload.get("incidentId"))
+        incident_id = payload.get("incidentId")
+        incident_no = payload.get("incidentNumber")
+        span.set_attribute("incident_id", incident_id)
+        if incident_no:
+            span.set_attribute("incident_no", incident_no)
         span.set_attribute("question_length", len(question) if question else 0)
         span.set_attribute("resolution_length", len(resolution) if resolution else 0)
         
@@ -188,7 +198,11 @@ async def send_update_to_servicenow_async(payload: Dict, question: str, resoluti
 async def send_rejection_to_servicenow_async(payload, additonal_comment: str = 'BOT is unable to resolve, assign to an Engineer'):
     tracer = get_tracer(__name__)
     with tracer.start_as_current_span("send_rejection_to_servicenow_async") as span:
-        span.set_attribute("incident_id", payload.get("incidentId"))
+        incident_id = payload.get("incidentId")
+        incident_no = payload.get("incidentNumber")
+        span.set_attribute("incident_id", incident_id)
+        if incident_no:
+            span.set_attribute("incident_no", incident_no)
         span.set_attribute("additional_comment", additonal_comment[:500] if additonal_comment else "")
         span.set_attribute("responded_with", "rejection")
         payload.update({"state": "On Hold","cause": "Bot is unable to resolve Assign to an Engineer."})
@@ -199,7 +213,11 @@ async def send_rejection_to_servicenow_async(payload, additonal_comment: str = '
 async def send_question_to_servicenow_async(payload, question):
     tracer = get_tracer(__name__)
     with tracer.start_as_current_span("send_question_to_servicenow_async") as span:
-        span.set_attribute("incident_id", payload.get("incidentId"))
+        incident_id = payload.get("incidentId")
+        incident_no = payload.get("incidentNumber")
+        span.set_attribute("incident_id", incident_id)
+        if incident_no:
+            span.set_attribute("incident_no", incident_no)
         span.set_attribute("question_sent", question[:500] if question else "")
         span.set_attribute("responded_with", "question")
         span.set_attribute("question_length", len(question) if question else 0)
@@ -211,7 +229,11 @@ async def send_question_to_servicenow_async(payload, question):
 async def send_resolution_to_servicenow_async(payload, resolution):
     tracer = get_tracer(__name__)
     with tracer.start_as_current_span("send_resolution_to_servicenow_async") as span:
-        span.set_attribute("incident_id", payload.get("incidentId"))
+        incident_id = payload.get("incidentId")
+        incident_no = payload.get("incidentNumber")
+        span.set_attribute("incident_id", incident_id)
+        if incident_no:
+            span.set_attribute("incident_no", incident_no)
         span.set_attribute("resolution_length", len(resolution) if resolution else 0)
         span.set_attribute("responded_with", "diagnosis")
         span.set_attribute("diagnosis", resolution[:500] if resolution else "")
@@ -252,6 +274,10 @@ class IncidentManagementFlow(Flow[IncidentState]):
         tracer = get_tracer(__name__)
         with tracer.start_as_current_span("initialize_and_classify") as span:
             span.set_attribute("incident_id", self.state.incident_id)
+            # Get incident number from payload for tracing
+            incident_no = self.state.payload.get("incidentNumber") if self.state.payload else None
+            if incident_no:
+                span.set_attribute("incident_no", incident_no)
 
             self.state.incident_description, self.state.ucic = payload_to_incident_description(self.state.payload)
 
@@ -274,15 +300,31 @@ class IncidentManagementFlow(Flow[IncidentState]):
             # Get previous classifier output for context continuity
             previous_classifier_output = self.state.payload.get('__agent_data', {}).get('classifier_output')
 
-            classifier_output = await run_crew_with_retry_async(
-                lambda: run_classifier_with_enrichment_async(
-                    payload=self.state.payload,
-                    incident_description=self.state.incident_description,
-                    user_qa_pairs=self.state.user_qa_pairs,
-                    comment=comment,
-                    previous_classifier_output=previous_classifier_output
+            # The classifier's LLM crew and the historic-incident search are
+            # independent: the search only needs a text query, and the query it
+            # would get from `enriched_prompt` is the description plus identifiers
+            # and category - all of which come from regex/keyword helpers, not the
+            # LLM. So both run concurrently and the ~16s classifier overlaps the
+            # ~28s search instead of preceding it.
+            context_task = asyncio.create_task(self._gather_historic_context())
+
+            try:
+                classifier_output = await run_crew_with_retry_async(
+                    lambda: run_classifier_with_enrichment_async(
+                        payload=self.state.payload,
+                        incident_description=self.state.incident_description,
+                        user_qa_pairs=self.state.user_qa_pairs,
+                        comment=comment,
+                        previous_classifier_output=previous_classifier_output
+                    )
                 )
-            )
+            except Exception:
+                # Don't leave the search orphaned if classification fails - the
+                # flow aborts here and worker.py sends the fallback rejection.
+                context_task.cancel()
+                raise
+
+            self._context_task = context_task
             self.state.intent = classifier_output.intent
             self.state.customer_identifiers = classifier_output.customer_identifiers
             self.state.problem_category = classifier_output.problem_category
@@ -295,6 +337,63 @@ class IncidentManagementFlow(Flow[IncidentState]):
             
             print(f"Initialized and classified incident {self.state.incident_id} with intent: {self.state.intent}")
             return self.state.intent
+
+    async def _gather_historic_context(self) -> str:
+        """Historic-incident search, started before the classifier finishes.
+
+        Builds its own query rather than waiting for `enriched_prompt`: that
+        string is description + identifiers + problem category, and the LLM only
+        adds a restatement of the description to it. Identifiers and category
+        come from `extract_identifiers` / `guess_problem_category`, which are
+        regex and keyword matching.
+
+        Runs inside its own span so the concurrency is visible in the trace.
+        """
+        tracer = get_tracer(__name__)
+        with tracer.start_as_current_span("gather_context") as span:
+            span.set_attribute("incident_id", self.state.incident_id)
+            incident_no = self.state.payload.get("incidentNumber") if self.state.payload else None
+            if incident_no:
+                span.set_attribute("incident_no", incident_no)
+
+            payload = self.state.payload
+            description = self.state.incident_description
+            app_raw = payload.get("businessService", "CBS")
+            app_key = app_raw.lower().strip()
+
+            identifiers = extract_identifiers(description, payload)
+            category = guess_problem_category(description, get_app_from_payload(payload))
+            query = "\n".join([
+                f"Problem Category: {category}",
+                *(f"- {k}: {v}" for k, v in identifiers.items()),
+                "",
+                description,
+            ])
+
+            span.set_attribute("incident_description_length", len(description))
+            span.set_attribute("app", app_key)
+            span.set_attribute("problem_category", category)
+            span.set_attribute("concurrent_with_classifier", True)
+
+            try:
+                if app_has_observability(app_key):
+                    context = await run_crew_with_retry_async(
+                        lambda: run_incident_context_crew_async(query, application=app_raw)
+                    )
+                else:
+                    context = await run_crew_with_retry_async(
+                        lambda: run_incident_context_deterministic_async(query, application=app_raw)
+                    )
+            except Exception as exc:
+                # Historic context is advisory - it reaches the plan agent and the
+                # summary wording, never LOCATE. Losing it must not fail the
+                # incident, but it must be visible rather than silently "".
+                logger.error(f"[Flow] historic context failed: {exc}")
+                span.set_attribute("historic_context_error", str(exc))
+                return "No context found"
+
+            span.set_attribute("has_historic_context", bool(context and context != "No context found"))
+            return context or "No context found"
 
     @router(initialize_and_classify)
     async def start_process(self):
@@ -311,18 +410,28 @@ class IncidentManagementFlow(Flow[IncidentState]):
             span.set_attribute("needs_user_input", classifier_data.get('needs_user_input', False))
             span.set_attribute("interaction_counter", self.state.payload.get("interaction_counter", 0))
 
+            # Only the "gather_context" branch consumes the search started in
+            # initialize_and_classify; every other branch answers without it, so
+            # drop it rather than leaving a task running past the flow.
+            def _abandon_context(route: str) -> str:
+                task = getattr(self, "_context_task", None)
+                if task is not None and not task.done():
+                    task.cancel()
+                    logger.info(f"[Flow] context search cancelled - route={route}")
+                return route
+
             counter = self.state.payload.get("interaction_counter", 0)
             self.state.payload["interaction_counter"] = counter + 1
             if counter >= 3:
                 print(f"Interaction limit exceeded for incident {self.state.incident_id}")
-                return "limit_exceeded"
+                return _abandon_context("limit_exceeded")
 
-            if self.state.intent == "closure": 
+            if self.state.intent == "closure":
                 print(f"Closure intent for incident {self.state.incident_id}")
-                return "handle_closure"
-            if self.state.intent == "rebuttal": 
+                return _abandon_context("handle_closure")
+            if self.state.intent == "rebuttal":
                 print(f"Rebuttal intent for incident {self.state.incident_id}")
-                return "handle_rebuttal"
+                return _abandon_context("handle_rebuttal")
 
             classifier_data = self.state.payload.get('__agent_data', {}).get('classifier_output', {})
             if classifier_data.get('needs_user_input'):
@@ -336,7 +445,7 @@ class IncidentManagementFlow(Flow[IncidentState]):
                 # FIX: unique event name — does NOT collide with the string
                 # "update_servicenow" that _run_agentic_resolver returns on
                 # the normal path, which would otherwise double-fire both listeners.
-                return "send_clarification"
+                return _abandon_context("send_clarification")
             
             print(f"Fresh incident {self.state.incident_id}, gather context")
             return "gather_context"
@@ -344,31 +453,29 @@ class IncidentManagementFlow(Flow[IncidentState]):
 
     @listen('gather_context')
     async def semantic_search(self):
+        """Collects the search started in `initialize_and_classify`.
+
+        By the time the router reaches here the search has had the classifier's
+        runtime to make progress, so this usually only waits out the remainder.
+        """
         tracer = get_tracer(__name__)
-        with tracer.start_as_current_span("gather_context") as span:
+        with tracer.start_as_current_span("await_context") as span:
             span.set_attribute("incident_id", self.state.incident_id)
-            span.set_attribute("incident_description_length", len(self.state.incident_description))
-            span.set_attribute("app", self.state.app)
-            span.set_attribute("problem_category", self.state.problem_category)
 
-            desc = self.state.enriched_prompt
-            app_raw = self.state.payload.get("businessService", "CBS")
-            app_key = app_raw.lower().strip()
-
-            if app_has_observability(app_key):
-                incident_context = await run_crew_with_retry_async(
-                    lambda: run_incident_context_crew_async(desc, application=app_raw)
-                )
+            task = getattr(self, "_context_task", None)
+            if task is None:
+                # Defensive: every path that reaches here goes through
+                # initialize_and_classify, but a future entry point might not.
+                logger.warning("[Flow] no context task - running search inline")
+                self.state.incident_context = await self._gather_historic_context()
             else:
-                incident_context = await run_crew_with_retry_async(
-                    lambda: run_incident_context_deterministic_async(desc, application=app_raw)
-                )
-            self.state.incident_context = incident_context if incident_context else "No context found"
-            
-            # Track semantic search results
-            has_historic_context = bool(incident_context and incident_context != "No context found")
-            span.set_attribute("has_historic_context", has_historic_context)
+                self.state.incident_context = await task
 
+            span.set_attribute(
+                "has_historic_context",
+                bool(self.state.incident_context
+                     and self.state.incident_context != "No context found"),
+            )
             return 'run_resolver'
 
 
@@ -377,6 +484,9 @@ class IncidentManagementFlow(Flow[IncidentState]):
         tracer = get_tracer(__name__)
         with tracer.start_as_current_span("run_resolver") as span:
             span.set_attribute("incident_id", self.state.incident_id)
+            incident_no = self.state.payload.get("incidentNumber") if self.state.payload else None
+            if incident_no:
+                span.set_attribute("incident_no", incident_no)
             span.set_attribute("qa_pairs_count", len(self.state.user_qa_pairs))
             span.set_attribute("app", self.state.app)
             span.set_attribute("problem_category", self.state.problem_category)
@@ -485,14 +595,52 @@ class IncidentManagementFlow(Flow[IncidentState]):
             # Which relaxation step of the span search answered (planned service
             # / whole app / any service / unfiltered). Tells you whether the plan
             # agent's service pick is pulling its weight in production.
+            #
+            # Match the two *search* stages by name rather than the `locate`
+            # prefix: `locate_precheck`, `locate_activity` and `locate_error` also
+            # share it and carry no filter_scope, so a prefix test picks the wrong
+            # entry and reports an empty scope for a search that did narrow.
             locate = next(
                 (c for c in reversed(execution_result.tool_calls)
-                 if str(c.get("stage", "")).startswith("locate")),
+                 if c.get("stage") in ("locate", "locate_untagged")),
                 {},
             )
             span.set_attribute("locate_filter_scope", str(locate.get("filter_scope") or ""))
+            # `locate_untagged` means the pinned identifier matched nothing and the
+            # search fell back to text alone - a far weaker result than a pinned
+            # hit, and otherwise indistinguishable from one in the trace.
+            span.set_attribute("locate_stage", str(locate.get("stage") or ""))
+            span.set_attribute("locate_hits", int(locate.get("hits") or 0))
+            span.set_attribute("locate_time_bucket", str(locate.get("time_bucket") or ""))
+            span.set_attribute("locate_pivoted", bool(locate.get("pivoted") or False))
+            # Which identifier spellings actually gated the query. An empty list
+            # here with hits present means the result rests on text alone.
+            span.set_attribute(
+                "locate_pinned_tags", ",".join(str(t) for t in (locate.get("pinned_tags") or []))
+            )
+            span.set_attribute(
+                "locate_pivot_tags", ",".join(str(t) for t in (locate.get("pivot_tags") or []))
+            )
+            # "" (not run) / healthy / never_called. Records that the service the
+            # plan agent expected to be broken was actually checked - the
+            # difference between "we found nothing" and "it was working".
+            span.set_attribute("planned_service_state", execution_result.planned_service_state)
+            deepen = next(
+                (c for c in execution_result.tool_calls if c.get("stage") == "deepen"), {}
+            )
+            span.set_attribute(
+                "success_payload_spans", int(deepen.get("success_payload_spans") or 0)
+            )
+            # Empty unless the span search never ran; a wrong cluster otherwise
+            # reads in the trace like an incident that left no spans.
+            span.set_attribute("locate_skipped_reason", execution_result.locate_skipped_reason)
 
             print(f"Investigation completed for incident {self.state.incident_id} stage={execution_result.search_stage}")
+            if execution_result.locate_skipped_reason:
+                logger.error(
+                    f"[Flow] span search did not run for incident {self.state.incident_id}: "
+                    f"{execution_result.locate_skipped_reason}"
+                )
 
             # Elasticsearch was already the primary search here, so there is no
             # separate ELK fallback crew to run - unlike new_flow, which only
